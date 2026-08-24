@@ -9,6 +9,9 @@
   "cacheDirectories": [
     ".next/cache"
   ],
+  "resolutions": {
+    "@types/react": "^18.2.0"
+  },
   "dependencies": {
     "@date-io/date-fns": "^1.3.5",
     "@material-ui/core": "^4.11.0",

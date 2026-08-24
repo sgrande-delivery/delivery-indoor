@@ -5,6 +5,7 @@ import Link, { LinkProps } from 'next/link';
 interface CustomLinkProps extends LinkProps {
   color: 'primary' | 'secondary' | 'error';
   className?: string;
+  children: React.ReactNode;
 }
 
 const useStyles = makeStyles(theme => ({

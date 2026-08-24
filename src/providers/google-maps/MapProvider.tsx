@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext } from 'react';
+import React, { createContext, useCallback, useContext, PropsWithChildren } from 'react';
 import { useAddressComponents } from '../../hooks/useAddressComponents';
 import { Address } from 'src/types/address';
 import { infoWindowContent } from './infoWindowContent';
@@ -22,7 +22,7 @@ export function useMap(): GoogleMapsContextValue {
   return useContext(GoogleMapsContext);
 }
 
-const GoogleMapsProvider: React.FC = ({ children }) => {
+const GoogleMapsProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const { getAddressComponent } = useAddressComponents();
 
   const createMap = useCallback((position: Position): google.maps.Map => {

@@ -1,4 +1,4 @@
-import React, { ReactElement, useState } from 'react';
+import React, { PropsWithChildren, ReactElement, useState } from 'react';
 import { Dialog, AppBar, Toolbar, IconButton, Typography, makeStyles } from '@material-ui/core';
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import { useApp } from 'src/providers/AppProvider';
@@ -60,7 +60,7 @@ const useStyles = makeStyles(theme => ({
   }),
 }));
 
-interface ModalProps {
+interface ModalProps extends PropsWithChildren {
   onExited(): void;
   title?: string;
   componentActions?: ReactElement;

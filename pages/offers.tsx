@@ -36,13 +36,15 @@ export const getStaticProps: GetStaticProps<OffersPageProps> = async () => {
     },
   });
 
-  const response: AxiosResponse<Product[]> = await api.get('/products', { params: { environment: 'board' } });
+  const response: AxiosResponse<{ items: Product[] }> = await api.get('/products', {
+    params: { environment: 'board' },
+  });
 
   const restaurantResponse = await api.get('/restaurants');
 
   const restaurant = restaurantResponse.data;
 
-  const products = response.data.map(product => {
+  const products = response.data.items.map(product => {
     product.formattedPrice = moneyFormat(product.price);
     product.formattedSpecialPrice = moneyFormat(product.special_price);
     return product;
