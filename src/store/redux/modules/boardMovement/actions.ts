@@ -1,6 +1,7 @@
 import { BoardMovement } from 'src/types/boardMovement';
 import { BoardMovementPayment } from 'src/types/boardMovementPayment';
 import { BoardOrderProduct } from 'src/types/boardOrderProduct';
+import { BoardTotalsChangedPayload } from 'src/types/boardTotalsChanged';
 import { BoardMovementActions } from './types';
 
 export function setBoardMovement(movement: BoardMovement): BoardMovementActions {
@@ -69,5 +70,12 @@ export function setBoardDiscount(discount: number): BoardMovementActions {
   return {
     type: '@boardMovement/SET_DISCOUNT',
     discount,
+  };
+}
+
+export function setBoardTotals(totals: BoardTotalsChangedPayload): BoardMovementActions {
+  return {
+    type: '@boardMovement/SET_TOTALS',
+    totals,
   };
 }

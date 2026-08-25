@@ -26,4 +26,8 @@ export interface BoardMovement {
   isPaid: boolean;
   discount: number;
   formattedDiscount: string;
+  subtotal: number;
+  formattedSubtotal: string;
+  tip_amount: number;
+  formattedTipAmount: string;
 }
