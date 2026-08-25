@@ -1,0 +1,77 @@
+name: Feature
+description: Pedir uma feature nova no delivery-indoor
+title: "[feature] "
+labels: ["feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Descreva o que você quer que o app passe a fazer e por quê.
+
+        Vale saber de antemão: este app **não tem login** — o cliente é identificado pela movimentação de mesa que vem na URL (`?session=<uuid>`), não por usuário autenticado. Feature que pressupõe cliente identificado exige decidir identidade antes, e isso costuma ser cross-repo.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema / motivação
+      description: Qual dor a feature resolve, e pra quem (cliente na mesa, garçom, gestor).
+      placeholder: |
+        O cliente não tem como chamar o garçom pelo app. Hoje ele levanta a mão e espera ser visto, o que trava a mesa em horário de pico.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposta
+      description: A solução como você imagina. Não precisa ser técnica.
+      placeholder: |
+        Um botão "chamar garçom" na tela da conta, que avisa o PDV e mostra ao cliente que o chamado foi registrado.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Escopo principal
+      options:
+        - Tela nova
+        - Alteração de tela existente
+        - Integração com a delivery-api (endpoint)
+        - Tempo real (evento de socket)
+        - Infra / build / configuração
+        - Outro / não tenho certeza
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Prioridade percebida
+      options:
+        - high
+        - medium
+        - low
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativas consideradas (opcional)
+      description: O que mais foi pensado e por que foi descartado.
+
+  - type: input
+    id: related
+    attributes:
+      label: Feature relacionada (opcional)
+      description: Se já existe pasta em `.claude/sdd/` cobrindo a mesma frente, linkar aqui.
+      placeholder: 01-indoor-api-socket-recovery
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Observações adicionais (opcional)
+      description: |
+        Dependências em outros repos (`delivery-api`, `delivery-socket-api-2`, `delivery-admin`),
+        endpoints ou eventos que ainda não existem, considerações de segurança.

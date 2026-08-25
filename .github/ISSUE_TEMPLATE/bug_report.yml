@@ -1,0 +1,109 @@
+name: Bug
+description: Relatar um bug encontrado no delivery-indoor
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Descreva o bug com o máximo de contexto possível. Quanto mais específico, mais rápido fica pra corrigir.
+
+        Este é o app que o cliente usa **na mesa**, acessado pelo QR code com `?session=<uuid>` na URL. Sempre informe a URL usada — sem a sessão, o app não tem mesa e várias telas ficam vazias por comportamento esperado, não por bug.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: O que aconteceu
+      description: Descrição clara do bug (observado)
+      placeholder: |
+        O garçom lançou uma porção de fritas no PDV e a tela da conta continuou mostrando só os 2 itens anteriores. Só apareceu depois de dar F5.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: O que deveria acontecer
+      placeholder: |
+        O item lançado deveria aparecer na conta sozinho, sem recarregar a página.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Passos para reproduzir
+      description: Liste cada passo em ordem. Inclua a URL completa usada, com o `?session=<uuid>`.
+      placeholder: |
+        1. Abrir a mesa 5 no PDV (delivery-admin)
+        2. Acessar https://<host>/board?session=8f2c1d54-... no celular
+        3. Lançar um produto na mesa 5 pelo PDV
+        4. Observar a tela da conta no celular — nada muda
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severidade
+      options:
+        - blocker (impede usar o app na mesa)
+        - high (funciona parcialmente ou mostra dado errado ao cliente)
+        - medium (incômodo, há workaround)
+        - low (cosmético — texto, alinhamento, mensagem pouco clara)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: screen
+    attributes:
+      label: Tela afetada
+      options:
+        - Conta da mesa (/board)
+        - Cardápio — categorias (/menu)
+        - Cardápio — produtos da categoria (/menu/[url])
+        - Ofertas (/offers)
+        - Carrinho / envio do pedido (/cart)
+        - Home (/)
+        - Mais de uma / não tenho certeza
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Ambiente
+      description: Onde o bug foi observado — local (`yarn dev`) ou produção. Inclua navegador e se é mobile ou desktop.
+      placeholder: Produção / Chrome Android / celular
+    validations:
+      required: true
+
+  - type: input
+    id: session
+    attributes:
+      label: UUID da movimentação de mesa (opcional)
+      description: O valor do `?session=` da URL. Ajuda a reproduzir com os mesmos dados.
+      placeholder: 8f2c1d54-3b7a-4e91-9c2f-1d0a6b8e4f37
+
+  - type: input
+    id: related_task
+    attributes:
+      label: Feature ou task relacionada (opcional)
+      description: Se o bug tem relação com algo em `.claude/sdd/`, linkar aqui.
+      placeholder: 01-indoor-api-socket-recovery / task 03
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console e Network (opcional)
+      description: |
+        Cole erros do console do navegador e o que aparece na aba Network (status, corpo da resposta).
+        Para bug de tempo real, o console é essencial: a recusa de conexão do socket é silenciosa na UI.
+        Se houver `Authorization`, cookie, JWT cru ou dado pessoal do cliente, **redija antes de colar**.
+      render: shell
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Observações adicionais (opcional)
+      description: Capturas de tela, payload da resposta, qualquer outro contexto.
