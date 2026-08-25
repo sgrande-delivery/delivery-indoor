@@ -6,4 +6,5 @@
 /public/*workbox*
 public/sitemap.xml
 .env.development
+tsconfig.tsbuildinfo
 
