@@ -1,11 +1,6 @@
 import React, { PropsWithChildren, useCallback, useContext, useEffect, useState } from 'react';
-import {
-  firebaseMessagingIsSupported,
-  getFirebaseMessaging,
-  initialize as firebaseInitialize,
-} from 'src/config/FirebaseConfig';
+import { getFirebaseMessaging, initialize as firebaseInitialize } from 'src/config/FirebaseConfig';
 import { api } from 'src/services/api';
-import { useSelector } from 'src/store/redux/selector';
 
 type FirebaseContextValue = {
   getTokenFirebaseMessaging(): void;
@@ -22,7 +17,6 @@ export function useFirebase(): FirebaseContextValue {
 
 const FirebaseProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [fmHasToken, setFmHasToken] = useState(false);
-  const user = useSelector(state => state.user);
 
   const getTokenFirebaseMessaging = useCallback(() => {
     try {
@@ -39,7 +33,7 @@ const FirebaseProvider: React.FC<PropsWithChildren> = ({ children }) => {
               type: 'client',
             };
 
-            api.post('/pushTokens', param).catch(err => {
+            api.post('/push-tokens', param).catch(err => {
               console.log(err);
             });
           }
@@ -56,13 +50,6 @@ const FirebaseProvider: React.FC<PropsWithChildren> = ({ children }) => {
     if (process.browser) firebaseInitialize();
   }, []);
 
-  useEffect(() => {
-    if (process.browser)
-      if (user.id && firebaseMessagingIsSupported()) {
-        getTokenFirebaseMessaging();
-      }
-  }, [getTokenFirebaseMessaging, user.id]);
-
   const requestPermissionMessaging = useCallback(() => {
     try {
       const firebaseMessaging = getFirebaseMessaging();
@@ -76,7 +63,7 @@ const FirebaseProvider: React.FC<PropsWithChildren> = ({ children }) => {
             type: 'client',
           };
 
-          api.post('/pushTokens', param).catch(err => {
+          api.post('/push-tokens', param).catch(err => {
             console.log(err);
           });
         })

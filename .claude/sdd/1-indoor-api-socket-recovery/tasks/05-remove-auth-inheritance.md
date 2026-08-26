@@ -5,7 +5,7 @@
 **Tipo:** refator
 **Repo:** delivery-indoor
 **Depende de:** 02 (toca `src/App.tsx`, que a `02` também altera)
-**Status:** pendente
+**Status:** shipped ([PR #10](https://github.com/sgrande-delivery/delivery-indoor/pull/10)) — base task/02 (PR #7); reapontar para a integração após o merge da 02
 
 ## Objetivo
 

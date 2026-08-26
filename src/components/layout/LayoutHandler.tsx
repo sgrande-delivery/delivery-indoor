@@ -7,8 +7,6 @@ import IndexLayout from './IndexLayout';
 
 const authPaths = [
   '/register',
-  '/login',
-  '/login/email',
   '/guest-register',
   '/password-request',
   '/password-reset/[token]',
