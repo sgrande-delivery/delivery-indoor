@@ -1,14 +1,17 @@
 import React from 'react';
-import axios, { AxiosError, AxiosResponse } from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import Head from 'next/head';
 import { moneyFormat } from 'src/helpers/numberFormat';
 import { makeStyles } from '@material-ui/core/styles';
 import { Typography } from '@material-ui/core';
 import { GetServerSideProps, NextPage } from 'next';
-import { Category as CategoryType } from 'src/types/category';
+import { Category as CategoryType, CategoryWithPaginatedProducts } from 'src/types/category';
+import { Product } from 'src/types/product';
 import InitialLoading from 'src/components/loading/InitialLoading';
 import { useRouter } from 'next/router';
-import Products from 'src/components/products/Products';
+import CategoryProducts from 'src/components/category/CategoryProducts';
+import PaginationProvider from 'src/providers/PaginationProvider';
+import { PER_PAGE_PAGINATION_VALUE } from 'src/constants/constants';
 
 const useStyles = makeStyles({
   container: {
@@ -21,10 +24,12 @@ const useStyles = makeStyles({
 
 type CategoryPageProps = {
   category?: CategoryType;
+  products?: Product[];
+  lastPage?: number;
   error?: string;
 };
 
-const CategoryPage: NextPage<CategoryPageProps> = ({ category, error }) => {
+const CategoryPage: NextPage<CategoryPageProps> = ({ category, products, lastPage, error }) => {
   const classes = useStyles();
   const router = useRouter();
 
@@ -45,7 +50,9 @@ const CategoryPage: NextPage<CategoryPageProps> = ({ category, error }) => {
           </Typography>
         </div>
       ) : (
-        category && (
+        category &&
+        products &&
+        lastPage !== undefined && (
           <>
             <Head>
               <title>{title}</title>
@@ -58,7 +65,14 @@ const CategoryPage: NextPage<CategoryPageProps> = ({ category, error }) => {
               <meta property="og:description" content={category.description} />
               <meta property="og:image" content={category.image.imageUrl} />
             </Head>
-            <Products products={category.products} categoryName={category.name} categoryType="NORMAL" />
+            <PaginationProvider key={category.url}>
+              <CategoryProducts
+                url={category.url}
+                categoryName={category.name}
+                products={products}
+                lastPage={lastPage}
+              />
+            </PaginationProvider>
           </>
         )
       )}
@@ -68,7 +82,7 @@ const CategoryPage: NextPage<CategoryPageProps> = ({ category, error }) => {
 
 export default CategoryPage;
 
-export const getServerSideProps: GetServerSideProps = async ({ params }) => {
+export const getServerSideProps: GetServerSideProps<CategoryPageProps> = async ({ params }) => {
   const axiosInstance = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API,
     headers: {
@@ -77,39 +91,36 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   });
 
   try {
-    const response = await axiosInstance.get<CategoryType, AxiosResponse<CategoryType>>(`/categories/${params?.url}`, {
-      params: { environment: 'board' },
+    const response = await axiosInstance.get<
+      CategoryWithPaginatedProducts,
+      AxiosResponse<CategoryWithPaginatedProducts>
+    >(`/categories/${params?.url}`, {
+      params: { environment: 'board', page: 1, rows: PER_PAGE_PAGINATION_VALUE },
     });
-    const products = response.data.products.map(product => {
+
+    const { products: paginatedProducts, ...category } = response.data;
+
+    const products = paginatedProducts.items.map(product => {
       product.formattedPrice = moneyFormat(product.price);
       product.formattedSpecialPrice = moneyFormat(product.special_price);
       return product;
     });
 
-    const category = {
-      ...response.data,
-      products,
-    };
-
     return {
       props: {
         category,
+        products,
+        lastPage: paginatedProducts.last_page,
       },
     };
   } catch (err) {
-    const error = err as AxiosError<any>;
-
-    if (error.response)
-      return {
-        props: {
-          error:
-            error.response.status === 404 ? '404 - página não encontrada' : 'aconteceu um erro ao carregar a página',
-        },
-      };
+    if (!axios.isAxiosError(err)) {
+      throw err;
+    }
 
     return {
       props: {
-        error: 'aconteceu um erro ao carregar a página',
+        error: err.response?.status === 404 ? '404 - página não encontrada' : 'aconteceu um erro ao carregar a página',
       },
     };
   }

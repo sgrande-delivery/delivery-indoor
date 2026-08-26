@@ -20,7 +20,7 @@ export class SocketStore {
     isConnected: this.isConnected,
   };
 
-  constructor(private readonly namespace: string) {}
+  constructor(private readonly url: string, private readonly namespace: string, private readonly app: string) {}
 
   private update(nextSocket: Socket | null, nextIsConnected: boolean) {
     if (this.snapshot.socket === nextSocket && this.snapshot.isConnected === nextIsConnected) {
@@ -38,7 +38,7 @@ export class SocketStore {
       return;
     }
 
-    const url = `${process.env.NEXT_PUBLIC_SOCKET}/${this.namespace}`;
+    const url = `${this.url}/${this.namespace}`;
 
     if (id) {
       this.setAuth(id);
@@ -50,7 +50,7 @@ export class SocketStore {
       transports: ['websocket'],
       auth: this.auth,
       query: {
-        app: 'client',
+        app: this.app,
       },
     });
 
@@ -60,10 +60,20 @@ export class SocketStore {
       this.emit();
     });
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', reason => {
       this.isConnected = false;
       this.update(this.socket, this.isConnected);
       this.emit();
+
+      if (reason === 'io server disconnect') {
+        console.error(`socket ${this.namespace}: disconnected by server, reason=${reason}`);
+      } else {
+        console.warn(`socket ${this.namespace}: disconnect, reason=${reason}`);
+      }
+    });
+
+    socket.on('connect_error', error => {
+      console.error(`socket ${this.namespace}: connect_error`, error.message);
     });
 
     this.socket = socket;

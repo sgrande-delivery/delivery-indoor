@@ -65,6 +65,8 @@ export default function reducer(state = INITIAL_STATE, action: BoardMovementActi
         formattedCreatedAt: format(parseISO(action.movement.created_at), 'PPp', { locale: ptBR }),
         products: [],
         payments: [],
+        formattedSubtotal: moneyFormat(action.movement.subtotal),
+        formattedTipAmount: moneyFormat(action.movement.tip_amount),
       };
     }
 
@@ -189,15 +191,19 @@ export default function reducer(state = INITIAL_STATE, action: BoardMovementActi
         return state;
       }
 
-      const total = state.products.reduce((previous, product) => previous + product.final_price, 0);
+      const productsTotal = state.products.reduce((previous, product) => previous + product.final_price, 0);
       const totalPaid = state.payments.reduce((previous, payment) => previous + payment.value, 0);
+      // discount não vem do GET /boardMovements/{id} — só chega depois, pelo
+      // GET /boardMovements/{id}/products. Sem o || 0 o total vira NaN nessa janela.
+      const total = productsTotal + (state.tip_amount || 0) - (state.discount || 0);
 
       return {
         ...state,
-        total: total - state.discount,
-        formattedTotal: moneyFormat(total - state.discount),
+        total,
+        formattedTotal: moneyFormat(total),
         totalPaid,
         formattedTotalPaid: moneyFormat(totalPaid),
+        isPaid: total > 0 && totalPaid + 0.01 >= total,
       };
     }
 
@@ -210,6 +216,23 @@ export default function reducer(state = INITIAL_STATE, action: BoardMovementActi
         ...state,
         discount: action.discount,
         formattedDiscount: moneyFormat(action.discount),
+      };
+    }
+
+    case '@boardMovement/SET_TOTALS': {
+      if (!state) {
+        return state;
+      }
+
+      // total/totalPaid/isPaid não vêm daqui: são sempre derivados pelo UPDATE_TOTAL,
+      // a partir dos arrays locais de produtos/pagamentos e desta gorjeta. O middleware
+      // dispara UPDATE_TOTAL logo em seguida a este tipo de ação.
+      return {
+        ...state,
+        subtotal: action.totals.subtotal,
+        formattedSubtotal: moneyFormat(action.totals.subtotal),
+        tip_amount: action.totals.tip_amount,
+        formattedTipAmount: moneyFormat(action.totals.tip_amount),
       };
     }
 

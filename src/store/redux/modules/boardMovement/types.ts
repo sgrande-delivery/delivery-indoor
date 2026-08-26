@@ -1,6 +1,7 @@
 import { BoardMovement } from 'src/types/boardMovement';
 import { BoardMovementPayment } from 'src/types/boardMovementPayment';
 import { BoardOrderProduct } from 'src/types/boardOrderProduct';
+import { BoardTotalsChangedPayload } from 'src/types/boardTotalsChanged';
 
 interface SetBoardMovementAction {
   type: '@boardMovement/SET_BOARD_MOVEMENT';
@@ -51,6 +52,11 @@ interface SetBoardMovementDiscountAction {
   discount: number;
 }
 
+interface SetBoardMovementTotalsAction {
+  type: '@boardMovement/SET_TOTALS';
+  totals: BoardTotalsChangedPayload;
+}
+
 export type BoardMovementActions =
   | SetBoardMovementAction
   | SetBoardMovementProducts
@@ -61,4 +67,5 @@ export type BoardMovementActions =
   | UpdateBoardMovementTotal
   | SetBoardMovementPayments
   | SetBoardMovementCustomerAction
-  | SetBoardMovementDiscountAction;
+  | SetBoardMovementDiscountAction
+  | SetBoardMovementTotalsAction;

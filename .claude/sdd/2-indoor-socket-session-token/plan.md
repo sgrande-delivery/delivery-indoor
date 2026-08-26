@@ -2,7 +2,7 @@
 
 **Spec:** [spec.md](./spec.md)
 **Issue da feature:** [#2](https://github.com/sgrande-delivery/delivery-indoor/issues/2)
-**Branch de trabalho:** uma por task (`task/<id>-<slug>`)
+**Branch de trabalho:** uma por task (`task/<id>-<slug>`), cortada de `feature/indoor-recovery-and-session-token` e mergeada de volta nela. Essa branch de integração acumula as duas features e só depois vai para `master`.
 
 > **Estado:** planejamento preliminar. As tasks estão `a especificar` de propósito — a spec tem seis decisões pendentes, e três delas (#1, #2, #4) mudam a quebra em tasks. Materialize com `/create-task` depois de fechá-las.
 
