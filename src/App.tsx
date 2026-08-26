@@ -9,10 +9,7 @@ import InitialLoading from './components/loading/InitialLoading';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import reactGA from 'react-ga';
 import MessagingProvider from './providers/MessageProvider';
-import AuthProvider from './providers/AuthProvider';
 import FirebaseProvider from './providers/FirebaseProvider';
-import GoogleLoginProvider from './providers/GoogleProvider';
-import FacebookLoginProvider from './providers/FacebookProvider';
 import LayoutHandler from './components/layout/LayoutHandler';
 import { AppProvider, AppContextValue } from './providers/AppProvider';
 import { useWindowSize } from './hooks/windowSize';
@@ -141,22 +138,16 @@ const App: React.FC<AppProps> = ({ pageProps, Component }) => {
         {initialLoading && <InitialLoading />}
         {isProgressBarVisible && <LinearProgress color="secondary" className={classes.progressBar} />}
 
-        <AuthProvider>
-          <FirebaseProvider>
-            <MessagingProvider>
-              <GoogleLoginProvider>
-                <FacebookLoginProvider>
-                  <BottomNavigator />
-                  <LocationProvider>
-                    <LayoutHandler>
-                      <Component {...pageProps} />
-                    </LayoutHandler>
-                  </LocationProvider>
-                </FacebookLoginProvider>
-              </GoogleLoginProvider>
-            </MessagingProvider>
-          </FirebaseProvider>
-        </AuthProvider>
+        <FirebaseProvider>
+          <MessagingProvider>
+            <BottomNavigator />
+            <LocationProvider>
+              <LayoutHandler>
+                <Component {...pageProps} />
+              </LayoutHandler>
+            </LocationProvider>
+          </MessagingProvider>
+        </FirebaseProvider>
       </AppProvider>
     </ThemeProvider>
   );

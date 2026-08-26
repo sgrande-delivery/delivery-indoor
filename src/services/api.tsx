@@ -7,23 +7,12 @@ const api = axios.create({
   },
 });
 
-api.interceptors.request.use(
-  config => {
-    const token = localStorage.getItem(process.env.NEXT_PUBLIC_TOKEN_NAME || '');
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    return config;
-  },
-  err => Promise.reject(err)
-);
-
 api.interceptors.response.use(
-  config => config,
+  response => response,
   err => {
-    if (process.env.NEXT_PUBLIC_TOKEN_NAME) {
-      const token = localStorage.getItem(process.env.NEXT_PUBLIC_TOKEN_NAME);
-      if (token)
-        if (err.response && err.response.status === 401) localStorage.removeItem(process.env.NEXT_PUBLIC_TOKEN_NAME);
-    }
+    const status = err.response?.status;
+    const url = err.config?.url;
+    console.error(`[api] request failed: ${status ?? 'no status'} ${url ?? ''}`);
     return Promise.reject(err);
   }
 );
