@@ -3,17 +3,14 @@ import axios, { CancelTokenSource } from 'axios';
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API,
   headers: {
-    RestaurantId: process.env.NEXT_PUBLIC_RESTAURANT_ID,
+    'x-restaurant-id': process.env.NEXT_PUBLIC_RESTAURANT_UUID,
   },
 });
 
 api.interceptors.request.use(
   config => {
     const token = localStorage.getItem(process.env.NEXT_PUBLIC_TOKEN_NAME || '');
-    const restaurantAddressId = localStorage.getItem('restaurantAddressId');
     if (token) config.headers.Authorization = `Bearer ${token}`;
-
-    if (restaurantAddressId) config.headers.restaurantAddressId = restaurantAddressId;
     return config;
   },
   err => Promise.reject(err)
