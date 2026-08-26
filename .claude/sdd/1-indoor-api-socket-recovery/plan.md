@@ -2,7 +2,7 @@
 
 **Spec:** [spec.md](./spec.md)
 **Issue da feature:** [#1](https://github.com/sgrande-delivery/delivery-indoor/issues/1)
-**Branch de trabalho:** uma por task (`task/<id>-<slug>`)
+**Branch de trabalho:** uma por task (`task/<id>-<slug>`), cortada de `feature/indoor-recovery-and-session-token` e mergeada de volta nela. Essa branch de integração acumula as duas features e só depois vai para `master`.
 
 ## Abordagem técnica
 
