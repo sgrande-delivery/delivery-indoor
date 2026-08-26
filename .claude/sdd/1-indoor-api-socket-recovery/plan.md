@@ -34,7 +34,7 @@ Do lado do front, a task `02` alinha o `SocketStore` (`src/store/socket-store.ts
 | 02 | SocketStore com `app` e listeners da mesa corrigidos | [#3](https://github.com/sgrande-delivery/delivery-indoor/issues/3) | [02-socket-store-and-board-listeners.md](./tasks/02-socket-store-and-board-listeners.md) | 01 | shipped — validada local; produção depende do deploy da `01` |
 | 03 | Paginação e scroll infinito na listagem de produtos | [#4](https://github.com/sgrande-delivery/delivery-indoor/issues/4) | [03-products-pagination-infinite-scroll.md](./tasks/03-products-pagination-infinite-scroll.md) | — | pendente |
 | 04 | Header `x-restaurant-id` unificado | [#5](https://github.com/sgrande-delivery/delivery-indoor/issues/5) | [04-restaurant-header-alignment.md](./tasks/04-restaurant-header-alignment.md) | — | pendente |
-| 05 | Remover a herança de autenticação do fork | [#6](https://github.com/sgrande-delivery/delivery-indoor/issues/6) | [05-remove-auth-inheritance.md](./tasks/05-remove-auth-inheritance.md) | 02 | pendente |
+| 05 | Remover a herança de autenticação do fork | [#6](https://github.com/sgrande-delivery/delivery-indoor/issues/6) | [05-remove-auth-inheritance.md](./tasks/05-remove-auth-inheritance.md) | 02 | shipped ([PR #10](https://github.com/sgrande-delivery/delivery-indoor/pull/10)) — base task/02 |
 | 06 | Remover o stack de push / Firebase | — | — | 05 | a especificar |
 
 Status: `a especificar` → `pendente` → `executada` → `shipped`.
