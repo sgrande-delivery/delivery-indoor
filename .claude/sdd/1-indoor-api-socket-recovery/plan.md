@@ -36,6 +36,7 @@ Do lado do front, a task `02` alinha o `SocketStore` (`src/store/socket-store.ts
 | 04 | Header `x-restaurant-id` unificado | [#5](https://github.com/sgrande-delivery/delivery-indoor/issues/5) | [04-restaurant-header-alignment.md](./tasks/04-restaurant-header-alignment.md) | — | shipped ([PR #9](https://github.com/sgrande-delivery/delivery-indoor/pull/9)) |
 | 05 | Remover a herança de autenticação do fork | [#6](https://github.com/sgrande-delivery/delivery-indoor/issues/6) | [05-remove-auth-inheritance.md](./tasks/05-remove-auth-inheritance.md) | 02 | shipped ([PR #10](https://github.com/sgrande-delivery/delivery-indoor/pull/10)) — base task/02 |
 | 06 | Remover o stack de push / Firebase | — | — | 05 | a especificar |
+| 07 | Corrigir o crash da home causado por `@keyframes` dentro de `styled()` | [#12](https://github.com/sgrande-delivery/delivery-indoor/issues/12) | [07-fix-home-keyframes-crash.md](./tasks/07-fix-home-keyframes-crash.md) | — | pendente |
 
 Status: `a especificar` → `pendente` → `executada` → `shipped`.
 
@@ -48,6 +49,7 @@ Status: `a especificar` → `pendente` → `executada` → `shipped`.
 3. **`02` depois que a `01` estiver no ar.**
 4. **`05` por último**, porque toca `src/App.tsx` junto com a `02`. Cortar da branch da `02` se ela ainda não tiver mergeado.
 5. **`06`** depois da decisão pendente #2 da spec.
+6. **`07` a qualquer momento** — não depende de nenhuma outra e não toca arquivo de nenhuma outra. Corre em paralelo com o que estiver aberto. É a rota `/`, porta de entrada do QR code, então na prática vem antes da `06`.
 
 Se for preciso escolher uma só para hoje: a **`03`**. O cardápio quebrado impede o cliente de pedir; a conta congelada é grave, mas o cliente ainda consegue usar o app.
 
@@ -85,4 +87,5 @@ Se for preciso escolher uma só para hoje: a **`03`**. O cardápio quebrado impe
 - **Propagar o erro para a UI não basta: a página que falhou não pode ser dada como consumida.** Na primeira rodada da `03`, o `catch` só logava; como `page` já tinha avançado antes da requisição, um blip de rede na página 2 fazia o observer seguir para a 3 e **20 produtos sumiam do cardápio sem nada na tela**. O desenho que passou no review mantém `page` na página que falhou, trava o observer enquanto houver erro (`canLoadMore = page < lastPage && !error`) e oferece "tentar novamente".
 - **A busca do cardápio é filtro no cliente sobre o que já foi carregado.** `Products.tsx` desmontava a lista inteira quando o filtro não casava com nada — e a sentinela mora dentro dela. Com paginação, buscar um produto que está na página 3 respondia *"nenhum produto para exibir"*. Quem mexer em busca aqui precisa lembrar que ela **não** é server-side: `/search` está fora de escopo, e a lista só pode ser desmontada quando não houver mais página por carregar.
 - **Duas tasks que tocam o mesmo arquivo brigam mesmo quando a mudança é "de passagem".** A `03` trocou o header de `pages/offers.tsx` porque já estava editando a chamada; o arquivo é da `04`. O dano real não foi o conflito de merge, foi a incoerência: o SSR passou a mandar `x-restaurant-id` + UUID enquanto as páginas 2+ continuavam saindo por `src/services/api.tsx` com `RestaurantId` numérico — **uma rota, dois headers**. Foi revertido.
+- **Mas o `next build` não pega erro de JSS que só acontece no cliente.** A home tem um `TypeError` fatal em todo carregamento (`@keyframes` dentro de `styled()`, task `07`) e mesmo assim o build conclui as 6 rotas com `exit=0`, `/` inclusive, que é `● ISR`. O crash mora no `sheet.update()` do `makeStyles`/`styled`, caminho que o SSR do JSS via `pages/_document.tsx` não percorre. Some-se a isso que `getStaticProps` não falha: o erro é de render, não de dados. **Build verde + `tsc` limpo continuam sem dizer que a tela abre** — só o navegador diz.
 - **`next build` é prova de que hook que lança não é alcançado fora do provider.** Ao trocar `createContext({} as T)` por um contexto que lança, o risco vira derrubar a árvore em render. As rotas `○`/`●` da saída do build são pré-renderizadas de verdade, executando a árvore React no servidor — se `/`, `/board`, `/cart` ou `/offers` tocassem o hook fora do provider, o build quebrava. Só as rotas `λ` (aqui, `/menu` e `/menu/[url]`) continuam precisando de verificação por leitura.
