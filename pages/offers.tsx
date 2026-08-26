@@ -38,7 +38,7 @@ export const getStaticProps: GetStaticProps<OffersPageProps> = async () => {
   const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API,
     headers: {
-      RestaurantId: process.env.NEXT_PUBLIC_RESTAURANT_ID,
+      'x-restaurant-id': process.env.NEXT_PUBLIC_RESTAURANT_UUID,
     },
   });
 

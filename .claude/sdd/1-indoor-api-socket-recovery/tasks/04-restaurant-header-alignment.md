@@ -5,7 +5,7 @@
 **Tipo:** chore
 **Repo:** delivery-indoor
 **Depende de:** (nenhuma)
-**Status:** pendente
+**Status:** shipped ([PR #9](https://github.com/sgrande-delivery/delivery-indoor/pull/9))
 
 ## Objetivo
 
