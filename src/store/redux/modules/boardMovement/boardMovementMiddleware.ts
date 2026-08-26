@@ -12,6 +12,7 @@ export const boardMovementMiddleware: Middleware<any, RootState> = store => next
     '@boardMovement/SET_DISCOUNT',
     '@boardMovement/REMOVE_PAYMENT',
     '@boardMovement/REMOVE_PRODUCT',
+    '@boardMovement/SET_TOTALS',
   ];
 
   next(action);

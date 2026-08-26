@@ -69,6 +69,10 @@ const BoardTotal: React.FC = () => {
           <Typography className="value">{movement?.formattedDiscount}</Typography>
         </div>
         <div className="row">
+          <Typography>Gorjeta</Typography>
+          <Typography className="value">{movement?.formattedTipAmount}</Typography>
+        </div>
+        <div className="row">
           <Typography>Total</Typography>
           <Typography className="value bold">{movement?.formattedTotal}</Typography>
         </div>
