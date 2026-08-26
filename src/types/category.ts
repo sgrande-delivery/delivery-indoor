@@ -1,4 +1,5 @@
 import { Image } from './image';
+import { Paginated } from './paginated';
 import { Product } from './product';
 import { Restaurant } from './restaurant';
 
@@ -18,5 +19,8 @@ export interface Category {
   available_products_amount: number;
   image: Image;
   restaurant: Restaurant;
-  products: Product[];
+}
+
+export interface CategoryWithPaginatedProducts extends Category {
+  products: Paginated<Product[]>;
 }

@@ -1,8 +1,10 @@
 import React from 'react';
-import { List } from '@material-ui/core';
+import { Button, CircularProgress, List, Typography } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import ProductItem from './ProductItem';
 import { Product } from 'src/types/product';
+import { useLoadMore } from 'src/hooks/useLoadMore';
+import { usePagination } from 'src/providers/PaginationProvider';
 
 const useStyles = makeStyles(theme => ({
   listRow: {
@@ -26,6 +28,20 @@ const useStyles = makeStyles(theme => ({
       gridGap: 6,
     },
   },
+  sentinel: {
+    height: 1,
+  },
+  loadingMore: {
+    display: 'flex',
+    justifyContent: 'center',
+    padding: 15,
+  },
+  errorMore: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: 15,
+  },
 }));
 
 type ProductListProps = {
@@ -33,6 +49,7 @@ type ProductListProps = {
   handleProductClick(product: Product): void;
   handleOpenImagePreview(product: Product): void;
   listType: 'row' | 'col';
+  onRetry?: () => void;
 };
 
 const ProductList: React.FC<ProductListProps> = ({
@@ -40,8 +57,11 @@ const ProductList: React.FC<ProductListProps> = ({
   handleProductClick,
   handleOpenImagePreview,
   listType,
+  onRetry,
 }) => {
   const classes = useStyles();
+  const { loading, error } = usePagination();
+  const endRef = useLoadMore();
 
   return (
     <>
@@ -56,6 +76,27 @@ const ProductList: React.FC<ProductListProps> = ({
           />
         ))}
       </List>
+
+      <div ref={endRef} className={classes.sentinel} aria-hidden />
+
+      {error ? (
+        <div className={classes.errorMore}>
+          <Typography variant="body2" color="textSecondary">
+            {error}
+          </Typography>
+          {onRetry && (
+            <Button color="primary" onClick={onRetry}>
+              tentar novamente
+            </Button>
+          )}
+        </div>
+      ) : (
+        loading && (
+          <div className={classes.loadingMore}>
+            <CircularProgress size={24} color="primary" />
+          </div>
+        )
+      )}
     </>
   );
 };
