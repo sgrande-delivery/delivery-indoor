@@ -20,6 +20,7 @@ import { useApp } from 'src/providers/AppProvider';
 import { ProductsContextValue, ProductsProvider } from './hooks/useProducts';
 import { CartProduct } from 'src/types/cart';
 import { useRouter } from 'next/router';
+import { usePagination } from 'src/providers/PaginationProvider';
 
 const useStyles = makeStyles(theme => ({
   pageHeader: {
@@ -53,14 +54,21 @@ type ProductsProps = {
   products: Product[];
   categoryName: string;
   categoryType: 'OFFER' | 'NORMAL';
+  onRetry?: () => void;
 };
 
-const Products: React.FC<ProductsProps> = ({ products, categoryName, categoryType }) => {
+const Products: React.FC<ProductsProps> = ({ products, categoryName, categoryType, onRetry }) => {
   const classes = useStyles();
   const { handleCartVisibility } = useApp();
   const { handleClose } = useMessaging();
   const dispatch = useDispatch();
   const restaurant = useSelector(state => state.restaurant);
+  const { page, lastPage } = usePagination();
+  // de propósito sem `!error`, ao contrário do `canLoadMore` do `useLoadMore`:
+  // este flag decide se a lista continua montada, e é dentro dela que vive a
+  // mensagem de erro com o "tentar novamente". Somar `!error` aqui derrubaria a
+  // própria UI de recuperação quando a busca não tem resultado.
+  const hasMorePages = page < lastPage;
   const [imagePreview, setImagePreview] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -104,6 +112,14 @@ const Products: React.FC<ProductsProps> = ({ products, categoryName, categoryTyp
     setSearch('');
     ref.current?.focus();
   }, [handleSearch]);
+
+  // reaplica o termo de busca atual quando a paginação acrescenta produtos.
+  // `search` e `handleSearch` ficam fora das dependências de propósito: digitar já
+  // atualiza `filteredProducts` pelo próprio `handleSearch`, e reagir a eles aqui
+  // refiltraria a cada tecla.
+  useEffect(() => {
+    handleSearch(search);
+  }, [products]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleAddProductToCart = useCallback(
     (product: CartProduct, amount: number) => {
@@ -209,12 +225,13 @@ const Products: React.FC<ProductsProps> = ({ products, categoryName, categoryTyp
       {isPizza && <ProductPizzaComplement />}
       {isComplement && <ProductComplement />}
 
-      {filteredProducts.length > 0 ? (
+      {filteredProducts.length > 0 || hasMorePages ? (
         <ProductList
           listType="col"
           products={filteredProducts}
           handleProductClick={handleProductClick}
           handleOpenImagePreview={handleOpenImagePreview}
+          onRetry={onRetry}
         />
       ) : (
         <NoData message="nenhum produto para exibir" />
