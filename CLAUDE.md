@@ -70,6 +70,20 @@ QR code da mesa
 
 O `cart` tem middleware que recalcula total e promoções a cada ação (`src/store/redux/modules/cart/middleware.ts`). Não recalcule total em componente.
 
+## A v1 e a v2 da plataforma — este app é v1, e continua sendo
+
+A `delivery-api`, o `delivery-admin` e o `delivery-client` estão num corte para a **v2**, e **a v1 não acaba nele**: as duas atendem produção em paralelo enquanto os restaurantes migram, um a um, sem data para o fim da v1. A API publica as rotas v2 no mesmo deploy da v1, com chave por restaurante decidindo qual caminho serve cada loja; o painel e o app do cliente ficam com **dois apps no ar**, um da `master` (v1) e um da branch v2.
+
+**Este app consome rotas v1, e não precisa de versão v2 para continuar funcionando.** Medido em 2026-10-19: tudo o que ele chama é v1 (`/categories`, `/products/{id}`, `/restaurants`, `/boardMovements/{id}`, `/boardMovements/{id}/products`, `/boardMovements/{id}/payments`), e o envio do pedido, `POST /boardMovements/{id}/orders`, cai no `CreateOrderUseCase` **v1** (`app/Modules/Order/Controllers/Client/Order/CreateBoardOrderController.php:19`). Como a v1 não sai do ar, **nenhuma dessas rotas vai sumir**, e não há frente v2 a abrir aqui.
+
+Então:
+
+- **Não propor fallback, migração para rotas v2 nem ramificação por versão** sem spec que peça. Trocar `/products` por `/products/v2` é mudar o modelo de dado que as telas leem — é frente própria, não ajuste de passagem.
+- **Não apagar nem "modernizar" o que atende a v1**, e não perguntar se é para fazer: a resposta é não.
+- **Não presumir que a v2 da API é a fonte ao conferir contrato.** Este app mede contra as rotas v1; ler a v2 por engano descreve um formato que estas telas não recebem (dinheiro em centavos inteiro, `option_groups` em vez de complemento legado).
+
+**Uma fronteira de dado que vale conhecer, e que não é para "consertar" por conta própria:** o pedido que este app cria grava nas tabelas de complemento legadas (`order_additional`, `order_ingredients`, `order_product_complement_categories`), enquanto o caminho v2 da API grava só em `order_product_usages` — e o leitor v2 carrega **apenas** `products.usages` e `products.removedIngredients` (`core/Order/V2/Infra/DB/Eloquent/OrderRepository.php`, `baseQueryWithDetails`). Medido em 2026-10-19: os dois modelos **não se cruzam em nenhuma direção**. A consequência para este app é que um pedido lançado da mesa aparece no **painel v2** sem complementos, adicionais e ingredientes. Isso é decisão de produto em aberto na `delivery-api` — ou o leitor v2 passa a enxergar o modelo legado, ou este app passa a escrever pelo caminho de canal. **Não implementar nenhuma das duas sem spec.**
+
 ## Contratos externos
 
 Este app não tem banco nem backend próprio. Tudo vem de dois serviços, e **o contrato deles é a fonte de verdade** — quando o código local divergir do que a API devolve, o código local está errado.
@@ -228,6 +242,15 @@ Features abertas hoje:
 | `1-indoor-api-socket-recovery` | [#1](https://github.com/sgrande-delivery/delivery-indoor/issues/1) | As três quebras em produção: cardápio de categoria, tempo real e paginação. 5 tasks especificadas |
 | `2-indoor-socket-session-token` | [#2](https://github.com/sgrande-delivery/delivery-indoor/issues/2) | Endurecer a autenticação do socket. Tasks `a especificar` — seis decisões pendentes antes |
 
+## Contrato cross-repo não bloqueia implementação
+
+Feature que atravessa repos tem **spec nos dois lados**, e cada uma carrega o contrato: a daqui diz o que este app chama e o que espera de volta; a da `delivery-api` (ou do `delivery-socket-api`) diz o que publica. Esse par **é** o contrato — não há etapa de aprovação depois dele, e não há nada a esperar.
+
+- **Implementar contra o contrato da spec, sem esperar a outra ponta entregar.** Task daqui não fica bloqueada porque a rota ou o evento novo ainda não subiram, e não se troca implementação por mock, stub ou TODO.
+- **Não parar para perguntar se pode seguir.** Quem escreveu a spec já decidiu o que é para fazer; perguntar o que a task já responde é retrabalho para o dev, não cuidado.
+- **O aviso vai no relatório:** que a feature só funciona ponta a ponta quando a outra ponta subir.
+- **Motivo real para parar:** as duas specs divergirem no contrato (campo, status, unidade, nome de evento). Aí o contrato não existe de fato, e quem decide qual lado muda é o dev. Ausência de implementação do outro lado **não** é divergência — e é diferente de **divergência medida entre a task e a API real**, que é a regra do fim deste arquivo e continua valendo.
+
 ## Comandos
 
 ```bash
@@ -278,4 +301,5 @@ Para exercitar a mesa localmente é preciso uma movimentação aberta: `/?sessio
 - **Não** coloque segredo em var `NEXT_PUBLIC_*`
 - **Não** calcule total do carrinho em componente — é o middleware do módulo `cart`
 - **Não** construa em cima de `AuthProvider`, `GoogleProvider`, `FacebookProvider` ou `src/components/login/` — são herança morta do fork
-- Se o contrato real da `delivery-api` ou do `delivery-socket-api-2` divergir do que a task diz, **pare e reporte** em vez de adaptar em silêncio
+- **Não** migre rota para v2, nem ramifique por versão da plataforma, sem spec que peça — ver "A v1 e a v2 da plataforma"
+- Se o contrato real da `delivery-api` ou do `delivery-socket-api` divergir do que a task diz, **pare e reporte** em vez de adaptar em silêncio. Isto é divergência **medida** no contrato, e é bloqueio legítimo; não confundir com a outra ponta ainda não ter subido, que não é (ver "Contrato cross-repo não bloqueia implementação")
