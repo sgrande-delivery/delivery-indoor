@@ -37,7 +37,7 @@ Do lado do front, a task `02` alinha o `SocketStore` (`src/store/socket-store.ts
 | 05 | Remover a herança de autenticação do fork | [#6](https://github.com/sgrande-delivery/delivery-indoor/issues/6) | [05-remove-auth-inheritance.md](./tasks/05-remove-auth-inheritance.md) | 02 | shipped ([PR #10](https://github.com/sgrande-delivery/delivery-indoor/pull/10)) — base task/02 |
 | 06 | Remover o stack de push / Firebase | — | — | 05 | a especificar |
 | 07 | Corrigir o crash da home causado por `@keyframes` dentro de `styled()` | [#12](https://github.com/sgrande-delivery/delivery-indoor/issues/12) | [07-fix-home-keyframes-crash.md](./tasks/07-fix-home-keyframes-crash.md) | — | shipped — validada em `dev` e em modo de produção, no navegador |
-| 08 | Logo da home cai para `imageUrl` quando `imageThumbUrl` vem `null` | [#16](https://github.com/sgrande-delivery/delivery-indoor/issues/16) | [08-home-logo-thumb-fallback.md](./tasks/08-home-logo-thumb-fallback.md) | — | pendente |
+| 08 | Logo da home cai para `imageUrl` quando `imageThumbUrl` vem `null` | [#16](https://github.com/sgrande-delivery/delivery-indoor/issues/16) | [08-home-logo-thumb-fallback.md](./tasks/08-home-logo-thumb-fallback.md) | — | shipped ([PR #18](https://github.com/sgrande-delivery/delivery-indoor/pull/18)) — validada no navegador contra a integração da v2 |
 | 09 | Bloco de ofertas da home lê o envelope paginado de `/products`, no ambiente da mesa | [#17](https://github.com/sgrande-delivery/delivery-indoor/issues/17) | [09-home-offers-board-pagination.md](./tasks/09-home-offers-board-pagination.md) | — | pendente |
 
 Status: `a especificar` → `pendente` → `executada` → `shipped`.

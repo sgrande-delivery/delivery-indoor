@@ -5,7 +5,7 @@
 **Tipo:** bug
 **Repo:** `delivery-indoor`
 **Depende de:** (nenhuma)
-**Status:** pendente
+**Status:** shipped
 
 ## Objetivo
 
@@ -77,12 +77,12 @@ Este repo não tem suíte automatizada. A verificação é manual e reprodutíve
 
 ## Critérios de aceitação
 
-- [ ] Com a API devolvendo `restaurant.image.imageThumbUrl: null`, a home mostra o logo a partir de `imageUrl`, não o texto alternativo
-- [ ] Com a API devolvendo o thumb, a home continua usando o thumb (URL com `/thumb/`)
-- [ ] `src/types/image.ts` declara `imageThumbUrl: string | null`
-- [ ] Nenhum outro arquivo além de `src/types/image.ts` e `src/components/index/Info.tsx` foi alterado
-- [ ] `npx tsc --noEmit` sem erros
-- [ ] `npx next build` concluindo as 6 rotas com as vars de restaurante injetadas
+- [x] Com a API devolvendo `restaurant.image.imageThumbUrl: null`, a home mostra o logo a partir de `imageUrl`, não o texto alternativo
+- [x] Com a API devolvendo o thumb, a home continua usando o thumb (URL com `/thumb/`)
+- [x] `src/types/image.ts` declara `imageThumbUrl: string | null`
+- [x] Nenhum outro arquivo além de `src/types/image.ts` e `src/components/index/Info.tsx` foi alterado
+- [x] `npx tsc --noEmit` sem erros
+- [x] `npx next build` concluindo as 6 rotas com as vars de restaurante injetadas
 
 ## Fora de escopo
 
@@ -93,4 +93,56 @@ Este repo não tem suíte automatizada. A verificação é manual e reprodutíve
 
 ## Branch
 
-`task/08-home-logo-thumb-fallback`, base sugerida: `master`.
+`task/08-home-logo-thumb-fallback`, cortada de `origin/master` (`fe9afdd`) em 2026-11-06, com o commit `34d2ece` (`docs(sdd): especifica as tasks 08 e 09 da feature 1`) por cima. O PR do `/ship` abre contra `master`.
+
+## Implementação
+
+**Concluída em:** 2026-11-06 — código, review aprovado e validação em navegador
+
+### Camadas tocadas
+
+- Tipo: `src/types/image.ts` (`imageThumbUrl: string | null`)
+- Componente: `src/components/index/Info.tsx` (fallback `imageThumbUrl ? imageThumbUrl : imageUrl` no logo)
+
+### Contratos consumidos
+
+- `GET /restaurants`, campo `image.imageThumbUrl`, que a API devolve `null` quando não há thumb. Não reconferi a resposta real; segui o medido descrito na task.
+
+### Variáveis de ambiente novas
+
+- Nenhuma.
+
+### Decisões que tomei por conta própria
+
+- Nenhuma fora do prescrito. A quebra de linha do `<img>` seguiu a sugestão da task (linha acima de 120 colunas; o eslint/prettier passou).
+
+### Como testar
+
+1. Build e `next start` com `NEXT_PUBLIC_API=http://localhost:8094/api/client/`, `NEXT_PUBLIC_SOCKET` injetado, `NEXT_PUBLIC_RESTAURANT_ID=1`, `NEXT_PUBLIC_RESTAURANT_UUID=38691b7e-6dbe-46e6-97a0-971147ac02ad`
+2. Abrir `/?session=c10e064f-c565-46f8-9a86-db69b8ed2993`
+3. Observar o logo no círculo; no DevTools o `src` não tem `/thumb/`
+4. Repetir contra `http://localhost:8093/api/client/`: o `src` tem `/thumb/`
+
+### Verificação executada
+
+- Prova do tipo: com só `string | null` aplicado, `tsc` acusou exatamente um erro, `Info.tsx(112,41): TS2322 Type 'string | null' is not assignable to type 'string | undefined'`.
+- Com o fallback: `tsc` limpo; eslint 0 erros, 2 warnings (baseline); `next build` concluiu as 6 rotas com as vars injetadas; `grep -rl "api.sgrande.delivery" .next/static` vazio.
+
+### Review
+
+`code-reviewer-typescript`: **aprovado**, sem must fix, should fix ou nit no código. O revisor refez a prova do tipo numa cópia isolada (um erro só, em `Info.tsx:112`), conferiu o contrato nas duas branches da `delivery-api` (`imageThumbUrl` está em `$appends`, então a chave sempre vem, e `string | null` é o tipo exato) e varreu os 10 consumidores de `imageThumbUrl`. Os `.js` de `src/components/menu/` (que o `tsc` não checa) já usam o ternário e, além disso, são inalcançáveis: nenhuma página importa `Menu.tsx`.
+
+### Validação em navegador (2026-11-06)
+
+`next build` + `next start -p 3408` nesta worktree, loja 1 contra a integração da `delivery-api` (`:8094`, que devolve `restaurant.image.imageThumbUrl: null`), Chromium com tela de celular (390×844), `/?session=c10e064f-c565-46f8-9a86-db69b8ed2993`. Roteiro em `~/workspace/sgrande-delivery/.indoor-qa/validate-08.js`.
+
+- **Thumb `null` (resposta real da integração):** o `<img>` do logo carrega `…/upload/images/182445202009195f66771d00361.png`, sem `/thumb/`, com `naturalWidth > 0`. O logo aparece no círculo.
+- **Thumb presente:** a mesma resposta, com `imageThumbUrl` preenchido via interceptação do `GET /restaurants` do cliente (a home lê o restaurante do Redux, buscado no cliente). O `<img>` carrega `…/upload/images/thumb/182445202009195f66771d00361.png`. Quem tem thumb continua usando o thumb.
+- **Nenhum erro de página e nenhuma imagem quebrada** nos dois casos.
+- **Teste diferencial:** o mesmo roteiro contra o `origin/master` sem correção **falha** no caso `null`: o círculo fica vazio, só com o texto alternativo.
+
+O roteiro da task previa um segundo build contra a API `master` (`:8093`) para o caso "com thumb". Troquei por interceptação no mesmo build. O componente recebe exatamente a mesma forma de dado, e o resultado é o mesmo sem depender de qual API serve o thumb.
+
+### O que NÃO foi verificado
+
+- Lojas além da 1 (demo). As outras seis que ficam sem thumb na integração (2, 10, 93, 99, 105, 114) seguem o mesmo caminho de código.
