@@ -5,7 +5,7 @@
 **Tipo:** bug
 **Repo:** `delivery-indoor`
 **Depende de:** (nenhuma)
-**Status:** pendente
+**Status:** shipped
 
 ## Objetivo
 
@@ -116,13 +116,13 @@ Este repo não tem suíte automatizada. A verificação é manual e reprodutíve
 
 ## Critérios de aceitação
 
-- [ ] Na home de uma loja com ofertas, o bloco "ofertas" lista os produtos de `items`, e o console não registra `e.data.map is not a function`
-- [ ] A requisição é `GET /products` com `environment=board`, `page=1` e `rows=20`
-- [ ] Loja sem oferta (`total: 0`): o bloco não aparece
-- [ ] Falha da requisição: o bloco mostra "não foi possível carregar as ofertas", não some
-- [ ] `Offers.tsx` não importa mais `api`; a chamada mora em `src/components/index/offers/hooks/use-fetch-home-offers.ts`, tipada como `Paginated<Product[]>`
-- [ ] `npx tsc --noEmit` sem erros
-- [ ] `npx next build` concluindo as 6 rotas com as vars de restaurante injetadas
+- [x] Na home de uma loja com ofertas, o bloco "ofertas" lista os produtos de `items`, e o console não registra `e.data.map is not a function`
+- [x] A requisição é `GET /products` com `environment=board`, `page=1` e `rows=20`
+- [x] Loja sem oferta (`total: 0`): o bloco não aparece
+- [x] Falha da requisição: o bloco mostra "não foi possível carregar as ofertas", não some
+- [x] `Offers.tsx` não importa mais `api`; a chamada mora em `src/components/index/offers/hooks/use-fetch-home-offers.ts`, tipada como `Paginated<Product[]>`
+- [x] `npx tsc --noEmit` sem erros
+- [x] `npx next build` concluindo as 6 rotas com as vars de restaurante injetadas
 
 ## Fora de escopo
 
@@ -134,4 +134,65 @@ Este repo não tem suíte automatizada. A verificação é manual e reprodutíve
 
 ## Branch
 
-`task/09-home-offers-board-pagination`, base sugerida: `master`.
+`task/09-home-offers-board-pagination`, cortada de `origin/master` (`fe9afdd`) em 2026-11-06, com o commit `34d2ece` (`docs(sdd): especifica as tasks 08 e 09 da feature 1`) por cima. O PR do `/ship` abre contra `master`.
+
+## Implementação
+
+**Concluída em:** 2026-11-06 — código, review aprovado na segunda rodada e validação em navegador
+
+### Camadas tocadas
+
+- Hook novo: `src/components/index/offers/hooks/use-fetch-home-offers.ts`
+- Componente: `src/components/index/offers/Offers.tsx` (consome o hook, sem import de `api`, mostra o erro)
+
+### Contratos consumidos
+
+- `GET /products?environment=board&page=1&rows=20` -> `{ items, total, current_page, last_page }` (conferido por curl na API local, loja 1: 7 itens)
+
+### Variáveis de ambiente novas
+
+- Nenhuma.
+
+### Decisões que tomei por conta própria
+
+- O erro é renderizado dentro de um `div` com a classe `header` (reaproveita o `marginLeft: 15` no mobile), sob o título.
+
+### Como testar
+
+1. Build com `NEXT_PUBLIC_API=http://localhost:8094/api/client/` e vars da loja 1, `next start`
+2. Abrir `/?session=c10e064f-c565-46f8-9a86-db69b8ed2993`
+3. Roteiro do bloco "Testes" desta task (passos 3 a 7)
+
+
+### Ajuste pós-review
+
+- `if` do guard de lista vazia ganhou chaves.
+- O ternário aninhado do JSX virou `renderContent()` com early returns (skeleton, erro, lista); saiu o `products.length > 0 &&` redundante.
+- O hook declara o tipo de retorno (`UseFetchHomeOffers`) e o `catch` tipa `err: unknown`.
+- tsc, eslint e build refeitos, mesmos resultados.
+
+### Review
+
+`code-reviewer-typescript`, duas rodadas:
+
+- **Primeira rodada: reprovado.** Um must fix (o guard `if (...) return <Fragment />` sem chaves, numa linha que o diff reescreveu; o eslint não acusa porque a config `standard` usa `curly: multi-line`) e dois should fix (o ternário aninhado no JSX e o hook exportado sem tipo de retorno). Corrigidos no "Ajuste pós-review" acima.
+- **Segunda rodada: aprovado.** Ficaram só nits opcionais: o tipo de retorno explícito em `renderContent`, uma classe própria para a mensagem de erro em vez de `classes.header`, e o nome `ActivePromotions` do componente, que já existia (fora de escopo).
+- **Decisões do implementador julgadas:** a mensagem dentro de `classes.header` foi aprovada (alinha com o título, o skeleton e a lista no mobile). Cancelar a requisição ao desmontar foi julgado excesso: o projeto usa React 18, onde `setState` após desmontar é inócuo; o efeito roda uma vez só, então não há corrida entre respostas; e nenhum hook irmão cancela.
+
+### Validação em navegador (2026-11-06)
+
+`next build` + `next start -p 3409` nesta worktree (build já com o ajuste pós-review), loja 1 contra a integração da `delivery-api` (`:8094`), Chromium com tela de celular (390×844), `/?session=c10e064f-c565-46f8-9a86-db69b8ed2993`. Roteiro em `~/workspace/sgrande-delivery/.indoor-qa/validate-09.js`.
+
+- **Loja com ofertas (resposta real):** a chamada sai como `GET /products?environment=board&page=1&rows=20`. A vitrine "ofertas" aparece com os produtos de `items` (preço cheio riscado + preço de oferta, a começar por "Açai Copo 330ml"), e o console não registra `.map is not a function`.
+- **Tocar na oferta:** abre o diálogo de detalhe, e adicionar leva "Açai Copo 330ml" ao carrinho.
+- **Loja sem oferta:** `GET /products` interceptado devolvendo `{ items: [], total: 0, current_page: 1, last_page: 1 }`. O bloco não aparece, sem erro.
+- **Falha de rede:** `GET /products` abortado. O bloco mantém o título e mostra "não foi possível carregar as ofertas", alinhado com ele.
+- **Nenhum erro de página** nos três casos.
+- **Teste diferencial:** o mesmo roteiro contra o `origin/master` sem correção falha nos três casos: a chamada sai como `/products` sem parâmetros, o console registra o `TypeError`, a vitrine não aparece e a falha de rede passa em silêncio.
+
+Os passos 6 (loja 18, sem oferta) e 7 (bloquear a URL no DevTools) do roteiro manual foram cobertos por interceptação no mesmo build, em vez de rebuild e bloqueio manual: o componente recebe exatamente a mesma resposta nos dois jeitos.
+
+### O que NÃO foi verificado
+
+- Uma loja real cujas ofertas difiram entre `board` e `delivery`. Nos dados locais as duas listas coincidem (lojas 1 e 111), então o efeito do `environment=board` está provado pela URL da requisição, não por uma vitrine diferente.
+
