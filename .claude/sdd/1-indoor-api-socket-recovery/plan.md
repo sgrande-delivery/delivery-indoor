@@ -37,6 +37,8 @@ Do lado do front, a task `02` alinha o `SocketStore` (`src/store/socket-store.ts
 | 05 | Remover a herança de autenticação do fork | [#6](https://github.com/sgrande-delivery/delivery-indoor/issues/6) | [05-remove-auth-inheritance.md](./tasks/05-remove-auth-inheritance.md) | 02 | shipped ([PR #10](https://github.com/sgrande-delivery/delivery-indoor/pull/10)) — base task/02 |
 | 06 | Remover o stack de push / Firebase | — | — | 05 | a especificar |
 | 07 | Corrigir o crash da home causado por `@keyframes` dentro de `styled()` | [#12](https://github.com/sgrande-delivery/delivery-indoor/issues/12) | [07-fix-home-keyframes-crash.md](./tasks/07-fix-home-keyframes-crash.md) | — | shipped — validada em `dev` e em modo de produção, no navegador |
+| 08 | Logo da home cai para `imageUrl` quando `imageThumbUrl` vem `null` | [#16](https://github.com/sgrande-delivery/delivery-indoor/issues/16) | [08-home-logo-thumb-fallback.md](./tasks/08-home-logo-thumb-fallback.md) | — | pendente |
+| 09 | Bloco de ofertas da home lê o envelope paginado de `/products`, no ambiente da mesa | [#17](https://github.com/sgrande-delivery/delivery-indoor/issues/17) | [09-home-offers-board-pagination.md](./tasks/09-home-offers-board-pagination.md) | — | pendente |
 
 Status: `a especificar` → `pendente` → `executada` → `shipped`.
 
@@ -50,6 +52,7 @@ Status: `a especificar` → `pendente` → `executada` → `shipped`.
 4. **`05` por último**, porque toca `src/App.tsx` junto com a `02`. Cortar da branch da `02` se ela ainda não tiver mergeado.
 5. **`06`** depois da decisão pendente #2 da spec.
 6. **`07` a qualquer momento** — não depende de nenhuma outra e não toca arquivo de nenhuma outra. Corre em paralelo com o que estiver aberto. É a rota `/`, porta de entrada do QR code, então na prática vem antes da `06`.
+7. **`08` e `09` em paralelo, a qualquer momento** — as duas são da home e saíram do teste de 2026-11-06 contra a integração da v2 da `delivery-api`. Não dependem de nada pendente e não tocam o mesmo arquivo: a `08` fica em `src/components/index/Info.tsx` + `src/types/image.ts`, a `09` em `src/components/index/offers/`. O único ponto de contato é a linha de status de cada uma nesta tabela, que dá conflito trivial no merge da segunda.
 
 Se for preciso escolher uma só para hoje: a **`03`**. O cardápio quebrado impede o cliente de pedir; a conta congelada é grave, mas o cliente ainda consegue usar o app.
 
