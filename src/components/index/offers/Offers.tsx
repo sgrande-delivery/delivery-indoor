@@ -1,18 +1,17 @@
 import { makeStyles, Typography } from '@material-ui/core';
-import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Fragment, useCallback, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import ProductComplement from 'src/components/products/detail/complement/ProductComplement';
 import ProductPizzaComplement from 'src/components/products/detail/pizza_complement/ProductPizzaComplement';
 import ProductSimple from 'src/components/products/detail/simple/ProductSimple';
 import { ProductsProvider } from 'src/components/products/hooks/useProducts';
-import { moneyFormat } from 'src/helpers/numberFormat';
 import { useApp } from 'src/providers/AppProvider';
-import { api } from 'src/services/api';
 import { addToCart } from 'src/store/redux/modules/cart/actions';
 import { useSelector } from 'src/store/redux/selector';
 import { AnimatedBackground } from 'src/styles/animatedBackground';
 import { CartProduct } from 'src/types/cart';
 import { Product } from 'src/types/product';
+import { useFetchHomeOffers } from './hooks/use-fetch-home-offers';
 import OffersList from './OffersList';
 
 const useStyles = makeStyles(theme => ({
@@ -54,8 +53,7 @@ const useStyles = makeStyles(theme => ({
 
 const ActivePromotions: React.FC = () => {
   const classes = useStyles();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { products, loading, error } = useFetchHomeOffers();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const dispatch = useDispatch();
   const { handleCartVisibility } = useApp();
@@ -73,22 +71,6 @@ const ActivePromotions: React.FC = () => {
     return selectedProduct ? !selectedProduct.category.has_complement : false;
   }, [selectedProduct]);
 
-  useEffect(() => {
-    api
-      .get<Product[]>('/products')
-      .then(response => {
-        setProducts(
-          response.data.map(product => ({
-            ...product,
-            formattedPrice: moneyFormat(product.price),
-            formattedSpecialPrice: moneyFormat(product.special_price),
-          }))
-        );
-      })
-      .catch(err => console.error(err))
-      .finally(() => setLoading(false));
-  }, []);
-
   const handleAddProductToCart = useCallback(
     (product: CartProduct, amount: number) => {
       dispatch(addToCart(product, amount));
@@ -101,7 +83,33 @@ const ActivePromotions: React.FC = () => {
     [dispatch, handleCartVisibility, restaurant]
   );
 
-  if (products.length === 0 && !loading) return <Fragment />;
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className={classes.loading}>
+          {Array.from(Array(10).keys()).map(item => (
+            <AnimatedBackground className={classes.animated} key={item} />
+          ))}
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className={classes.header}>
+          <Typography variant="body2" color="textSecondary">
+            {error}
+          </Typography>
+        </div>
+      );
+    }
+
+    return <OffersList products={products} />;
+  };
+
+  if (products.length === 0 && !loading && !error) {
+    return <Fragment />;
+  }
 
   return (
     <ProductsProvider
@@ -124,15 +132,7 @@ const ActivePromotions: React.FC = () => {
           <Typography variant="h5">ofertas</Typography>
         </div>
 
-        {loading ? (
-          <div className={classes.loading}>
-            {Array.from(Array(10).keys()).map(item => (
-              <AnimatedBackground className={classes.animated} key={item} />
-            ))}
-          </div>
-        ) : (
-          products.length > 0 && <OffersList products={products} />
-        )}
+        {renderContent()}
       </div>
     </ProductsProvider>
   );
