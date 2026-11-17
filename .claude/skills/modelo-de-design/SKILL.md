@@ -1,6 +1,6 @@
 ---
 name: modelo-de-design
-description: De onde vem o visual do app de mesa — o tema em src/theme/, o design system "Brasa Punch" com os tokens versionados em .claude/design-system/tokens.json, e o protótipo da feature linkado na spec. Use ao especificar, implementar ou redesenhar tela, e antes de criar protótipo em canvas.
+description: De onde vem o visual do app de mesa — o tema em src/theme/, o design system versionado em design-system/ (README, tokens.json, tokens.css e 33 componentes com regra de uso e preview) e o protótipo da feature linkado na spec. Use ao especificar, implementar ou redesenhar tela, e antes de criar protótipo em canvas.
 ---
 
 # Modelo de design do app de mesa
@@ -8,16 +8,16 @@ description: De onde vem o visual do app de mesa — o tema em src/theme/, o des
 ## A ordem das fontes
 
 1. **O tema e os primitivos, em código** — `src/theme/` e `src/components/ui/`, na branch `feat/indoor-v2`, portados do `delivery-client` (`feat/app-v2@c2e52d59`) sem reescrita. É o que roda: cor, fonte, raio, altura e a anatomia de cada componente saem daqui, e se algo abaixo divergir, **vale o código**. Na `master` isso não existe: lá o tema é o `src/theme-v4.ts` do app v1.
-2. **O design system versionado** — `.claude/design-system/tokens.json`, o espelho dos tokens com a nota de uso de cada um, mais a página `Brasa Punch - Design System` do canvas, que tem a anatomia desenhada (botão, campo, chip, card, navegação, skeleton, toast, empty state, telas de erro) e o mapa para o `createTheme`. Serve para ler tokens sem abrir o código, e é de onde um protótipo novo parte.
+2. **O design system versionado** — a pasta **`design-system/`** na raiz, no mesmo formato do `delivery-client`: `README.md` (princípios, cor, tipografia, forma, os três formatos, voz), `tokens.json` com a nota de uso de cada token, `tokens.css` gerado dele, e `components/<Nome>/` com a regra de uso e o `preview.html` de **33 componentes** — os 19 compartilhados com o client e os 14 próprios da mesa (`BoardBillCard`, `BoardRoundGroup`, `BoardItemRow`, `BoardTotals`, `BoardPaymentRow`, `WaiterCallButton`, `AmountOption`, `PaymentMethodOption`, `PixPanel`, `CartItemRow`, `PersonNameDialog`, `OrderingAsRow`, `OrderSentPanel`, `TableTopBar`). Serve para ler token e anatomia sem abrir o código, e é de onde um protótipo novo parte.
 3. **O protótipo da feature** — o canvas linkado no `spec.md`, na seção "Referência de design". Diz layout, hierarquia, copy e estados **daquela** tela. **Não é fonte de cor, fonte ou espaçamento:** isso ele herda do design system. As duas telas próprias deste app são `Brasa Punch Indoor - Conta da Mesa` e `Brasa Punch Indoor - Carrinho`.
 
-Não existe `.claude/design/` legado aqui — este repo nasceu com o design system já versionado.
+Não existe `.claude/design/` legado aqui — este repo nasceu com o design system já versionado. **A base nasce no `delivery-client`:** token e primitivo compartilhado mudam lá e vêm no sync; componente próprio da mesa nasce aqui, em `design-system/components/`, e não volta para lá.
 
 **O DS é vendorado, não bifurcado.** `src/theme/` e `src/components/ui/` são cópia do `delivery-client`, e a intenção é continuar sincronizando com ele. Então: corrigir um primitivo aqui sem levar a correção para lá cria fork silencioso, e **reformatar** qualquer arquivo do DS (o repo está no prettier 3.7.4 do client exatamente para isso) transforma todo sync futuro em conflito. Componente que o app de mesa precisa e o client não tem nasce **fora** dessas duas pastas.
 
 ## Ao criar protótipo em canvas
 
-**Leia `.claude/design-system/tokens.json` antes de desenhar.** O protótipo novo usa os tokens de lá: paleta, as três famílias de fonte (Sora para texto, Bricolage Grotesque para display, Material Symbols Rounded para ícone), a escala de 4pt, os raios e as sombras com a tinta da marca. Protótipo que inventa paleta ou fonte vira duas fontes de verdade, e a implementação herda a divergência.
+**Leia `design-system/README.md` e `design-system/tokens.json` antes de desenhar, e o `components/<Nome>/README.md` do que a tela usar.** O protótipo novo usa os tokens de lá: paleta, as três famílias de fonte (Sora para texto, Bricolage Grotesque para display, Material Symbols Rounded para ícone), a escala de 4pt, os raios e as sombras com a tinta da marca. Protótipo que inventa paleta ou fonte vira duas fontes de verdade, e a implementação herda a divergência.
 
 Três coisas que o protótipo deste app precisa entregar, porque são do produto e não do gosto:
 

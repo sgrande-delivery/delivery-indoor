@@ -72,5 +72,3 @@ Duas notas que só valem aqui:
 Primitivo compartilhado vem de `src/components/ui/`; componente da mesa é composição desses primitivos, fora dessa pasta. `styled()` para layout, `sx` só para ajuste pontual, cor por `theme.vars.palette` (nunca hex), espaço por `theme.spacing`, dinheiro por `src/helpers/numberFormat`.
 
 **Copiar markup ou classe `bp-*`/`bpi-*` do preview para o app é violação:** o `bundle.css` existe para o preview, não para a aplicação.
-
-> **Pendência de organização:** o `.claude/design-system/tokens.json` criado antes desta pasta (no formato do `delivery-admin`) é redundante com `design-system/tokens.json` e sai no próximo PR que tocar o `.claude/`. A skill `modelo-de-design` passa a apontar para cá.

@@ -139,5 +139,5 @@ Nada abaixo carrega nesta conversa até ser preciso — é por isso que não est
 | `SocketStore`, salas, `subscribe_channel`, cleanup de listener | rule `socket-da-mesa` | tocar em `src/hooks/**`, `src/store/**` |
 | Extração de componente, `styled` × `sx`, MUI v4 × MUI 9, dinheiro | rule `componentes-e-estilos` | tocar em `src/**/*.tsx` |
 | Rotas da `delivery-api`, eventos do `/board`, payloads da mesa | skill `contratos-externos` | tocar em integração |
-| Design system, tokens versionados (`.claude/design-system/tokens.json`) e protótipo da tela | skill `modelo-de-design` | especificar, implementar ou redesenhar tela, e antes de criar protótipo |
+| Design system — `design-system/` (README, tokens, 33 componentes com preview) e o protótipo da tela | skill `modelo-de-design` | especificar, implementar ou redesenhar tela, e antes de criar protótipo |
 | Inventário dos repos, branches e clones da plataforma | skill `inventario-repos` | citar outro repo |
