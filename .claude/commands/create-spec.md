@@ -28,7 +28,7 @@ Fluxo:
 
 3. **Decidir o escopo do repo antes de escrever a spec.**
 
-   Este repo é um front-end sem backend próprio. Todo estado durável mora na `delivery-api`, e todo tempo real vem do `delivery-socket-api-2`. Isso muda a pergunta inicial de toda feature:
+   Este repo é um front-end sem backend próprio. Todo estado durável mora na `delivery-api`, e todo tempo real vem do `delivery-socket-api`. Isso muda a pergunta inicial de toda feature:
 
    - A feature precisa de **endpoint ou evento que ainda não existe**? Então parte dela é cross-repo. Registrar em "Dependências de outros repos" no `plan.md` e avaliar com o usuário se o planejamento principal deveria morar no `delivery-tasks` (`TASK-XXX`), com este repo executando só a parte de front.
    - A feature depende de **identidade do cliente**? Este app **não tem login** e `state.user` nunca é populado. Qualquer coisa que pressuponha usuário autenticado é decisão de arquitetura, não detalhe — vai para "Decisões pendentes".
@@ -37,7 +37,7 @@ Fluxo:
 
 4. **Coletar informações faltantes** — uma única rodada de perguntas curtas, só se algo essencial não estiver claro:
    - Objetivo e quem é afetado (cliente na mesa, garçom no PDV, gestor)
-   - Escopo: resolvível só neste repo, ou depende de contrato novo da `delivery-api`/`delivery-socket-api-2`
+   - Escopo: resolvível só neste repo, ou depende de contrato novo da `delivery-api`/`delivery-socket-api`
    - Regras de negócio já conhecidas
 
    Se a descrição já cobre tudo, pular.
@@ -45,7 +45,7 @@ Fluxo:
 5. **Inspecionar o código antes de escrever** — ancorar a spec na realidade do repo:
    - `CLAUDE.md` (fluxo da mesa, contratos externos, herança do fork, "O que NÃO fazer")
    - As specs vizinhas em `.claude/sdd/*/spec.md` — especialmente as RN, que costumam valer para mais de uma frente
-   - Os contratos reais: `app/Modules/*/routes/client-routes.php` na `delivery-api`, `src/nestjs/modules/*/events.ts` no `delivery-socket-api-2`. **Confirme na fonte**, não na memória
+   - Os contratos reais: `app/Modules/*/routes/client-routes.php` na `delivery-api`, `src/nestjs/modules/*/events.ts` no `delivery-socket-api`. **Confirme na fonte**, não na memória
    - O que já existe pra reaproveitar (`SocketStore`, hooks `useFetchX`, middlewares do `cart`)
 
    Spec que ignora o padrão do repo vira retrabalho no plan.
@@ -95,7 +95,7 @@ Fluxo:
 
    **As RN são o que a spec tem de mais durável.** Preferir regra que explique *por quê* ("o socket do `/board` exige cookie de login porque o `BoardGateway` herda o `handleConnection` do `Gateway`") a regra que só afirma. É nelas que uma premissa errada fica visível antes de virar bug.
 
-   Regras que valem para quase toda feature deste repo e devem aparecer quando forem tocadas: **não há login**; **a mesa vem de `router.query.session`**; **listagem de produto é paginada**; **um `socket.off` para cada `socket.on`**; **MUI v4 e Pages Router**.
+   Regras que valem para quase toda feature deste repo e devem aparecer quando forem tocadas: **não há login**; **a mesa vem da query string (`session`)**; **listagem de produto é paginada, e os envelopes da v1 e da v2 diferem**; **um `socket.off` para cada `socket.on`**; e **a stack depende da branch** — MUI v4 + Pages Router na `master`, MUI 9 + App Router na `feat/indoor-v2`.
 
 7. **Escrever `plan.md`** em `.claude/sdd/<feature>/plan.md`:
 
@@ -129,7 +129,7 @@ Fluxo:
 
    ## Dependências de outros repos
 
-   <Endpoint que a `delivery-api` precisa expor, evento que o `delivery-socket-api-2` precisa emitir.
+   <Endpoint que a `delivery-api` precisa expor, evento que o `delivery-socket-api` precisa emitir.
    Dizer qual repo, qual arquivo e se já está em produção. Omitir se a feature for autocontida.>
 
    ## Aprendizados que valem para as próximas tasks

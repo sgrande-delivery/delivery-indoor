@@ -52,11 +52,11 @@ Fluxo:
    - A mesa vem de `router.query.session`; toda tela precisa do caminho "sem mesa"
    - `SocketStore` em module scope, um por namespace; um `socket.off` para cada `socket.on`
    - Listagem de produto é paginada — `{ items, total, current_page, last_page }`, params `page`/`rows`
-   - MUI **v4** (`makeStyles`) e **Pages Router**; código do `delivery-client` precisa de tradução
+   - A stack depende da branch: MUI **v4** (`makeStyles`) + **Pages Router** na `master`, MUI **9** (`styled`) + **App Router** na `feat/indoor-v2`. Código do `delivery-client` precisa de tradução nos dois casos — lá ele tem login, endereço, frete e checkout
    - `api` de `src/services/api.tsx` não funciona em `getStaticProps`/`getServerSideProps`
    - Total do carrinho é responsabilidade do middleware do módulo `cart`
 
-   Quando a task tocar contrato externo, **abrir a fonte**: `app/Modules/*/routes/client-routes.php` na `delivery-api`, `src/nestjs/modules/*/events.ts` e `shared/gateway.ts` no `delivery-socket-api-2`.
+   Quando a task tocar contrato externo, **abrir a fonte**: `app/Modules/*/routes/client-routes.php` na `delivery-api`, `src/nestjs/modules/*/events.ts` e `shared/gateway.ts` no `delivery-socket-api`.
 
 6. **Escrever a task** seguindo o template:
 
@@ -66,7 +66,7 @@ Fluxo:
    **Issue:** [#<n>](<url>) | (sem issue)
    **Feature:** [<nome>](../spec.md) — issue #<n>
    **Tipo:** feature | bug | chore | refator
-   **Repo:** delivery-indoor | delivery-api | delivery-socket-api-2
+   **Repo:** delivery-indoor | delivery-api | delivery-socket-api
    **Depende de:** <ID> | (nenhuma)
    **Status:** pendente
 

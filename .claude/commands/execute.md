@@ -96,7 +96,7 @@ Fluxo:
 
 4. **Delegar ao agente `indoor-agent`** — passar o caminho da task, da spec e do plan. Ele lê os três + o `CLAUDE.md`, identifica a camada (página, componente, hook de fetch, módulo Redux, socket, serviço) e implementa. Repassar explicitamente as armadilhas registradas em "Aprendizados que valem para as próximas tasks".
 
-5. **Delegar ao `code-reviewer-typescript`** pra validar padrões (tipagem rigorosa, MUI v4, Pages Router, `off` para cada `on`, fetch em hook e não em componente, nada apoiado na herança de auth) e os modos de falha conhecidos desta base. Pedir julgamento explícito sobre as decisões que o implementador tomou por conta própria.
+5. **Delegar ao `code-reviewer-typescript`** pra validar padrões (tipagem rigorosa, a stack da branch em que a task roda, `off` para cada `on`, fetch em hook e não em componente, nada apoiado na herança de auth) e os modos de falha conhecidos desta base. Pedir julgamento explícito sobre as decisões que o implementador tomou por conta própria.
 
 6. Se o review apontar violação, voltar ao `indoor-agent` — loop até aprovar. **Verificar por conta própria** o que for barato: rodar `tsc`, `eslint` e `next build` com as vars de restaurante injetadas.
 
