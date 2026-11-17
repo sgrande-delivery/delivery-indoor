@@ -10,7 +10,11 @@ A frente troca a casca inteira e não entrega tela de domínio. A ordem é: stac
 
 **Stack.** `pages/` sai e `app/` entra: `app/layout.tsx` com `AppRouterCacheProvider` (`@mui/material-nextjs`), `InitColorSchemeScript`, `next/font` e a árvore de providers; `app/page.tsx` como home. O `pages/_document.tsx` (SSR de JSS, 150 linhas, inclusive a geração do `manifest.json`) é o arquivo que mais depende da stack velha — a parte de manifest vira rota depois, na frente de PWA, e nesta frente fica desativada. O modelo é `delivery-client/app/layout.tsx` + `delivery-client/src/App.tsx` (`feat/app-v2`), com a diferença de que aqui **não há `loadBoot`**: não existe recurso de app (`GET /apps/{appId}`) nem login, e o boot é `GET /restaurants` + `GET /boardMovements/{id}`.
 
-**Fonte do design.** O design system está versionado no repo: `.claude/design-system/tokens.json` (pelo [PR #26](https://github.com/sgrande-delivery/delivery-indoor/pull/26)) carrega cor, tipografia, espaço, tamanho, raio, sombra, motion e os três formatos de layout, cada token com a nota de uso. A task 02 **transcreve** esses valores para o `createTheme` — ela não escolhe nada —, e a task 03 tira a lista de ícones de lá e das telas. O número nunca vem de memória, e a skill `modelo-de-design` ordena as fontes.
+**O design system já está no repo, em código.** O port de 2026-11-17 (`e18a1cd`, na `feat/indoor-v2`) trouxe `src/theme/` e `src/components/ui/` do `delivery-client` (`feat/app-v2@c2e52d59`) sem reescrita, mais `src/fonts/`, o `scripts/generate-icon-font.mjs` e os dois helpers que os primitivos importam. `.claude/design-system/tokens.json` (pelo [PR #26](https://github.com/sgrande-delivery/delivery-indoor/pull/26)) é o **espelho** desses tokens, com a nota de uso de cada um.
+
+**Isso muda o que as tasks 02, 03 e 04 têm para fazer:** o conteúdo delas existe, e o que falta é **ligar** — `ThemeProvider` na árvore com a cor do restaurante em runtime, `next/font` carregado no documento, e o subset de ícone regerado para a lista que as telas da mesa usam. Nenhuma das três escreve tema, primitivo ou token do zero, e o `tsc`, o `eslint` e o `fonts:check` já passam com o DS dentro.
+
+**O DS é vendorado, não bifurcado.** Corrigir um primitivo aqui sem levar a correção ao `delivery-client` cria fork silencioso, e reformatar arquivo do DS transforma sync futuro em conflito — o repo foi para o prettier 3.7.4 do client exatamente por isso.
 
 **Tema.** `src/theme/` nasce portado de `delivery-client/src/theme/` (`createTheme.ts`, `palette.ts`, `component-tokens.ts`, `components.ts`, `color-scheme.ts`, `brand-variables.ts`, `surfaces.ts`, `breakpoints.ts`) e é conferido contra a página 13 do `Brasa Punch - Design System`, que entrega o `createTheme` já escrito: raio 16, botão com `minHeight: 52` / `paddingInline: 24` / `textTransform: 'none'` / peso 800, `MuiOutlinedInput` raio 14 sobre `#F3EEE7`, `MuiChip` raio 999 peso 700, `MuiPaper` raio 18, `MuiSkeleton` com `animation: 'wave'`, `MuiAlert` sobre `#1C1714`, `MuiDialog` raio 22 e `maxWidth: 440`. Claro e escuro trocam `background`/`paper`/`text`/`divider` (escuro: `--pg #17120E`, `--card #241C16`).
 
@@ -38,9 +42,9 @@ A frente troca a casca inteira e não entrega tela de domínio. A ordem é: stac
 | # | Task | Issue | Arquivo | Depende de | Status |
 |---|------|-------|---------|------------|--------|
 | 01 | Bootstrap da stack: App Router, MUI 9 + Emotion, React Query e camada de serviços | — | — | — | a especificar |
-| 02 | Tema do tenant: tokens do design no `createTheme`, cor em runtime, claro e escuro | — | — | 01 | a especificar |
-| 03 | Fontes e ícones: Sora, Bricolage Grotesque e subset do Material Symbols com `Icon` | — | — | 01 | a especificar |
-| 04 | Primitivos do Design System portados do `delivery-client` | — | — | 02, 03 | a especificar |
+| 02 | Ligar o tema na árvore: `ThemeProvider`, cor do restaurante em runtime, claro e escuro | — | — | 01 | a especificar — o tema já está em `src/theme/` (port `e18a1cd`); falta a ligação |
+| 03 | Ligar fontes e ícones: `next/font` no documento e subset regerado para a lista da mesa | — | — | 01 | a especificar — `src/fonts/` e o script já estão no repo |
+| 04 | Primitivos do Design System | — | — | — | **entregue pelo port `e18a1cd`** — 38 arquivos em `src/components/ui/`, sem reescrita |
 | 05 | Sessão da mesa: provider, boot e estado "sem mesa" | — | — | 01 | a especificar |
 | 06 | Shell responsivo: navegação do celular e barra superior do tablet | — | — | 04, 05 | a especificar |
 | 07 | Carregamento, vazio, erro e offline nos quatro formatos do design | — | — | 04 | a especificar |
@@ -51,8 +55,8 @@ Status: `a especificar` → `pendente` → `executada` → `shipped`.
 ## Ordem de execução
 
 1. **`01` primeiro e sozinha.** Ela troca a stack: toda outra task mexe em arquivo que ela cria ou move. Tentar paralelizar aqui dá conflito em `package.json`, `tsconfig.json`, `app/layout.tsx` e na árvore de providers.
-2. **`02` e `03` em paralelo** depois da `01`. Não se tocam: tema é `src/theme/`, fonte e ícone são `src/fonts/` + `src/components/ui/Icon.tsx` + o script de subset.
-3. **`04`** depois das duas, porque todo primitivo depende do tema e vários usam `Icon`.
+2. **`02` e `03` em paralelo** depois da `01`. Não se tocam: a `02` liga o tema na árvore, a `03` liga fonte e ícone no documento.
+3. **`04` não precisa de execução** — os primitivos entraram no port. O que sobra é conferir, na primeira tela que os usar, se algum deles depende de algo que este app não tem.
 4. **`05` em paralelo com `02`–`04`** — é dado e contexto, não aparência.
 5. **`06`** depois da `04` e da `05`: o shell usa os primitivos e mostra o estado da mesa.
 6. **`07`** depois da `04`.
@@ -66,6 +70,6 @@ Se for preciso escolher uma só: a **`01`**. Nada começa antes dela.
 |---|---|---|
 | `delivery-api` | Nada. Esta frente consome `GET /restaurants` e `GET /boardMovements/{id}`, as duas v1 e no ar | Verificado em 2026-11-16 contra `app/Modules/Restaurant/routes/client-routes.php` e `app/Modules/Board/routes/client-routes.php` em `origin/master` |
 | `delivery-socket-api` | Nada nesta frente. A conexão anônima do indoor no `/board` (`query.app=indoor` + `x-restaurant-uuid`) já está em `master` e documentada no `CLAUDE.md` de lá | Verificado em 2026-11-16 |
-| `delivery-client` | Nada a entregar: é **fonte de código**, não dependência. Portar sempre da `feat/app-v2` | — |
+| `delivery-client` | Nada a entregar: é **fonte de código**, não dependência. O design system veio da `feat/app-v2@c2e52d59` no port `e18a1cd`; correção em primitivo volta para lá | Port feito em 2026-11-17 |
 
 ## Aprendizados que valem para as próximas tasks
