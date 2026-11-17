@@ -25,9 +25,9 @@ Fluxo:
 2. **Aplicar regras do projeto antes de aceitar a proposta como está:**
    - **Este app não tem login.** Se a proposta pressupõe cliente identificado ("mostrar os pedidos anteriores dele", "salvar favoritos"), anotar que isso exige decidir identidade primeiro — e que `state.user` nunca é populado aqui
    - **A mesa vem da URL.** Qualquer feature ligada à conta depende de `?session=<uuid>`; anotar o comportamento esperado quando não há mesa
-   - **Tempo real custa contrato.** Se a feature precisa de evento novo, ele mora no `delivery-socket-api-2` — anotar que é cross-repo
+   - **Tempo real custa contrato.** Se a feature precisa de evento novo, ele mora no `delivery-socket-api` — anotar que é cross-repo
    - **Listagem de produto é paginada.** Se a proposta fala em "mostrar todos os produtos", anotar o envelope `{ items, total, current_page, last_page }`
-   - **MUI v4 e Pages Router.** Se a proposta cita um componente do `delivery-client`, anotar que ele precisa de tradução — o `delivery-client` está em MUI v6 + App Router
+   - **A stack depende da branch** (MUI v4 + Pages Router na `master`, MUI 9 + App Router na `feat/indoor-v2`). Se a proposta cita um componente do `delivery-client`, anotar que ele precisa de tradução — e que de lá saem os eixos que este app não tem (login, endereço, frete, checkout)
    - **Dependência de API.** Se consome endpoint que ainda não existe na `delivery-api`, anotar explicitamente — a issue vira candidata a `TASK-XXX` cross-repo no `delivery-tasks`
 
    Essas observações entram no campo "Observações adicionais" — não bloqueiam a abertura da issue.
