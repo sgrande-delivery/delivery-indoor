@@ -7,11 +7,13 @@ description: De onde vem o visual do app de mesa — o tema em src/theme/, o des
 
 ## A ordem das fontes
 
-1. **O tema** — `src/theme/`, criado pela task 02 da feature [#20](https://github.com/sgrande-delivery/delivery-indoor/issues/20). É o que roda: cor, fonte, raio e altura saem dele, e se algo abaixo divergir, vale o tema. **Enquanto ele não existir**, esta fonte está vazia — e é o item 2 que a gera, não o contrário (o `meta.note` do `tokens.json` registra essa inversão).
-2. **O design system** — `.claude/design-system/tokens.json`, a cópia versionada dos tokens, mais a página `Brasa Punch - Design System` do canvas, que tem a anatomia dos componentes (botão, campo, chip, card, navegação, skeleton, toast, empty state, telas de erro) e o mapa para o `createTheme`.
+1. **O tema e os primitivos, em código** — `src/theme/` e `src/components/ui/`, na branch `feat/indoor-v2`, portados do `delivery-client` (`feat/app-v2@c2e52d59`) sem reescrita. É o que roda: cor, fonte, raio, altura e a anatomia de cada componente saem daqui, e se algo abaixo divergir, **vale o código**. Na `master` isso não existe: lá o tema é o `src/theme-v4.ts` do app v1.
+2. **O design system versionado** — `.claude/design-system/tokens.json`, o espelho dos tokens com a nota de uso de cada um, mais a página `Brasa Punch - Design System` do canvas, que tem a anatomia desenhada (botão, campo, chip, card, navegação, skeleton, toast, empty state, telas de erro) e o mapa para o `createTheme`. Serve para ler tokens sem abrir o código, e é de onde um protótipo novo parte.
 3. **O protótipo da feature** — o canvas linkado no `spec.md`, na seção "Referência de design". Diz layout, hierarquia, copy e estados **daquela** tela. **Não é fonte de cor, fonte ou espaçamento:** isso ele herda do design system. As duas telas próprias deste app são `Brasa Punch Indoor - Conta da Mesa` e `Brasa Punch Indoor - Carrinho`.
 
 Não existe `.claude/design/` legado aqui — este repo nasceu com o design system já versionado.
+
+**O DS é vendorado, não bifurcado.** `src/theme/` e `src/components/ui/` são cópia do `delivery-client`, e a intenção é continuar sincronizando com ele. Então: corrigir um primitivo aqui sem levar a correção para lá cria fork silencioso, e **reformatar** qualquer arquivo do DS (o repo está no prettier 3.7.4 do client exatamente para isso) transforma todo sync futuro em conflito. Componente que o app de mesa precisa e o client não tem nasce **fora** dessas duas pastas.
 
 ## Ao criar protótipo em canvas
 
@@ -33,11 +35,14 @@ Terminado, **linke o protótipo na spec**, na seção "Referência de design", e
 - **Nenhum alvo de toque abaixo de 44px.** O tablet é compartilhado e manuseado na mesa.
 - **Ícone é subset.** Nome fora de `src/components/ui/icon-names.ts` renderiza **texto embaralhado**, não vazio: o Material Symbols carrega as letras latinas das próprias ligaduras. Ícone escolhido por dado de API precisa de mapa explícito, nunca de cast.
 - **No tablet, nada de dado pessoal de pagamento** — nem cartão salvo, nem carteira, nem nome de quem pagou antes. O aparelho é da mesa.
-- **O escuro ainda não está fechado.** O design declara só `--pg` e `--card` no escuro; os tokens de texto, rótulo, borda e campo estão marcados como pendentes no `tokens.json`, e a task que montar o tema resolve contra o design em vez de inventar.
+- **O escuro está fechado no código, não no desenho.** O design declara só `--pg` e `--card` no escuro; o tema implementado resolve o resto (`darkSurfaces`: ink `#F6EEE6`, muted `#A6907C`, line `#352B22`, field `#2A2320`), e é ele que vale.
+- **Não há terceiro nível de texto em código.** O design usa `#85705C` em rótulo de seção (`.sec`), e o tema tem só `ink` e `muted`. Em código, use `muted`; se o desenho exigir o terceiro nível, ele entra no tema primeiro — não como hex solto no componente.
 
 ## Ao implementar
 
-O protótipo e o design system são referência **visual**. A implementação é sempre componente do projeto, e **a stack depende da branch**: na `feat/indoor-v2`, MUI 9 com `styled()` para layout e `sx` só para ajuste pontual; na `master`, MUI v4 com `makeStyles`. Cor por `theme.palette`, espaçamento por `theme.spacing`, dinheiro por `src/helpers/numberFormat`.
+O protótipo é referência **visual**. A implementação é sempre componente do projeto, e **a stack depende da branch**: na `feat/indoor-v2`, os primitivos de `src/components/ui/` (`Button`, `Field`, `Input`, `Select`, `Choice`, `Chip`, `Badge`, `Sheet`, `Overlay`, `Toast`, `Skeleton`, `EmptyState`, `QuantityStepper`, `ProductCard`, `ProductListItem`, `BottomNav`, `Icon`) com MUI 9 e `styled()` para layout, `sx` só para ajuste pontual; na `master`, MUI v4 com `makeStyles`. Cor por `theme.palette`, espaçamento por `theme.spacing`, dinheiro por `src/helpers/numberFormat`.
+
+**Antes de criar um componente, procure o primitivo.** O DS tem 38 arquivos em `src/components/ui/`, e metade do que uma tela precisa já está lá — inclusive o que não é óbvio: `use-sheet-drag` (arrastar sheet), `OverlayTransition`, `PanelTransition`, `HighlightedText`, `ThumbDiscountMark`, `VisuallyHidden`.
 
 **Copiar markup do protótipo é violação.** `<button class="cta">` vira `Button`; `.opt` vira o componente de opção do projeto; `.chip` vira `Chip`; `<input>` vira o campo do projeto. O design é HTML/CSS com classes próprias e não conhece theming, modo escuro nem acessibilidade.
 
