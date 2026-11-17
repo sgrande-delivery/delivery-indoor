@@ -1,0 +1,30 @@
+<!-- @dsCard height=300 -->
+<div class="bp" style="position:relative;width:960px;height:300px;background:var(--page);overflow:hidden">
+<style>
+.cv-primary{fill:var(--primary)} .cv-secondary{fill:var(--secondary)} .cv-chrome{fill:var(--chrome-base)}
+.cv-soft{fill:var(--brand-soft)} .cv-card{fill:var(--card)} .cv-accent{fill:var(--chrome-accent)}
+</style>
+<!--
+blocks: primary 200×232 (radius-lg 22), chrome-base 216×152 (radius-lg 22), secondary disc 120 (radius-pill), brand-soft pill 168×64.
+arrangement: one tall primary slab bleeding off the top, the dark chrome block beside it like the bottom navigation, secondary and soft satellites below.
+pattern: a rail of pills on the chrome block, cut by radius-pill at control-md height — the chip rail of categories is the gesture this app repeats on every screen.
+scales: gap space-xs 8 / space-md 16; heights control-sm 36 and control-md 44; radii radius-lg 22, radius-pill.
+-->
+<svg width="480" height="300" viewBox="0 0 480 300" style="position:absolute;left:480px;top:0">
+  <rect class="cv-primary" x="16" y="-24" width="200" height="232" rx="22"/>
+  <rect class="cv-chrome" x="232" y="40" width="232" height="152" rx="22"/>
+  <rect class="cv-accent" x="248" y="56" width="88" height="36" rx="18"/>
+  <rect class="cv-card" x="344" y="56" width="104" height="36" rx="18" opacity=".9"/>
+  <rect class="cv-card" x="248" y="100" width="120" height="36" rx="18" opacity=".55"/>
+  <rect class="cv-card" x="376" y="100" width="72" height="36" rx="18" opacity=".55"/>
+  <rect class="cv-card" x="248" y="144" width="72" height="36" rx="18" opacity=".3"/>
+  <rect class="cv-card" x="328" y="144" width="120" height="36" rx="18" opacity=".3"/>
+  <rect class="cv-secondary" x="96" y="224" width="120" height="120" rx="60"/>
+  <rect class="cv-soft" x="232" y="208" width="168" height="64" rx="32"/>
+  <rect class="cv-card" x="40" y="24" width="64" height="64" rx="32"/>
+</svg>
+<div style="position:absolute;left:48px;bottom:44px;width:420px">
+  <div class="bp-disp" style="font-size:88px;font-weight:800;line-height:.92;letter-spacing:-.03em;color:var(--ink)">SGrande Cliente</div>
+  <div style="font-size:14px;color:var(--muted);margin-top:16px">Brasa Punch com a cor de cada restaurante.</div>
+</div>
+</div>

@@ -1,0 +1,250 @@
+/* SGrande Indoor — generated from tokens.json */
+
+:root, [data-theme="light"] {
+  --primary: #FF5A1F;
+  --primary-light: #FF7B4C;
+  --primary-dark: #CC4819;
+  --on-primary: #FFFFFF;
+  --secondary: #FFC53D;
+  --on-secondary: #1C1714;
+  --page: #FFEBE1;
+  --card: #FFFFFF;
+  --ink: #2F0A02;
+  --muted: #7D6259;
+  --line: #FDD3C6;
+  --field: #FFE3D7;
+  --brand-soft: #FFD7C4;
+  --brand-on-soft: #960000;
+  --brand-text: #B20900;
+  --brand-text-hover: #9D0000;
+  --brand-strong: #980000;
+  --on-primary-support: rgba(20, 10, 4, 0.66);
+  --on-primary-wash: rgba(255, 255, 255, 0.18);
+  --chrome-base: #350000;
+  --chrome-raised: #6A1200;
+  --chrome-ink: #F9F4F2;
+  --chrome-muted: #C9B1AA;
+  --chrome-dim: #917E78;
+  --chrome-accent: #FF8257;
+  --chrome-idle: #95817B;
+  --success: #1FA463;
+  --danger: #E11D2A;
+  --warn: #F5B301;
+  --danger-text: #BD1823;
+  --danger-glyph: #E11D2A;
+  --warn-glyph: #A77A01;
+  --highlight-mark: rgba(245, 179, 1, 0.34);
+  --inverse: #1C1714;
+  --inverse-muted: #8C7A6B;
+  --on-inverse: #FFFFFF;
+  --inverse-field: #2A2320;
+  --inverse-line: #3A322D;
+  --overlay: rgba(28, 23, 20, 0.55);
+  --order-pending-payment: #17A2B8;
+  --order-open: #FFC53D;
+  --order-approved: #6FA82F;
+  --order-dispatched: #1565C0;
+  --order-completed: #6C757D;
+  --order-cancelled: #E11D2A;
+  --elevation-sm: 0 6px 16px rgba(28, 23, 20, 0.06);
+  --elevation-md: 0 8px 20px rgba(28, 23, 20, 0.1);
+  --elevation-lg: 0 14px 30px -10px rgba(28, 23, 20, 0.22);
+  --elevation-card: 0 8px 20px rgba(28, 23, 20, 0.08);
+  --elevation-button: 0 12px 26px -10px rgba(28, 23, 20, 0.4);
+  --elevation-dialog: 0 40px 80px -20px rgba(0, 0, 0, 0.5);
+  --elevation-thumb-mark: 0 2px 6px rgba(28, 23, 20, 0.25);
+}
+
+[data-theme="dark"] {
+  --primary: #FF5A1F;
+  --primary-light: #FF7B4C;
+  --primary-dark: #CC4819;
+  --on-primary: #FFFFFF;
+  --secondary: #FFC53D;
+  --on-secondary: #1C1714;
+  --page: #220500;
+  --card: #30150D;
+  --ink: #F6F0EF;
+  --muted: #ADA29E;
+  --line: #41312C;
+  --field: #381F17;
+  --brand-soft: #48261B;
+  --brand-on-soft: #EED9D2;
+  --brand-text: #FF6C3A;
+  --brand-text-hover: #FF804F;
+  --brand-strong: #C73700;
+  --on-primary-support: rgba(20, 10, 4, 0.66);
+  --on-primary-wash: rgba(255, 255, 255, 0.18);
+  --chrome-base: #150100;
+  --chrome-raised: #3A190F;
+  --chrome-ink: #F6F0EF;
+  --chrome-muted: #B4A8A4;
+  --chrome-dim: #817875;
+  --chrome-accent: #FF7E4F;
+  --chrome-idle: #8D8481;
+  --success: #4ADE80;
+  --danger: #FF6B6B;
+  --warn: #F5B301;
+  --danger-text: #E74A55;
+  --danger-glyph: #E11D2A;
+  --warn-glyph: #F5B301;
+  --highlight-mark: rgba(245, 179, 1, 0.34);
+  --inverse: #1C1714;
+  --inverse-muted: #8C7A6B;
+  --on-inverse: #FFFFFF;
+  --inverse-field: #2A2320;
+  --inverse-line: #3A322D;
+  --overlay: rgba(28, 23, 20, 0.55);
+  --order-pending-payment: #17A2B8;
+  --order-open: #FFC53D;
+  --order-approved: #6FA82F;
+  --order-dispatched: #589EED;
+  --order-completed: #959CA3;
+  --order-cancelled: #FF6B6B;
+  --elevation-sm: 0 6px 16px rgba(28, 23, 20, 0.06);
+  --elevation-md: 0 8px 20px rgba(28, 23, 20, 0.1);
+  --elevation-lg: 0 14px 30px -10px rgba(28, 23, 20, 0.22);
+  --elevation-card: 0 8px 20px rgba(28, 23, 20, 0.08);
+  --elevation-button: 0 12px 26px -10px rgba(28, 23, 20, 0.4);
+  --elevation-dialog: 0 40px 80px -20px rgba(0, 0, 0, 0.5);
+  --elevation-thumb-mark: 0 2px 6px rgba(28, 23, 20, 0.25);
+}
+
+:root {
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+  --radius-control-sm: 12px;
+  --radius-control-md: 14px;
+  --radius-control-lg: 16px;
+  --radius-paper: 18px;
+  --radius-sheet: 28px;
+  --radius-dialog: 26px;
+  --control-sm: 36px;
+  --control-md: 44px;
+  --control-lg: 52px;
+  --icon-button-xs: 30px;
+  --icon-button-sm: 34px;
+  --touch-min: 44px;
+  --bottom-nav-height: 73px;
+  --app-max-width: 372px;
+  --empty-circle: 72px;
+  --opacity-tint: 0.08;
+  --opacity-solid: 0.88;
+  --opacity-disabled: 0.45;
+  --opacity-loading: 0.55;
+  --font-display: "Bricolage Grotesque", Sora, sans-serif;
+  --font-text: Sora, sans-serif;
+  --font-mono: ui-monospace, monospace;
+  --font-icons: "Material Symbols Rounded";
+}
+
+.h1 {
+  font-family: var(--font-display);
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.h2 {
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.h3 {
+  font-family: var(--font-display);
+  font-size: 19px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.h4 {
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.h5 {
+  font-family: var(--font-display);
+  font-size: 15px;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+.h6 {
+  font-family: var(--font-display);
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.subtitle1 {
+  font-family: var(--font-text);
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.subtitle2 {
+  font-family: var(--font-text);
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.body1 {
+  font-family: var(--font-text);
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.body2 {
+  font-family: var(--font-text);
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 400;
+}
+
+.button {
+  font-family: var(--font-text);
+  font-size: 14px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.caption {
+  font-family: var(--font-text);
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: 400;
+}
+
+.label {
+  font-family: var(--font-text);
+  font-size: 11px;
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.price {
+  font-family: var(--font-text);
+  font-size: 15px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
