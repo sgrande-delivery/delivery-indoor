@@ -6,7 +6,7 @@ import { api } from 'src/services/api';
 import { setRestaurant } from 'src/store/redux/modules/restaurant/actions';
 import { Restaurant } from 'src/types/restaurant';
 import reactGA from 'react-ga';
-import defaultTheme from '../theme';
+import defaultTheme from '../theme-v4';
 import { Theme } from '@material-ui/core';
 
 type UseFetchRestaurant = [Theme, boolean];

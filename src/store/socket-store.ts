@@ -20,7 +20,11 @@ export class SocketStore {
     isConnected: this.isConnected,
   };
 
-  constructor(private readonly url: string, private readonly namespace: string, private readonly app: string) {}
+  constructor(
+    private readonly url: string,
+    private readonly namespace: string,
+    private readonly app: string
+  ) {}
 
   private update(nextSocket: Socket | null, nextIsConnected: boolean) {
     if (this.snapshot.socket === nextSocket && this.snapshot.isConnected === nextIsConnected) {

@@ -27,8 +27,8 @@ const Menu: React.FC<MenuProps> = ({ categories }) => {
           productsAmount > 1
             ? `${productsAmount} produtos disponíveis`
             : productsAmount === 1
-            ? `${productsAmount} produto disponível`
-            : ''
+              ? `${productsAmount} produto disponível`
+              : ''
         }
       />
       <Grid container>

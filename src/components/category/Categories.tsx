@@ -25,8 +25,8 @@ const Categories: React.FC<CategoryProps> = ({ categories }) => {
           productsAmount > 1
             ? `${productsAmount} produtos disponíveis`
             : productsAmount === 1
-            ? `${productsAmount} produto disponível`
-            : ''
+              ? `${productsAmount} produto disponível`
+              : ''
         }
       />
 

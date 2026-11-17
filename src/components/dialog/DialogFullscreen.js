@@ -106,12 +106,11 @@ DialogFullscreen.propTypes = {
 };
 
 // eslint-disable-next-line react/display-name
-export const withDialoagFullscreen = Component => props =>
-  (
-    <DialogFullscreenContext.Consumer>
-      {context => <Component {...props} {...context} />}
-    </DialogFullscreenContext.Consumer>
-  );
+export const withDialoagFullscreen = Component => props => (
+  <DialogFullscreenContext.Consumer>
+    {context => <Component {...props} {...context} />}
+  </DialogFullscreenContext.Consumer>
+);
 
 export default DialogFullscreen;
 export const DialogFullscreenConsumer = DialogFullscreenContext.Consumer;
