@@ -1,305 +1,143 @@
-# delivery-indoor — CLAUDE.md
+# CLAUDE.md — delivery-indoor
 
-## Contexto do Projeto
+App web que o **cliente sentado à mesa** usa: chega pelo QR code da mesa, que abre a aplicação com `?session=<uuid-da-movimentação>`, navega o cardápio, envia o pedido para a cozinha e acompanha a conta em tempo real. Repo canônico: **`sgrande-delivery/delivery-indoor`**. Este arquivo tem só o que vale em **toda** sessão; o resto carrega sob demanda (ver "Onde está o resto", no fim).
 
-Este repositório é o **delivery-indoor** (nome histórico do diretório e do `package.json`: `delivery-board-client`). Repo canônico no GitHub: **`sgrande-delivery/delivery-indoor`**, branch principal `master`.
+> **Confira o remote antes de qualquer push.** O `origin` local pode apontar para o fork pessoal `raphaelcarreiro/delivery-board-client`. `git remote -v`.
 
-> **Atenção ao remote.** O `origin` local ainda pode apontar para o fork pessoal `raphaelcarreiro/delivery-board-client`. O repo canônico é `sgrande-delivery/delivery-indoor` — confira com `git remote -v` antes de qualquer push.
+## O que diferencia este app do `delivery-client`
 
-## O que é este projeto
+Este repo é fork do `delivery-client` (histórico git compartilhado desde o `1d341e8 first commit`), e três ausências explicam quase toda decisão aqui:
 
-App web que o **cliente sentado à mesa** usa. Ele chega pelo QR code da mesa, que abre a aplicação com `?session=<uuid-da-movimentação>`, navega o cardápio, envia o pedido e acompanha a conta em tempo real até pedir o fechamento.
+- **Não tem login.** Nenhuma rota `/login`. O cliente é identificado pela movimentação de mesa, não por usuário autenticado. `state.user` nunca é populado e **não é fonte de identidade**.
+- **Não tem checkout.** O pedido vai para a cozinha e entra na conta da mesa; não há pagamento no envio do pedido.
+- **Não tem entrega.** `shipment_method` é sempre de mesa; endereço, frete e área de entrega não se aplicam.
 
-O que o diferencia do `delivery-client` (do qual este repo é fork, com histórico git compartilhado desde o `1d341e8 first commit`):
+A **conta da mesa é a tela principal**: mostra produtos lançados, pagamentos e total, atualizados por socket enquanto o garçom lança coisas no PDV. O carrinho local é só a área de composição do pedido antes do envio — não sobrevive ao envio e não representa estado do servidor.
 
-- **Não tem login.** Nenhuma rota `/login` existe em `pages/`. O cliente é identificado pela movimentação de mesa, não por usuário autenticado.
-- **Não tem checkout.** O pedido é enviado direto para `POST /boardMovements/{id}/orders`; não há pagamento no app.
-- **Não tem entrega.** `shipment_method` é sempre `board`; endereço, frete e área de entrega não se aplicam.
-- **A conta é a tela principal.** `/board` mostra produtos lançados, pagamentos e total da mesa, atualizados por socket enquanto o garçom lança coisas no PDV.
+## Duas stacks, duas branches
 
-O carrinho local existe apenas como área de composição do pedido antes do envio — ele não sobrevive ao envio nem representa estado do servidor.
+| | `master` (v1, em produção) | `feat/indoor-v2` (o redesign) |
+|---|---|---|
+| Framework | Next.js 13.2 — **Pages Router** (`pages/`) | Next.js 15 — App Router |
+| UI | **Material-UI v4** (`@material-ui/core`, `makeStyles`/JSS) | MUI 9 + Emotion, `styled()` |
+| Estado | Redux + `@reduxjs/toolkit`, middleware por módulo | React Query (servidor) + contexto (UI) |
+| Ícones | `@material-ui/icons` | subset do Material Symbols por `Icon` |
 
-## Stack
+Runtime: Node 18 local, `engines.node: >=16`. Deploy por `server.js` (express + `heroku-ssl-redirect`), estilo Heroku. **Não há GitHub Actions neste repo** — nenhum merge ou tag dispara build ou deploy.
 
-| | |
-|---|---|
-| Framework | Next.js 13.2 — **Pages Router** (`pages/`), não App Router |
-| UI | **Material-UI v4** (`@material-ui/core`, `makeStyles`/JSS) — não é `@mui` v5+ |
-| Estado | Redux + `@reduxjs/toolkit`, com middlewares próprios por módulo |
-| HTTP | axios, instância única em `src/services/api.tsx` |
-| Realtime | `socket.io-client` via `SocketStore` (`src/store/socket-store.ts`) |
-| Runtime | Node 18 local; `engines.node: >=16` |
-| Deploy | `server.js` (express + `heroku-ssl-redirect`), estilo Heroku. **Não há GitHub Actions neste repo** — nenhum merge ou tag dispara deploy |
+**A `master` é o app que os clientes usam hoje.** O redesign está especificado nas features [#20](https://github.com/sgrande-delivery/delivery-indoor/issues/20) a [#24](https://github.com/sgrande-delivery/delivery-indoor/issues/24) e acumula na `feat/indoor-v2`, que vai para a `master` quando fechar. Correção do app em produção sai da `master`; trabalho do redesign sai da branch de integração. **Nenhum dos dois lados importa código do outro para preencher lacuna.**
 
-O `delivery-client` já migrou para Next 15 + App Router + MUI v6. **Este repo não migrou.** Código copiado de lá precisa ser traduzido para MUI v4 e Pages Router — não cole `sx`, `'use client'` nem imports de `@mui/*`.
+Código copiado do `delivery-client` vem da `feat/app-v2` de lá e **precisa ser traduzido** para a stack de destino. Nunca cole `sx`, `'use client'` ou import de `@mui/*` em código da `master`.
 
-## Arquitetura — o fluxo da mesa
+## O fluxo da mesa
 
 ```
-QR code da mesa
-   └── /?session=<board_movement_uuid>
-         │
-         ├── src/App.tsx
-         │     ├── useFecthRestaurant()                      → GET /restaurants        (tema, cores, is_open)
-         │     ├── useFetchBoardMovement(session)            → GET /boardMovements/{id}
-         │     ├── useBoardControlSocket(session)            → namespace /board, subscribe_channel
-         │     ├── useSocketEvents()                         → namespace /client, kitchen_state_changed
-         │     └── useFetchPromotions()                      → GET /promotions
-         │
-         ├── /menu, /menu/[url], /offers   → cardápio (composição do pedido)
-         ├── /cart                         → revisão e POST /boardMovements/{id}/orders
-         └── /board                        → a conta da mesa
-               ├── useFecthBoardMovementProducts(id)  → GET /boardMovements/{id}/products
-               └── useFetchBoardMovementPayments(id)  → GET /boardMovements/{id}/payments
+QR code → /?session=<board_movement_uuid>
+   ├── GET /restaurants                      tema, cores, is_open, is_kitchen_open
+   ├── GET /boardMovements/{id}              a mesa
+   ├── socket /board, subscribe_channel      tempo real da conta
+   ├── /menu, /offers                        cardápio (composição do pedido)
+   ├── /cart                                 revisão e envio do pedido
+   └── /board                                a conta da mesa
 ```
 
-**`router.query.session` é a chave de tudo.** Sem ele o app não tem mesa: `useFetchBoardMovement` e `useBoardControlSocket` recebem `undefined` e retornam cedo, e `/board` renderiza `BoardNoMovement`. Toda feature que dependa da mesa precisa lidar com esse estado.
-
-### Redux
-
-`src/store/redux/modules/`:
-
-| Módulo | Papel |
-|---|---|
-| `restaurant` | dados do restaurante, tema, `is_open`, `is_kitchen_open` |
-| `boardMovement` | **a conta da mesa** — produtos lançados, pagamentos, desconto, total |
-| `cart` | composição local do pedido (some após o envio) |
-| `promotion` | promoções ativas, aplicadas pelo middleware do `cart` |
-| `order` | último pedido enviado |
-| `user` | herança do fork — **sem login, nunca é populado** |
-
-O `cart` tem middleware que recalcula total e promoções a cada ação (`src/store/redux/modules/cart/middleware.ts`). Não recalcule total em componente.
-
-## A v1 e a v2 da plataforma — este app é v1, e continua sendo
-
-A `delivery-api`, o `delivery-admin` e o `delivery-client` estão num corte para a **v2**, e **a v1 não acaba nele**: as duas atendem produção em paralelo enquanto os restaurantes migram, um a um, sem data para o fim da v1. A API publica as rotas v2 no mesmo deploy da v1, com chave por restaurante decidindo qual caminho serve cada loja; o painel e o app do cliente ficam com **dois apps no ar**, um da `master` (v1) e um da branch v2.
-
-**Este app consome rotas v1, e não precisa de versão v2 para continuar funcionando.** Medido em 2026-10-19: tudo o que ele chama é v1 (`/categories`, `/products/{id}`, `/restaurants`, `/boardMovements/{id}`, `/boardMovements/{id}/products`, `/boardMovements/{id}/payments`), e o envio do pedido, `POST /boardMovements/{id}/orders`, cai no `CreateOrderUseCase` **v1** (`app/Modules/Order/Controllers/Client/Order/CreateBoardOrderController.php:19`). Como a v1 não sai do ar, **nenhuma dessas rotas vai sumir**, e não há frente v2 a abrir aqui.
-
-Então:
-
-- **Não propor fallback, migração para rotas v2 nem ramificação por versão** sem spec que peça. Trocar `/products` por `/products/v2` é mudar o modelo de dado que as telas leem — é frente própria, não ajuste de passagem.
-- **Não apagar nem "modernizar" o que atende a v1**, e não perguntar se é para fazer: a resposta é não.
-- **Não presumir que a v2 da API é a fonte ao conferir contrato.** Este app mede contra as rotas v1; ler a v2 por engano descreve um formato que estas telas não recebem (dinheiro em centavos inteiro, `option_groups` em vez de complemento legado).
-
-**Uma fronteira de dado que vale conhecer, e que não é para "consertar" por conta própria:** o pedido que este app cria grava nas tabelas de complemento legadas (`order_additional`, `order_ingredients`, `order_product_complement_categories`), enquanto o caminho v2 da API grava só em `order_product_usages` — e o leitor v2 carrega **apenas** `products.usages` e `products.removedIngredients` (`core/Order/V2/Infra/DB/Eloquent/OrderRepository.php`, `baseQueryWithDetails`). Medido em 2026-10-19: os dois modelos **não se cruzam em nenhuma direção**. A consequência para este app é que um pedido lançado da mesa aparece no **painel v2** sem complementos, adicionais e ingredientes. Isso é decisão de produto em aberto na `delivery-api` — ou o leitor v2 passa a enxergar o modelo legado, ou este app passa a escrever pelo caminho de canal. **Não implementar nenhuma das duas sem spec.**
+**`session` é a chave de tudo.** Sem ela o app não tem mesa: os hooks recebem `undefined` e retornam cedo, e a conta renderiza o estado "sem mesa". Toda feature que dependa da mesa precisa lidar com esse estado.
 
 ## Contratos externos
 
 Este app não tem banco nem backend próprio. Tudo vem de dois serviços, e **o contrato deles é a fonte de verdade** — quando o código local divergir do que a API devolve, o código local está errado.
 
-### `delivery-api` (`~/projects/sgrande-delivery/delivery-api`)
+- **`delivery-api`** (`~/projects/sgrande-delivery/delivery-api`), base `${NEXT_PUBLIC_API}` = `.../api/client/`. O header canônico é **`x-restaurant-id` com o UUID** (`NEXT_PUBLIC_RESTAURANT_UUID`); os legados `restaurantid`/`restaurant_id` com id numérico ainda são aceitos, e código novo **não** os usa.
+- **`delivery-socket-api`** (clone local: `~/projects/sgrande-delivery/delivery-socket-api`), base `${NEXT_PUBLIC_SOCKET}`. Namespaces que interessam: `/client` (anônimo, `x-restaurant-uuid`) e `/board` (anônimo com `query.app=indoor`, sala por movimentação via `subscribe_channel`).
 
-Base: `${NEXT_PUBLIC_API}` = `.../api/client/`. Rotas registradas por módulo em `app/Modules/*/routes/client-routes.php`.
+Duas armadilhas que já quebraram tela aqui, e que valem em toda chamada:
 
-**Identificação do restaurante.** O header canônico é **`x-restaurant-id`, com o UUID** (`NEXT_PUBLIC_RESTAURANT_UUID`). O `RestaurantMiddleware` ainda aceita os legados `restaurantid`/`restaurant_id` com id numérico, e o repo hoje mistura os dois — `src/services/api.tsx` manda `RestaurantId` numérico, `pages/_document.tsx` e `pages/menu/*` mandam `x-restaurant-id` com UUID. Código novo usa **sempre** `x-restaurant-id` + UUID.
+- **`environment=board` em toda chamada de catálogo.** A API assume `delivery` quando o parâmetro falta: a omissão não dá erro, dá **cardápio errado**.
+- **Listagem de produto é paginada, e os dois envelopes diferem.** v1: `{ items, total, current_page, last_page }`, **sem** `per_page`. v2: `{ data, meta: { total, per_page, current_page, last_page, has_more, facets } }`. Tipo que fala dos dois é tipo que mente.
 
-Rotas que este app consome:
+A tabela de rotas, a de eventos de socket e os payloads estão na skill `contratos-externos`.
 
-| Rota | Observação |
-|---|---|
-| `GET /restaurants` | tema, cores, `is_open`, `working_hours`, `addresses` |
-| `GET /categories?environment=board` | array simples de categorias |
-| `GET /categories/{url}?environment=board` | **`products` vem paginado** — objeto, não array |
-| `GET /products?environment=board&page&rows` | **paginado** |
-| `GET /products/{id}` | produto completo com complementos |
-| `GET /promotions` | |
-| `GET /boardMovements/{id}` | a mesa |
-| `GET /boardMovements/{id}/products` | `{ products, discount }` |
-| `GET /boardMovements/{id}/payments` | |
-| `POST /boardMovements/{id}/orders` | envio do pedido — validado por `app/Modules/Order/Request/OrderBaseRequest.php` |
+## A v1 e a v2 da plataforma
 
-**Paginação.** O envelope é `{ items, total, current_page, last_page }` — repare que é **`current_page`**, não `per_page`. Os parâmetros são `page` e `rows`. Isso vale tanto para `/products` quanto para o `products` de dentro de `/categories/{url}`.
+A `delivery-api` publica as rotas v2 **no mesmo deploy** da v1, com chave por restaurante (`uses_v2_orders`, `uses_payment_connectors`) decidindo qual caminho serve cada loja. **A v1 não acaba:** ela atende quem não migrou, sem data para o fim.
 
-`/pushTokens` **não existe mais** — virou `push-tokens` (`app/Modules/PushNotification/routes/client-routes.php`).
+- **Não propor fallback de v2 para v1**, migração de rota ou ramificação por versão **sem spec que peça**.
+- **Não apagar nem "modernizar" o que atende a v1**, e não perguntar se é para fazer: a resposta é não.
+- **Não presumir que a v2 da API é a fonte ao conferir contrato** do app na `master`: ele mede contra as rotas v1, e ler a v2 por engano descreve um formato que estas telas não recebem (dinheiro em centavos inteiro, `option_groups` em vez de complemento legado).
 
-### `delivery-socket-api-2` (`~/projects/sgrande-delivery/delivery-socket-api-2`)
-
-> **O diretório local e o repo no GitHub têm nomes diferentes.** O checkout local é `delivery-socket-api-2`, mas o repositório é **`sgrande-delivery/delivery-socket-api`**, sem sufixo. Use o nome sem sufixo em qualquer `gh` — com ele o comando devolve *"Could not resolve to a Repository"*.
-
-Base: `${NEXT_PUBLIC_SOCKET}`. Dois namespaces interessam:
-
-**`/client`** — `ClientGateway` autentica **só** com `x-restaurant-uuid` no `handshake.auth`. Anônimo. Eventos: `kitchen_state_changed`, `restaurant_state_changed`.
-
-**`/board`** — `BoardGateway` (`src/nestjs/modules/board/board.gateway.ts`). Eventos, todos em `board/events.ts`:
-
-| Evento | Direção | Sala |
-|---|---|---|
-| `subscribe_channel` / `unsubscribe_channel` | emit | — |
-| `board_products_added` | on | `board_movement_id` |
-| `board_product_deleted` | on | `board_movement_id` |
-| `board_payment_added` | on | `board_movement_id` |
-| `board_payment_deleted` | on | `board_movement_id` |
-| `board_totals_changed` | on | `board_movement_id` |
-| `board_session_created` / `board_session_completed` | on | `restaurant_uuid` |
-
-> **Autenticação do `/board`.** O `BoardGateway` herda `handleConnection` de `src/nestjs/modules/shared/gateway.ts`, que exige o cookie `socket-${app}-access-token` e derruba a conexão sem ele. Esse cookie só é emitido no login (`AuthController` da `delivery-api`), e **este app não tem login** — por isso o socket do indoor está morto. O destravamento está especificado em `.claude/sdd/1-indoor-api-socket-recovery/`, e o endurecimento (cookie por sessão de mesa) em `.claude/sdd/2-indoor-socket-session-token/`.
-
-## Estrutura atual
-
-```
-pages/                        Pages Router
-  _app.tsx                    Provider redux → src/App.tsx
-  _document.tsx               SSR de estilos JSS + geração do manifest.json do PWA
-  index.tsx                   home (ISR 60s)
-  menu/index.tsx              lista de categorias (SSR)
-  menu/[url].tsx              produtos de uma categoria (SSR)
-  offers.tsx                  ofertas (ISR 300s)
-  cart.tsx                    revisão e envio do pedido
-  board.tsx                   a conta da mesa
-
-src/
-  App.tsx                     árvore de providers + hooks globais da mesa
-  components/
-    board/                    ~2.1k LOC — a conta da mesa e o detalhe de produto lançado
-    cart/                     ~1.7k LOC — composição e envio do pedido
-    products/                 listagem e detalhe do cardápio
-    index/, category/, offers/, menu/
-    login/                    HERANÇA DO FORK — inalcançável, não há rota /login
-    appbar/, sidebar/, layout/, dialog/, modal/, loading/, nodata/, ...
-  providers/
-    AppProvider.ts            viewport, menu, visibilidade do carrinho
-    MessageProvider.tsx       snackbar
-    LocationProvider.tsx      geolocalização
-    AuthProvider.tsx          HERANÇA DO FORK — login/social/jwt.verify, sem uso real
-    GoogleProvider.tsx        HERANÇA DO FORK — login social
-    FacebookProvider.tsx      HERANÇA DO FORK — login social
-    FirebaseProvider.tsx      push; só dispara com user.id, que nunca existe aqui
-  hooks/
-    useFetchBoardMovement.ts  a mesa
-    use-board-socket.ts       SocketStore do namespace /board
-    use-board-control-socket.ts  listeners dos eventos da mesa
-    use-client-socket.ts      SocketStore do namespace /client
-    use-socket-events.ts      kitchen_state_changed
-  store/
-    socket-store.ts           orquestra as conexões socket.io
-    redux/modules/            restaurant, boardMovement, cart, promotion, order, user
-  services/api.tsx            instância axios
-  types/                      contratos da API em TS
-```
-
-## Herança do fork — o que não pertence a este app
-
-Este repo carrega código do `delivery-client` que **nunca executa aqui**, porque depende de login ou de entrega. Ele confunde quem lê e dá a impressão de que existe fluxo de autenticação:
-
-| O que | Por que não pertence |
-|---|---|
-| `src/providers/AuthProvider.tsx` | login, logout, social login, `jwt.verify` client-side. Nenhuma tela chama |
-| `src/providers/GoogleProvider.tsx`, `FacebookProvider.tsx` | login social |
-| `src/components/login/` | inalcançável — não há rota `/login` em `pages/` |
-| `src/store/redux/modules/user` | `state.user` nunca é populado |
-| `src/providers/FirebaseProvider.tsx` | só pede token quando `user.id` existe; sem login, nunca |
-| `NEXT_PUBLIC_SECRET` | usado apenas pelo `jwt.verify` do `AuthProvider` |
-| dependência `jsonwebtoken` | idem |
-
-A remoção está especificada em `.claude/sdd/1-indoor-api-socket-recovery/tasks/05-*`. Até lá, **não construa nada em cima desse código** e não trate `state.user` como fonte de identidade.
-
-## Padrões de desenvolvimento
-
-### Busca de dados
-
-- **SSR/ISR** (`getStaticProps`/`getServerSideProps`): cria uma instância axios própria na página, porque `src/services/api.tsx` toca `localStorage` no interceptor e quebra no servidor. Mantenha o padrão; não importe `api` dentro de `getStaticProps`.
-- **Client-side:** `import { api } from 'src/services/api'`, sempre dentro de um hook `useFetchX` em `src/hooks/` ou em `src/components/<área>/hooks/`, que despacha para o Redux. Componente não chama `api` direto.
-- Erro de fetch some no `console.error` em vários hooks. Em código novo, propague estado de erro para a UI.
-
-### Socket
-
-- Uma instância de `SocketStore` **por namespace**, criada em **module scope** do hook (`const store = new SocketStore(...)` fora do componente). Instanciar dentro do componente abre uma conexão por render.
-- O hook expõe o socket via `useSyncExternalStore`.
-- Todo `socket.on(...)` dentro de `useEffect` precisa do `socket.off(...)` correspondente no cleanup — **um `off` por `on`, com o mesmo nome de evento**. Listener duplicado aqui vira produto lançado duas vezes na conta.
-- Ao trocar de mesa, emitir `unsubscribe_channel` antes de `subscribe_channel` na nova.
-
-### Componentes
-
-- MUI **v4**: `makeStyles`/`useStyles`, `<Grid container>` com API v4, `@material-ui/icons`. Nada de `sx` ou `styled` do `@mui`.
-- `if` sempre com `{}`.
-- Sem `any`; `unknown` quando inevitável.
-- Tipagem dos contratos da API mora em `src/types/` — se a API mudou, o tipo muda junto, no mesmo commit.
-- Formatação de dinheiro sempre por `src/helpers/numberFormat`.
-- Textos de UI em português, minúsculo, seguindo o que já existe (`"cardápio"`, `"nenhum produto para mostrar"`).
-
-### Identificadores
-
-Código, nomes de arquivo, branches e slugs de pasta SDD em **inglês**. Specs, tasks, issues, PRs e mensagens de UI em **português**.
-
-## Fluxo de trabalho (SDD)
-
-```
-/create-spec      → .claude/sdd/<n>-<slug>/{spec.md, plan.md, tasks/}
-/create-task      → .claude/sdd/<n>-<slug>/tasks/<id>-<slug>.md
-/execute          → branch + worktree, implementação via indoor-agent, review
-/ship             → commits atômicos, push, PR
-```
-
-`/report-bug` e `/request-feature` abrem issue no GitHub a partir de relato livre.
-
-Specs e tasks vivas ficam em `.claude/sdd/`. Leia a `spec.md` e o `plan.md` da feature — inclusive a seção "Aprendizados que valem para as próximas tasks" — antes de executar qualquer task dela.
-
-Features abertas hoje:
-
-| Pasta | Issue | O que é |
-|---|---|---|
-| `1-indoor-api-socket-recovery` | [#1](https://github.com/sgrande-delivery/delivery-indoor/issues/1) | As três quebras em produção: cardápio de categoria, tempo real e paginação. 5 tasks especificadas |
-| `2-indoor-socket-session-token` | [#2](https://github.com/sgrande-delivery/delivery-indoor/issues/2) | Endurecer a autenticação do socket. Tasks `a especificar` — seis decisões pendentes antes |
-
-## Contrato cross-repo não bloqueia implementação
-
-Feature que atravessa repos tem **spec nos dois lados**, e cada uma carrega o contrato: a daqui diz o que este app chama e o que espera de volta; a da `delivery-api` (ou do `delivery-socket-api`) diz o que publica. Esse par **é** o contrato — não há etapa de aprovação depois dele, e não há nada a esperar.
-
-- **Implementar contra o contrato da spec, sem esperar a outra ponta entregar.** Task daqui não fica bloqueada porque a rota ou o evento novo ainda não subiram, e não se troca implementação por mock, stub ou TODO.
-- **Não parar para perguntar se pode seguir.** Quem escreveu a spec já decidiu o que é para fazer; perguntar o que a task já responde é retrabalho para o dev, não cuidado.
-- **O aviso vai no relatório:** que a feature só funciona ponta a ponta quando a outra ponta subir.
-- **Motivo real para parar:** as duas specs divergirem no contrato (campo, status, unidade, nome de evento). Aí o contrato não existe de fato, e quem decide qual lado muda é o dev. Ausência de implementação do outro lado **não** é divergência — e é diferente de **divergência medida entre a task e a API real**, que é a regra do fim deste arquivo e continua valendo.
+**Uma fronteira de dado que não é para "consertar" por conta própria:** o pedido que a `master` cria grava nas tabelas de complemento legadas, enquanto o leitor v2 do painel carrega só `products.usages` e `products.removedIngredients` — um pedido lançado da mesa aparece no painel v2 **sem** complementos, adicionais e ingredientes. A saída está especificada ([#22](https://github.com/sgrande-delivery/delivery-indoor/issues/22) aqui, [delivery-api#1608](https://github.com/sgrande-delivery/delivery-api/issues/1608) lá). Não implementar outra por conta própria.
 
 ## Comandos
 
 ```bash
 yarn dev                       # next dev
-yarn build                     # next build  (precisa de NEXT_PUBLIC_RESTAURANT_ID/UUID no ambiente)
+yarn build                     # precisa das vars de restaurante no ambiente
 yarn start                     # server.js em produção
 npx tsc --noEmit               # type-check
 npx eslint src pages --ext .ts,.tsx
 ```
 
-**O build precisa das vars de restaurante.** `.env.production` não traz `NEXT_PUBLIC_RESTAURANT_ID` nem `NEXT_PUBLIC_RESTAURANT_UUID` — em produção o provisionamento injeta. Localmente:
+**O build precisa das vars de restaurante.** `.env.production` não traz `NEXT_PUBLIC_RESTAURANT_ID` nem `NEXT_PUBLIC_RESTAURANT_UUID` — em produção o provisionamento injeta:
 
 ```bash
-NEXT_PUBLIC_RESTAURANT_ID=1 \
-NEXT_PUBLIC_RESTAURANT_UUID=38691b7e-6dbe-46e6-97a0-971147ac02ad \
-npx next build
+NEXT_PUBLIC_RESTAURANT_ID=1 NEXT_PUBLIC_RESTAURANT_UUID=38691b7e-6dbe-46e6-97a0-971147ac02ad npx next build
 ```
 
-Sem isso, `getStaticProps` e `_document` recebem 404 da API e o export falha nas 6 rotas — é falha de ambiente, não de código.
+Sem isso, `getStaticProps` e `_document` recebem 404 da API e o export falha nas 6 rotas — é falha de ambiente, não de código. **O repo só tem `.env.production`, e o `next dev` não carrega esse arquivo**: sem criar `.env.development` (gitignored), `NEXT_PUBLIC_API` e `NEXT_PUBLIC_SOCKET` ficam `undefined` e a falha aparece como tela em branco.
+
+**`next build` e `next start` carregam `.env.production`** — testar em modo de produção sem injetar as vars sobe o app apontando para a produção de verdade. Confirme com `grep -r "api.sgrande.delivery" .next/static` antes de abrir o navegador.
 
 Para exercitar a mesa localmente é preciso uma movimentação aberta: `/?session=<uuid>`.
 
-## Variáveis de ambiente
+**`.env.production` está versionado e o repo é público.** Toda var `NEXT_PUBLIC_*` é inlinada no bundle do browser — ela é pública por construção. Nunca coloque segredo real numa `NEXT_PUBLIC_*`, e nunca acrescente var não pública a esse arquivo.
 
-| Var | Uso |
-|---|---|
-| `NEXT_PUBLIC_API` | base da `delivery-api`, terminando em `/api/client/` |
-| `NEXT_PUBLIC_SOCKET` | base do `delivery-socket-api-2` |
-| `NEXT_PUBLIC_RESTAURANT_UUID` | valor do header `x-restaurant-id` |
-| `NEXT_PUBLIC_RESTAURANT_ID` | id numérico, usado pelo header legado |
-| `NEXT_PUBLIC_TOKEN_NAME` | chave de token no localStorage — herança do fork |
-| `NEXT_PUBLIC_SECRET` | **a remover** — só alimenta o `jwt.verify` do `AuthProvider` |
-| `NEXT_PUBLIC_LOCALSTORAGE_CART` | chave do carrinho local |
-| `NEXT_PUBLIC_FIREBASE_*` | push |
-| `NEXT_PUBLIC_GOOGLE_API_KEY` | Google Maps |
+## Fluxo de trabalho (SDD)
 
-> **`.env.production` está versionado e o repo é público.** Toda var `NEXT_PUBLIC_*` é inlinada no bundle do browser pelo Next — ela é pública por construção, versionada ou não. Nunca coloque segredo real numa `NEXT_PUBLIC_*`, e nunca acrescente var não pública a esse arquivo.
+O trabalho é organizado por **feature**, não por task solta. Cada feature vive em `.claude/sdd/<issue>-<slug>/` com `spec.md` (o quê e por quê), `plan.md` (como, tabela de tasks e aprendizados) e `tasks/<id>-<slug>.md`, numerados pelas issues do GitHub — feature com label `feature`, cada task como sub-issue com label `task`.
+
+```
+/create-spec      → spec.md + plan.md + tasks/ (e a issue da feature)
+/create-task      → acrescenta uma task à spec
+/execute          → branch + worktree, implementação via indoor-agent, review
+/ship             → commits atômicos, push e PR contra a base de que a task foi cortada
+```
+
+Fora do ciclo: `/review-task` confere a entrega contra o que a task prometeu, `/follow-ups` consolida a dívida adiada, e `/report-bug` e `/request-feature` abrem issue a partir de relato livre de tester ou PO.
+
+**Status da task** no `plan.md`: `a especificar` → `pendente` → `executada` → `shipped`.
+
+**Leia a `spec.md` e o `plan.md` da feature antes de executar qualquer task dela** — inclusive a seção "Aprendizados que valem para as próximas tasks", que é onde uma armadilha já paga fica registrada.
+
+**Contrato escrito é contrato para implementar.** Feature que depende de rota ou evento novo nasce como spec no repo de destino, e aqui a spec e cada task carregam o contrato **inline**. A tela é construída inteira contra ele, mesmo com a rota ainda não publicada. É proibido esconder UI porque "a rota não subiu", trocar implementação por mock, stub ou TODO, ou transformar isso em pergunta. O aviso de ordem de deploy vai no relatório, nunca na execução. O único motivo real para parar é **divergência medida** entre as duas specs no contrato (campo, status, unidade, nome de evento) — ausência de implementação do outro lado **não** é divergência.
+
+**Subagentes** (`.claude/agents/`): `indoor-agent` implementa, `code-reviewer-typescript` revisa contra os modos de falha desta base, `git-agent` faz commit, push e PR. O `/execute` e o `/ship` os orquestram — não invocar direto.
+
+**Identificadores:** código, nomes de arquivo, branches e slugs de pasta SDD em **inglês**; specs, tasks, issues, PRs e mensagens de UI em **português**, minúsculo, seguindo o que já existe (`"cardápio"`, `"nenhum produto para mostrar"`).
 
 ## O que NÃO fazer
 
 - **Não** trate `state.user` como identidade — este app não tem login
-- **Não** copie código do `delivery-client` sem traduzir de MUI v6 → v4 e de App Router → Pages Router
+- **Não** copie código do `delivery-client` sem traduzir para a stack de destino
 - **Não** chame `api` (de `src/services/api.tsx`) dentro de `getStaticProps`/`getServerSideProps` — ele toca `localStorage`
 - **Não** instancie `SocketStore` dentro de componente
 - **Não** registre `socket.on` sem o `socket.off` correspondente no cleanup
-- **Não** assuma que `products` de `/categories/{url}` é array — é `{ items, total, current_page, last_page }`
-- **Não** assuma `per_page` no envelope de paginação — o campo é `current_page`
+- **Não** assuma que `products` de `/categories/{url}` é array — é envelope paginado
+- **Não** assuma `per_page` no envelope da v1 — lá o campo é `current_page`
 - **Não** coloque segredo em var `NEXT_PUBLIC_*`
-- **Não** calcule total do carrinho em componente — é o middleware do módulo `cart`
-- **Não** construa em cima de `AuthProvider`, `GoogleProvider`, `FacebookProvider` ou `src/components/login/` — são herança morta do fork
-- **Não** migre rota para v2, nem ramifique por versão da plataforma, sem spec que peça — ver "A v1 e a v2 da plataforma"
-- Se o contrato real da `delivery-api` ou do `delivery-socket-api` divergir do que a task diz, **pare e reporte** em vez de adaptar em silêncio. Isto é divergência **medida** no contrato, e é bloqueio legítimo; não confundir com a outra ponta ainda não ter subido, que não é (ver "Contrato cross-repo não bloqueia implementação")
+- **Não** calcule total do carrinho em componente — é o middleware do módulo `cart` (na `master`) ou o servidor (na v2)
+- **Não** construa em cima de `AuthProvider`, `GoogleProvider`, `FacebookProvider` ou `src/components/login/` — é herança morta do fork, cuja remoção está na [#20](https://github.com/sgrande-delivery/delivery-indoor/issues/20)
+- **Não** migre rota para v2 nem ramifique por versão da plataforma sem spec que peça
+- Se o contrato real da API divergir do que a task diz, **pare e reporte** em vez de adaptar em silêncio
+
+## Onde está o resto
+
+Nada abaixo carrega nesta conversa até ser preciso — é por isso que não está aqui.
+
+| Preciso de | Onde está | Carrega quando |
+|---|---|---|
+| Hook de busca, React Query, envelope de paginação, erro na UI | rule `busca-de-dados` | tocar em `src/**` |
+| `SocketStore`, salas, `subscribe_channel`, cleanup de listener | rule `socket-da-mesa` | tocar em `src/hooks/**`, `src/store/**` |
+| Extração de componente, `styled` × `sx`, MUI v4 × MUI 9, dinheiro | rule `componentes-e-estilos` | tocar em `src/**/*.tsx` |
+| Rotas da `delivery-api`, eventos do `/board`, payloads da mesa | skill `contratos-externos` | tocar em integração |
+| Design system, tokens versionados (`.claude/design-system/tokens.json`) e protótipo da tela | skill `modelo-de-design` | especificar, implementar ou redesenhar tela, e antes de criar protótipo |
+| Inventário dos repos, branches e clones da plataforma | skill `inventario-repos` | citar outro repo |
