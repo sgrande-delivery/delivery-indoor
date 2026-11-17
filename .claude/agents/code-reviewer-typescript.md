@@ -95,11 +95,11 @@ Este é o valor deste agente. Procure ativamente — **todos já aconteceram aqu
 
 **19. Alvo de toque abaixo de 44px.** O tablet é compartilhado e manuseado na mesa; o design fixa o mínimo.
 
-**20. Cor literal em vez do tema.** A primária vem de `restaurant.primary_color` em runtime; o hex do design é do tenant de referência e quebra todo restaurante que não é o de teste.
+**20. Cor literal em vez do tema.** A primária vem de `restaurant.primary_color` em runtime; o hex do design é do tenant de referência e quebra todo restaurante que não é o de teste. Hex copiado do protótipo também é achado: token vem do tema, espelhado em `.claude/design-system/tokens.json`.
 
 **21. `.map()` com JSX de mais de uma linha sem split.** Pai + `<XxxList>` + `<XxxItem>`. Rode o grep, leia cada hit, bloqueie com a lista exata.
 
-**22. Componente do design copiado literal.** `<button class="cta">`, `.chip`, `.ghost` crus. O design é referência **visual**; a implementação é componente do projeto.
+**22. Componente do protótipo copiado literal.** `<button class="cta">`, `.opt`, `.chip`, `.ghost` crus. O protótipo é referência **visual** — layout, hierarquia, copy e estados; a implementação é componente do projeto, e token vem do tema.
 
 ## Regras duras do repo
 

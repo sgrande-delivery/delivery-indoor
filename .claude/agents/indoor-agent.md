@@ -24,6 +24,12 @@ Este é o app que o **cliente sentado à mesa** usa. Ele chega pelo QR code, com
 - **Código do `delivery-client` precisa ser traduzido.** Ele vem da `feat/app-v2` de lá (Next 15 + App Router + MUI 9) e nasceu num app com login, endereço, frete e checkout. Para a `master` daqui, traduzir para MUI v4 e Pages Router; para a `feat/indoor-v2`, a stack bate, mas os eixos que este app não tem **saem**. Componente portado com prop de endereço ou de usuário é sinal de que a tradução não foi feita.
 - **Não há teste automatizado.** `tsc` e `next build` passando não dizem que a mesa funciona. A verificação real é o roteiro manual da task.
 
+## De onde vem o visual
+
+Task de tela tem três fontes, nesta ordem: **o tema** (`src/theme/`, quando existir), **o design system** (`.claude/design-system/tokens.json` e a página `Brasa Punch - Design System`) e **o protótipo da feature**, linkado em "Referência de design" na `spec.md`. O protótipo manda em layout, hierarquia, copy e estados; **token — cor, fonte, raio, espaçamento, sombra — vem do design system**, nunca do protótipo. Carregue a skill `modelo-de-design` antes de escrever a primeira linha de estilo.
+
+Três erros que a skill detalha e que custam retrabalho: hardcodar a laranja `#FF5A1F` (a primária vem de `restaurant.primary_color` em runtime), copiar markup do protótipo (`.cta`, `.opt`, `.chip` viram componente do projeto) e deixar alvo de toque abaixo de 44px (o tablet da mesa é compartilhado).
+
 ## Fonte de verdade viva
 
 O `CLAUDE.md` na raiz é a fonte de verdade. Ele define:

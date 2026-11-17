@@ -56,6 +56,8 @@ Fluxo:
    - `api` de `src/services/api.tsx` não funciona em `getStaticProps`/`getServerSideProps`
    - Total do carrinho é responsabilidade do middleware do módulo `cart`
 
+   Quando a task tocar **tela**, ler o protótipo citado em "Referência de design" na `spec.md` e carregar a skill `modelo-de-design`; citar na task o que dali é fonte de verdade (layout, hierarquia, copy, estados) e lembrar que token vem de `.claude/design-system/tokens.json`.
+
    Quando a task tocar contrato externo, **abrir a fonte**: `app/Modules/*/routes/client-routes.php` na `delivery-api`, `src/nestjs/modules/*/events.ts` e `shared/gateway.ts` no `delivery-socket-api`.
 
 6. **Escrever a task** seguindo o template:

@@ -36,6 +36,9 @@ Fluxo:
    - A feature toca **listagem de produto**? A `delivery-api` pagina; assumir array é o erro mais comum aqui.
 
 4. **Coletar informações faltantes** — uma única rodada de perguntas curtas, só se algo essencial não estiver claro:
+
+   - A feature tem **tela**? Então carregar a skill `modelo-de-design` e perguntar, ainda aqui, qual é o protótipo dela. Ler o protótipo antes de escrever o plan — é o que ancora layout, hierarquia, copy e estados; cor, fonte, raio e espaçamento vêm do design system. Sem protótipo, perguntar se deve nascer um antes da execução.
+
    - Objetivo e quem é afetado (cliente na mesa, garçom no PDV, gestor)
    - Escopo: resolvível só neste repo, ou depende de contrato novo da `delivery-api`/`delivery-socket-api`
    - Regras de negócio já conhecidas
@@ -76,6 +79,13 @@ Fluxo:
 
    - **RN-01** — <regra, com o porquê quando não for óbvio>
 
+   ## Referência de design
+
+   <O link do protótipo que ancora as telas desta feature e o que dele é fonte de verdade
+   (layout, hierarquia, copy, estados). Token — cor, fonte, raio, espaçamento, sombra — vem do
+   design system (`.claude/design-system/tokens.json`, skill `modelo-de-design`), não do protótipo;
+   a implementação é sempre componente do projeto. Omitir se a feature não tem tela.>
+
    ## Fora do escopo
 
    - <Item que poderia confundir mas não está na feature>
@@ -95,7 +105,7 @@ Fluxo:
 
    **As RN são o que a spec tem de mais durável.** Preferir regra que explique *por quê* ("o socket do `/board` exige cookie de login porque o `BoardGateway` herda o `handleConnection` do `Gateway`") a regra que só afirma. É nelas que uma premissa errada fica visível antes de virar bug.
 
-   Regras que valem para quase toda feature deste repo e devem aparecer quando forem tocadas: **não há login**; **a mesa vem da query string (`session`)**; **listagem de produto é paginada, e os envelopes da v1 e da v2 diferem**; **um `socket.off` para cada `socket.on`**; e **a stack depende da branch** — MUI v4 + Pages Router na `master`, MUI 9 + App Router na `feat/indoor-v2`.
+   Regras que valem para quase toda feature deste repo e devem aparecer quando forem tocadas: **não há login**; **a mesa vem da query string (`session`)**; **listagem de produto é paginada, e os envelopes da v1 e da v2 diferem**; **um `socket.off` para cada `socket.on`**; e **a stack depende da branch** — MUI v4 + Pages Router na `master`, MUI 9 + App Router na `feat/indoor-v2`. Em feature com tela, acrescentar que **a cor da marca vem do restaurante em runtime** e que **nenhum alvo de toque fica abaixo de 44px**, porque o tablet da mesa é compartilhado.
 
 7. **Escrever `plan.md`** em `.claude/sdd/<feature>/plan.md`:
 
