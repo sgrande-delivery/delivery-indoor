@@ -71,6 +71,12 @@ Socket, namespace `/board`, sala da movimentação (`subscribe_channel` com o uu
 - **RN-10 — Chamar o garçom é ação sem resultado visível no salão para o cliente.** O cliente não sabe se o garçom viu. A tela diz o que é verdade — "garçom chamado às 20:12" — e não promete atendimento; e a ação tem um intervalo mínimo entre chamadas, para não virar um botão de spam contra o PDV.
 - **RN-11 — Conta paga não libera a mesa.** `is_board_paid` é saldo zerado; liberar a mesa é ação do PDV (`PATCH /boardMovements/{id}/free`). A tela de conta paga agradece a visita e **não** oferece liberar a mesa.
 
+## Referência de design
+
+Projeto [Brasa Punch](https://claude.ai/code/artifact/00f39abb-79e7-4225-ab1a-18a339df7e41): `Brasa Punch Indoor - Conta da Mesa` — celular (conta em aberto e conta paga), desktop 1440, tablet deitado (itens à esquerda, conta e pagamento à direita) e tablet em pé (coluna única com barra de ações fixa).
+
+O protótipo é fonte de **layout, hierarquia, copy e estados**. **Token — cor, fonte, raio, espaçamento, sombra e os três formatos de layout — vem de `.claude/design-system/tokens.json`**, não do protótipo, e a cor da marca vem de `restaurant.primary_color` em runtime. Antes de implementar, carregar a skill `modelo-de-design`.
+
 ## Fora do escopo
 
 - O fluxo de pagamento em si — frente [#24](https://github.com/sgrande-delivery/delivery-indoor/issues/24). Aqui só existe a entrada ("Pagar conta") e o reflexo do pagamento na conta.

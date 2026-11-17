@@ -6,7 +6,7 @@
 
 ## Abordagem técnica
 
-> **Fonte do design.** O design system está sendo centralizado neste repo (PR a caminho, padrão do `delivery-admin`). Antes de implementar tela, conferir se a centralização já entrou: entrou, a fonte é o arquivo versionado; não entrou, é a página do canvas "Brasa Punch". Ver a feature [#20](https://github.com/sgrande-delivery/delivery-indoor/issues/20), RN-11.
+> **Fonte do design.** Token vem de `.claude/design-system/tokens.json` (versionado pelo [PR #26](https://github.com/sgrande-delivery/delivery-indoor/pull/26)); layout, copy e estado vêm do protótipo citado em "Referência de design" na spec. Carregar a skill `modelo-de-design` antes de implementar tela. Ver a RN-11 da [#20](https://github.com/sgrande-delivery/delivery-indoor/issues/20).
 
 O cardápio é a área onde o `delivery-client` dá mais código pronto, porque lá ele já consome exatamente estas rotas. As fontes, todas em `feat/app-v2`: `src/services/menu.ts`, `src/services/product.ts`, `src/services/search.ts`, `src/services/ingredients.ts`, `src/components/menu/`, `src/components/category/`, `src/components/product/`, `src/components/search/`, `src/components/home/`, `src/hooks/use-load-more.ts` e os primitivos `ProductCard.tsx` / `ProductListItem.tsx` / `QuantityStepper.tsx` / `ThumbDiscountMark.tsx`. O que muda na tradução: cai tudo que depende de login (`is_favorite`, últimos comprados, avaliação) e entra o `environment=board` em toda chamada.
 

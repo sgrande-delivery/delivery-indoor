@@ -79,6 +79,12 @@ Socket, namespace `/board`, sala da movimentação: `board.charge_updated` com `
 - **RN-11 — Dinheiro da mesa é float em real.** O contrato da mesa é v1; o valor digitado em "outro valor" é convertido numa fronteira só, e a comparação com o saldo usa a mesma unidade.
 - **RN-12 — A taxa de serviço faz parte do que falta pagar.** `total_due = subtotal + tip_amount`; o cliente que paga "tudo que falta" paga a taxa. Nenhuma tela desta frente oferece remover a taxa — isso é decisão de salão, feita no PDV.
 
+## Referência de design
+
+Projeto [Brasa Punch](https://claude.ai/code/artifact/00f39abb-79e7-4225-ab1a-18a339df7e41): `Brasa Punch Indoor - Conta da Mesa`, blocos "Mobile · pagar pelo app (interativo)", "Mobile · Pix gerado (copia e cola primeiro)", a coluna de pagamento do tablet deitado e "Tablet deitado · Pix gerado (QR em destaque)".
+
+O protótipo é fonte de **layout, hierarquia, copy e estados**. **Token — cor, fonte, raio, espaçamento, sombra e os três formatos de layout — vem de `.claude/design-system/tokens.json`**, não do protótipo, e a cor da marca vem de `restaurant.primary_color` em runtime. Antes de implementar, carregar a skill `modelo-de-design`.
+
 ## Fora do escopo
 
 - Pagar por item (escolher quais itens o pagamento cobre). O servidor já guarda `coverage` e `split_mode` para o PDV, e o design divide por **valor**.

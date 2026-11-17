@@ -66,6 +66,12 @@ Item da sacola na resposta: `{ id, product_id, product_public_id, name, image_ur
 - **RN-09 — Loja ou cozinha fechada bloqueia o envio, não a composição.** `is_open` e `is_kitchen_open` vêm do restaurante e mudam por socket. O cliente pode montar a sacola; o que trava é o botão de enviar, com o motivo escrito.
 - **RN-10 — O gate `orders.v2` do restaurante vale para o preview e para o checkout.** Loja que não migrou responde `403 v2_orders_disabled`. Como o app de mesa passa a existir só na v2, essa resposta é condição de loja não migrada — e a tela precisa de uma mensagem própria, não de "erro inesperado".
 
+## Referência de design
+
+Projeto [Brasa Punch](https://claude.ai/code/artifact/00f39abb-79e7-4225-ab1a-18a339df7e41): `Brasa Punch Indoor - Carrinho` — celular (primeiro pedido interativo, solicitação de nome, próximos pedidos), desktop 1440 com o modal de nome, e os dois formatos de tablet (sacola lateral em paisagem, painel inferior em retrato, e o diálogo de nome com o teclado aberto).
+
+O protótipo é fonte de **layout, hierarquia, copy e estados**. **Token — cor, fonte, raio, espaçamento, sombra e os três formatos de layout — vem de `.claude/design-system/tokens.json`**, não do protótipo, e a cor da marca vem de `restaurant.primary_color` em runtime. Antes de implementar, carregar a skill `modelo-de-design`.
+
 ## Fora do escopo
 
 - Cupom e promoção por código: o carrinho v2 tem `POST /cart/{cartId}/coupon`, e a mesa não tem cupom hoje.

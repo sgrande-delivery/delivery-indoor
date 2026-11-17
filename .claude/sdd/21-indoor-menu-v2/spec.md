@@ -65,6 +65,12 @@ Todas as rotas abaixo levam `x-restaurant-id` com o UUID do restaurante, e **tod
 - **RN-08 — Não há login, então não há favorito nem "últimos comprados".** `is_favorite` vem no payload e é sempre falso aqui; `/wishlist/v2` e `/last-brought-products/v2` exigem JWT. Não desenhar nada que dependa deles.
 - **RN-09 — `activated: false` não é erro, é item fora do ar.** Produto e categoria desativados não entram na lista, e o app não tenta explicar o motivo ao cliente.
 
+## Referência de design
+
+Projeto [Brasa Punch](https://claude.ai/code/artifact/00f39abb-79e7-4225-ab1a-18a339df7e41): `Brasa Punch - Catalogo`, `Brasa Punch - Produto` e `Brasa Punch - Busca`; a grade do tablet (3 colunas deitado, 2 em pé) e a trilha de categorias fixa saem dos quadros de tablet de `Brasa Punch Indoor - Carrinho`.
+
+O protótipo é fonte de **layout, hierarquia, copy e estados**. **Token — cor, fonte, raio, espaçamento, sombra e os três formatos de layout — vem de `.claude/design-system/tokens.json`**, não do protótipo, e a cor da marca vem de `restaurant.primary_color` em runtime. Antes de implementar, carregar a skill `modelo-de-design`.
+
 ## Fora do escopo
 
 - Carrinho, sacola e envio do pedido — frente [#22](https://github.com/sgrande-delivery/delivery-indoor/issues/22).

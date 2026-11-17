@@ -6,7 +6,7 @@
 
 ## Abordagem técnica
 
-> **Fonte do design.** O design system está sendo centralizado neste repo (PR a caminho, padrão do `delivery-admin`). Antes de implementar tela, conferir se a centralização já entrou: entrou, a fonte é o arquivo versionado; não entrou, é a página do canvas "Brasa Punch". Ver a feature [#20](https://github.com/sgrande-delivery/delivery-indoor/issues/20), RN-11.
+> **Fonte do design.** Token vem de `.claude/design-system/tokens.json` (versionado pelo [PR #26](https://github.com/sgrande-delivery/delivery-indoor/pull/26)); layout, copy e estado vêm do protótipo citado em "Referência de design" na spec. Carregar a skill `modelo-de-design` antes de implementar tela. Ver a RN-11 da [#20](https://github.com/sgrande-delivery/delivery-indoor/issues/20).
 
 Esta é a tela que **não** vem do `delivery-client` — ele não tem conta de mesa. O que vem de lá são os primitivos e a linguagem do detalhe do pedido (`src/components/order/detail/`: `OrderPaymentCard.tsx`, `OrderTotals`, a lista de status e a lista de itens), que o design diz explicitamente estar seguindo. O domínio é daqui: `src/components/board/` (~2,1k linhas) e os hooks `useFetchBoardMovement`, `useFecthBoardMovementProducts`, `useFetchBoardMovementPayments`, `use-board-socket`, `use-board-control-socket`.
 

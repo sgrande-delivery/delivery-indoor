@@ -6,7 +6,7 @@
 
 ## Abordagem técnica
 
-> **Fonte do design.** O design system está sendo centralizado neste repo (PR a caminho, padrão do `delivery-admin`). Antes de implementar tela, conferir se a centralização já entrou: entrou, a fonte é o arquivo versionado; não entrou, é a página do canvas "Brasa Punch". Ver a feature [#20](https://github.com/sgrande-delivery/delivery-indoor/issues/20), RN-11.
+> **Fonte do design.** Token vem de `.claude/design-system/tokens.json` (versionado pelo [PR #26](https://github.com/sgrande-delivery/delivery-indoor/pull/26)); layout, copy e estado vêm do protótipo citado em "Referência de design" na spec. Carregar a skill `modelo-de-design` antes de implementar tela. Ver a RN-11 da [#20](https://github.com/sgrande-delivery/delivery-indoor/issues/20).
 
 A sacola do `delivery-client` já é o carrinho v2, e é a fonte: `src/services/cart.ts`, `src/components/cart/` (`CartScreen.tsx`, `CartItemList.tsx`, `CartItemCard.tsx`, `CartFooter.tsx`, `CartSummary.tsx`, `CartEmpty.tsx`, `CartError.tsx`, `CartClearConfirm.tsx`, `use-cart.ts`, `use-cart-actions.ts`, `cart-query.ts`, `cart-item-composition.ts`) e `src/services/client-session.ts`. O que cai na tradução: endereço, frete, cupom, checkout de pagamento, barra de carrinho com rota de checkout. O que entra: a linha da mesa, o diálogo de nome, o envio para a cozinha e os dois formatos de tablet.
 

@@ -6,7 +6,7 @@
 
 ## Abordagem técnica
 
-> **Fonte do design.** O design system está sendo centralizado neste repo (PR a caminho, padrão do `delivery-admin`). Antes de implementar tela, conferir se a centralização já entrou: entrou, a fonte é o arquivo versionado; não entrou, é a página do canvas "Brasa Punch". Ver a feature [#20](https://github.com/sgrande-delivery/delivery-indoor/issues/20), RN-11.
+> **Fonte do design.** Token vem de `.claude/design-system/tokens.json` (versionado pelo [PR #26](https://github.com/sgrande-delivery/delivery-indoor/pull/26)); layout, copy e estado vêm do protótipo citado em "Referência de design" na spec. Carregar a skill `modelo-de-design` antes de implementar tela. Ver a RN-11 da [#20](https://github.com/sgrande-delivery/delivery-indoor/issues/20).
 
 A frente tem três partes bem separadas: **quanto pagar** (regra de valor, sem rede), **como pagar** (canais e coletores, que é onde o `delivery-client` ajuda) e **a espera** (tempo real, que é onde o indoor já tem músculo).
 
