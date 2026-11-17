@@ -1,29 +1,6 @@
 {
   "permissions": {
-    "allow": [
-      "Edit",
-      "Write",
-      "Bash(npx tsc *)",
-      "Bash(npx eslint *)",
-      "Bash(npx next build *)",
-      "Bash(yarn build *)",
-      "Bash(yarn dev *)",
-      "Bash(yarn lint *)",
-      "Bash(git fetch *)",
-      "Bash(git status *)",
-      "Bash(git diff *)",
-      "Bash(git log *)",
-      "Bash(git checkout *)",
-      "Bash(git add *)",
-      "Bash(git commit -m ' *)",
-      "Bash(git push *)",
-      "Bash(git stash *)",
-      "Bash(git pull *)",
-      "Bash(git worktree *)",
-      "Bash(gh issue view *)",
-      "Bash(gh pr view *)",
-      "Bash(gh api repos/sgrande-delivery/delivery-indoor *)"
-    ]
+    "allow": ["Edit", "Write", "Bash", "Edit"]
   },
   "worktree": {
     "symlinkDirectories": ["node_modules"],
