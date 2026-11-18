@@ -56,6 +56,7 @@ Socket, namespace `/board`, sala da movimentação (`subscribe_channel` com o uu
 - **RF-16** — Sem `session`, ou com movimentação inexistente ou já liberada, a tela mostra o estado de "sem mesa" da fundação.
 - **RF-17** — No tablet em paisagem, itens à esquerda e o bloco de conta e pagamento à direita, cada coluna com rolagem própria; em retrato, coluna única com barra de ações fixa embaixo.
 - **RF-18** — Carregamento usa skeleton com a forma dos blocos; falha que impede a tela usa a tela de erro da fundação, com o código do erro.
+- **RF-19** — Conta quitada no tablet em paisagem: a coluna da direita vira o bloco de encerramento — `check_circle` em `success`, "Conta paga", o total quitado, **a lista dos pagamentos com forma, nome e hora**, e a ação de chamar garçom; os itens continuam legíveis à esquerda e o chip da mesa na barra superior passa a "Mesa 12 · paga". Nada de pagar aparece mais na tela.
 
 ## Regras de negócio
 
@@ -73,9 +74,9 @@ Socket, namespace `/board`, sala da movimentação (`subscribe_channel` com o uu
 
 ## Referência de design
 
-Projeto [Brasa Punch](https://claude.ai/code/artifact/00f39abb-79e7-4225-ab1a-18a339df7e41): `Brasa Punch Indoor - Conta da Mesa` — celular (conta em aberto e conta paga), desktop 1440, tablet deitado (itens à esquerda, conta e pagamento à direita) e tablet em pé (coluna única com barra de ações fixa).
+Canvas [Brasa Punch Indoor](https://claude.ai/artifact/E8mKAq2MKaCRXcRVLeDh1u): `Conta · tablet deitado` (itens à esquerda, conta e pagamento à direita), `Conta · tablet em pé` (coluna única com barra de ações fixa) e `Conta · tablet deitado · conta paga`; no celular, `Conta · celular · em aberto` e `Conta · celular · paga`, e `Conta · desktop 1440`. Os estados da tela em tablet são `Estado · carregando (skeleton)`, `Estado · erro de rota`, `Estado · offline` e `Estado · sem mesa (sem session)`.
 
-O protótipo é fonte de **layout, hierarquia, copy e estados**. **Token — cor, fonte, raio, espaçamento, sombra e os três formatos de layout — vem de `.claude/design-system/tokens.json`**, não do protótipo, e a cor da marca vem de `restaurant.primary_color` em runtime. Antes de implementar, carregar a skill `modelo-de-design`.
+O protótipo é fonte de **layout, hierarquia, copy e estados**. **Token — cor, fonte, raio, espaçamento e sombra — vem de `design-system/tokens.json`, e os três formatos de layout da tabela "Os três formatos" do `design-system/README.md`**, não do protótipo, e a cor da marca vem de `restaurant.primary_color` em runtime. Antes de implementar, carregar a skill `modelo-de-design`.
 
 ## Fora do escopo
 
@@ -97,6 +98,7 @@ O protótipo é fonte de **layout, hierarquia, copy e estados**. **Token — cor
 - [ ] Pagar tudo pelo PDV troca a tela para o estado de conta paga, com o intervalo de tempo de mesa.
 - [ ] "Chamar garçom" mostra o estado de chamada feita e não dispara duas vezes seguidas.
 - [ ] Em tablet paisagem as duas colunas rolam independentemente; em retrato a barra de ações fica fixa.
+- [ ] Com a conta quitada, a coluna da direita mostra os pagamentos (forma, nome e hora) e nenhuma ação de pagar.
 - [ ] Sem `session`, a tela de "sem mesa" aparece em vez de conta vazia.
 
 ## Decisões pendentes

@@ -46,9 +46,10 @@ Item da sacola na resposta: `{ id, product_id, product_public_id, name, image_ur
 - **RF-07** — O envio manda o nome como identificação de quem pediu, para que os itens apareçam na conta da mesa atribuídos a essa pessoa.
 - **RF-08** — Durante o envio o botão mostra spinner e fica desabilitado; o envio não pode ser disparado duas vezes.
 - **RF-09** — Enviado, a tela mostra a confirmação do design ("Pedido enviado, \<primeiro nome\>!", "A cozinha já recebeu. Os itens entraram na conta da Mesa 12.") com os dois caminhos: ver a conta da mesa e voltar ao cardápio.
+- **RF-09a** — No tablet em paisagem a confirmação do envio **não toma a tela**: ela ocupa a coluna da sacola, com o cardápio seguindo navegável à esquerda, o selo da rodada ("Pedido 3 · em preparo"), os itens enviados e os dois caminhos (ver na conta da mesa, continuar no cardápio). Em retrato ela ocupa o painel inferior.
 - **RF-10** — Após o envio a sacola fica vazia, e o `cart_id` consumido não é reutilizado.
 - **RF-11** — "Limpar" esvazia a sacola, com confirmação.
-- **RF-12** — Sacola vazia usa o empty state do design, com a ação de ver o cardápio.
+- **RF-12** — Sacola vazia usa o empty state do design, com a ação de ver o cardápio. **No tablet em paisagem a coluna da sacola não desaparece quando está vazia**: ela mostra o empty state (círculo de 72, "nenhum item ainda", a frase de que o pedido só vai para a cozinha quando enviar) e o botão de enviar **desabilitado**, para a coluna não piscar entre existir e não existir.
 - **RF-13** — No tablet em paisagem a sacola é coluna fixa ao lado do cardápio, sempre visível; em retrato é painel inferior que abre sobre o cardápio. Controles de quantidade e botões com no mínimo 44px.
 - **RF-14** — No tablet em paisagem, com o teclado aberto, o diálogo de nome sobe para o topo da tela — o teclado ocupa perto de 40% da altura.
 - **RF-15** — Falha no envio mantém a sacola intacta e mostra o motivo, com "tentar novamente".
@@ -68,9 +69,9 @@ Item da sacola na resposta: `{ id, product_id, product_public_id, name, image_ur
 
 ## Referência de design
 
-Projeto [Brasa Punch](https://claude.ai/code/artifact/00f39abb-79e7-4225-ab1a-18a339df7e41): `Brasa Punch Indoor - Carrinho` — celular (primeiro pedido interativo, solicitação de nome, próximos pedidos), desktop 1440 com o modal de nome, e os dois formatos de tablet (sacola lateral em paisagem, painel inferior em retrato, e o diálogo de nome com o teclado aberto).
+Canvas [Brasa Punch Indoor](https://claude.ai/artifact/E8mKAq2MKaCRXcRVLeDh1u): `Carrinho · tablet deitado` (sacola lateral em paisagem), `Carrinho · tablet em pé` (painel inferior em retrato), `Carrinho · tablet deitado · nome com teclado`, `Pedido enviado · tablet deitado` e a sacola vazia na coluna de `Cardápio · tablet deitado · 3 colunas`; no celular, `Carrinho · celular · primeiro pedido` (interativo), `Carrinho · celular · solicitação de nome` e `Carrinho · celular · nome salvo`, e `Carrinho · desktop 1440` com o modal de nome.
 
-O protótipo é fonte de **layout, hierarquia, copy e estados**. **Token — cor, fonte, raio, espaçamento, sombra e os três formatos de layout — vem de `.claude/design-system/tokens.json`**, não do protótipo, e a cor da marca vem de `restaurant.primary_color` em runtime. Antes de implementar, carregar a skill `modelo-de-design`.
+O protótipo é fonte de **layout, hierarquia, copy e estados**. **Token — cor, fonte, raio, espaçamento e sombra — vem de `design-system/tokens.json`, e os três formatos de layout da tabela "Os três formatos" do `design-system/README.md`**, não do protótipo, e a cor da marca vem de `restaurant.primary_color` em runtime. Antes de implementar, carregar a skill `modelo-de-design`.
 
 ## Fora do escopo
 

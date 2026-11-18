@@ -54,6 +54,7 @@ Socket, namespace `/board`, sala da movimentação: `board.charge_updated` com `
 - **RF-08** — Pix: a cobrança é criada, a tela mostra o valor, a expiração em contagem e "aguardando pagamento", com a promessa de que a conta atualiza sozinha.
 - **RF-09** — No celular, o Pix prioriza o copia e cola: botão de copiar o código e as três instruções do design; o QR aparece abaixo, para pagar de outro aparelho.
 - **RF-10** — No tablet, o Pix prioriza o QR em destaque, com a instrução de apontar a câmera, e o copia e cola como ação secundária.
+- **RF-10a** — O formato do tablet muda **onde** o fluxo mora, não o fluxo: em paisagem ele é a coluna da direita da conta (RF-17 da [#23](https://github.com/sgrande-delivery/delivery-indoor/issues/23)); em retrato, por estar abaixo do `overlayBreakpoint` de 1024, é **`Sheet` ancorado embaixo** com valor e forma na mesma folha, e o Pix gerado e a confirmação em tela cheia. As três telas de retrato estão no canvas.
 - **RF-11** — Cartão de crédito: os dados do cartão são coletados pelo componente do provedor e **só o token** sai do aparelho.
 - **RF-12** — Carteiras (Google Pay, NuPay): no celular abrem o fluxo da carteira; no tablet compartilhado, abrem por QR no celular de quem paga.
 - **RF-13** — "Trocar forma de pagamento" volta à escolha sem perder o valor escolhido, e cancela a cobrança pendente quando houver.
@@ -81,9 +82,9 @@ Socket, namespace `/board`, sala da movimentação: `board.charge_updated` com `
 
 ## Referência de design
 
-Projeto [Brasa Punch](https://claude.ai/code/artifact/00f39abb-79e7-4225-ab1a-18a339df7e41): `Brasa Punch Indoor - Conta da Mesa`, blocos "Mobile · pagar pelo app (interativo)", "Mobile · Pix gerado (copia e cola primeiro)", a coluna de pagamento do tablet deitado e "Tablet deitado · Pix gerado (QR em destaque)".
+Canvas [Brasa Punch Indoor](https://claude.ai/artifact/E8mKAq2MKaCRXcRVLeDh1u): no celular, `Conta · celular · pagar pelo app` (interativo) e `Conta · celular · Pix gerado` (copia e cola primeiro); no tablet deitado, a coluna de pagamento de `Conta · tablet deitado` e `Conta · tablet deitado · Pix gerado` (QR em destaque); no tablet em pé, `Pagamento · tablet em pé · valor e forma`, `Pagamento · tablet em pé · Pix gerado` e `Pagamento · tablet em pé · confirmado`; o terminal em `Conta · tablet deitado · conta paga`.
 
-O protótipo é fonte de **layout, hierarquia, copy e estados**. **Token — cor, fonte, raio, espaçamento, sombra e os três formatos de layout — vem de `.claude/design-system/tokens.json`**, não do protótipo, e a cor da marca vem de `restaurant.primary_color` em runtime. Antes de implementar, carregar a skill `modelo-de-design`.
+O protótipo é fonte de **layout, hierarquia, copy e estados**. **Token — cor, fonte, raio, espaçamento e sombra — vem de `design-system/tokens.json`, e os três formatos de layout da tabela "Os três formatos" do `design-system/README.md`**, não do protótipo, e a cor da marca vem de `restaurant.primary_color` em runtime. Antes de implementar, carregar a skill `modelo-de-design`.
 
 ## Fora do escopo
 

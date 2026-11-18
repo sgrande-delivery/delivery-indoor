@@ -35,8 +35,9 @@ O repo roda em Next 15 com App Router e MUI 9, com o tema do restaurante aplicad
 - **RF-06** — Os primitivos do Design System usados pelas telas da mesa estão em `src/components/ui/`: botão, campo, stepper de quantidade, chip, badge, card de produto, item de lista, sheet, overlay, skeleton, toast, empty state e os blocos de tela de erro.
 - **RF-07** — `?session=<uuid>` é resolvido por um provider único, que expõe a movimentação da mesa, o estado de carregamento e o estado "sem mesa" para toda a árvore.
 - **RF-08** — Com `session` ausente ou com movimentação inexistente/fechada, o app mostra a tela de "sem mesa" em vez de árvore vazia, em qualquer rota.
-- **RF-09** — O shell serve dois formatos: celular com navegação inferior, e tablet com barra superior fixa (Cardápio / Conta, e a ação de garçom à direita), em retrato e paisagem, com alvos de toque de no mínimo 44px.
-- **RF-10** — Carregamento, vazio, erro e offline seguem o design: skeleton com a forma do conteúdo, spinner dentro do botão para ação, empty state com ícone em círculo de 72px, erro de rota em tela cheia no celular e em modal no desktop/tablet, erro parcial em toast ou inline, e banner fixo de offline.
+- **RF-09** — O shell serve dois formatos: celular com navegação inferior, e tablet com barra superior fixa (marca da loja, chip da mesa, abas Cardápio / Conta e a ação de garçom à direita), **em retrato e paisagem**, com alvos de toque de no mínimo 44px. O corte entre os dois shells é `(min-width: 744px) and (min-height: 600px)`: 744 é o tablet em pé mais estreito que a loja usa, e a altura mínima exclui **celular em paisagem**, que passa por qualquer `min-width` sozinho. Em retrato a barra é a mesma de paisagem, só com o garçom em botão de ícone (44px) — os dois artboards portados de retrato no canvas ainda mostram a barra reduzida, sem marca e sem garçom; **vale esta RF**, não eles.
+- **RF-10** — Carregamento, vazio, erro e offline seguem o design: skeleton com a forma do conteúdo, spinner dentro do botão para ação, empty state com ícone em círculo de 72px, erro parcial em toast ou inline, e banner fixo de offline. **A sobreposição tem um corte só, e ele é do código:** `overlayBreakpoint = 1024` (`src/theme/breakpoints.ts`). Acima dele — tablet deitado (1180) e desktop — erro, detalhe de produto e pagamento são **painel centrado**; abaixo — tablet em pé (820) e celular — são **`Sheet` ancorado embaixo**, e o erro de rota é tela cheia no celular. Não se inventa um terceiro corte para tablet.
+- **RF-10a** — O banner de offline **não troca a tela pelo erro**: mantém o conteúdo que já estava (a conta de 20:07, por exemplo), diz desde quando, oferece "tentar agora" e **desabilita o que depende da rede** — pagar pelo app sai do ar com a explicação de que o garçom fecha no caixa.
 - **RF-11** — Toda tela de erro mostra o código do erro em texto pequeno, para suporte.
 - **RF-12** — As chamadas de cliente passam por uma instância axios única com `x-restaurant-id` + UUID, e o estado de servidor é cacheado por React Query.
 - **RF-13** — A herança do fork sai do repo: módulo `user`, `AuthProvider`, `GoogleProvider`, `FacebookProvider`, `src/components/login/`, `FirebaseProvider` e o stack de push, a dependência `jsonwebtoken` e a variável `NEXT_PUBLIC_SECRET`.
@@ -59,9 +60,9 @@ O repo roda em Next 15 com App Router e MUI 9, com o tema do restaurante aplicad
 
 ## Referência de design
 
-Projeto [Brasa Punch](https://claude.ai/code/artifact/00f39abb-79e7-4225-ab1a-18a339df7e41): `Brasa Punch - Design System` (fundações, tipografia, raio, sombra, espaço, botões, campos, chips, cards, navegação, skeleton, toast, empty state, telas de erro e o mapa para o `createTheme`), `Brasa Punch - Estados do App`, `Brasa Punch - Páginas de Erro` e `Brasa Punch - Bottom Navigation`; a barra superior do tablet e as abas Cardápio/Conta saem das duas telas indoor.
+Dois canvas. O do app de mesa, [Brasa Punch Indoor](https://claude.ai/artifact/E8mKAq2MKaCRXcRVLeDh1u), é a fonte do tablet: `Conta · tablet deitado` e `Conta · tablet em pé` dão a `TableTopBar` (marca, chip da mesa, abas Cardápio/Conta e a ação de garçom nos dois formatos), e `Estado · carregando (skeleton)`, `Estado · vazio`, `Estado · erro de rota`, `Estado · offline` e `Estado · sem mesa (sem session)` dão os estados em tablet. O do app do cliente, [Brasa Punch](https://claude.ai/code/artifact/00f39abb-79e7-4225-ab1a-18a339df7e41), é a fonte do celular e das fundações: `Brasa Punch - Design System` (fundações, tipografia, raio, sombra, espaço, botões, campos, chips, cards, navegação, skeleton, toast, empty state, telas de erro e o mapa para o `createTheme`), `Brasa Punch - Estados do App`, `Brasa Punch - Páginas de Erro` e `Brasa Punch - Bottom Navigation`.
 
-O protótipo é fonte de **layout, hierarquia, copy e estados**. **Token — cor, fonte, raio, espaçamento, sombra e os três formatos de layout — vem de `.claude/design-system/tokens.json`**, não do protótipo, e a cor da marca vem de `restaurant.primary_color` em runtime. Antes de implementar, carregar a skill `modelo-de-design`.
+O protótipo é fonte de **layout, hierarquia, copy e estados**. **Token — cor, fonte, raio, espaçamento e sombra — vem de `design-system/tokens.json`, e os três formatos de layout da tabela "Os três formatos" do `design-system/README.md`**, não do protótipo, e a cor da marca vem de `restaurant.primary_color` em runtime. Antes de implementar, carregar a skill `modelo-de-design`.
 
 ## Fora do escopo
 
@@ -82,6 +83,9 @@ O protótipo é fonte de **layout, hierarquia, copy e estados**. **Token — cor
 - [ ] Um nome de ícone fora da união quebra o `tsc`, e o `build` falha se o subset estiver defasado.
 - [ ] Abrir qualquer rota sem `?session=` mostra a tela de "sem mesa".
 - [ ] A mesma rota abre em celular (navegação inferior) e em tablet retrato e paisagem (barra superior fixa), sem rolagem horizontal e sem alvo menor que 44px.
+- [ ] Celular em paisagem continua com navegação inferior, e não vira o shell de tablet.
+- [ ] Sobreposição em 820 de largura abre como `Sheet` embaixo e em 1180 como painel centrado, sem nenhum corte novo além do `overlayBreakpoint`.
+- [ ] Derrubar a rede com a conta na tela mantém os itens, mostra o banner com o horário do último dado e desabilita pagar pelo app.
 - [ ] Derrubar a API mostra a tela de erro de rota com código visível, e "tentar novamente" recarrega com skeleton.
 - [ ] `grep` não encontra mais `jsonwebtoken`, `NEXT_PUBLIC_SECRET`, `AuthProvider`, `GoogleProvider`, `FacebookProvider` nem `components/login`.
 
