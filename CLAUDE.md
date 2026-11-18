@@ -23,7 +23,9 @@ A **conta da mesa é a tela principal**: mostra produtos lançados, pagamentos e
 | Estado | Redux + `@reduxjs/toolkit`, middleware por módulo | React Query (servidor) + contexto (UI) |
 | Ícones | `@material-ui/icons` | subset do Material Symbols por `Icon` |
 
-Runtime: Node 18 local, `engines.node: >=16`. Deploy por `server.js` (express + `heroku-ssl-redirect`), estilo Heroku. **Não há GitHub Actions neste repo** — nenhum merge ou tag dispara build ou deploy.
+Runtime: Node 18 local, `engines.node: >=16`. O `server.js` (express + `heroku-ssl-redirect`) é herança do Heroku, e **não há GitHub Actions neste repo** — mas isso não quer dizer que nada deploya. Este repo tem **8 projetos na Vercel**, um por restaurante (`topezeira-board`, `tias-burger-board`, `domrafa-board`, `casa-do-espetinho-board`, `pizzaria-super-7-board`, `recanto-primavera-board`, `toplanches-mesas`, `ohamburgues-indoor`), todos publicando da `master` pela integração git: medido em 2026-11-18, os deploys de produção chegam com `source=git`, `ref=master`. **Push na `master` é deploy nos 8 restaurantes**, sem tag e sem release no meio.
+
+Acesso e mapa dos projetos: `delivery-infra/docs/vercel.md`. O token de escrita já existe — é o `VERCEL_TOKEN` do `.env` da `delivery-api` — e a production branch de um projeto só muda pelo dashboard.
 
 **A `master` é o app que os clientes usam hoje.** O redesign está especificado nas features [#20](https://github.com/sgrande-delivery/delivery-indoor/issues/20) a [#24](https://github.com/sgrande-delivery/delivery-indoor/issues/24) e acumula na `feat/indoor-v2`, que vai para a `master` quando fechar. Correção do app em produção sai da `master`; trabalho do redesign sai da branch de integração. **Nenhum dos dois lados importa código do outro para preencher lacuna.**
 
