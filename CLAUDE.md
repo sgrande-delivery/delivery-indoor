@@ -29,6 +29,14 @@ Runtime: Node 18 local, `engines.node: >=16`. Deploy por `server.js` (express + 
 
 Código copiado do `delivery-client` vem da `feat/app-v2` de lá e **precisa ser traduzido** para a stack de destino. Nunca cole `sx`, `'use client'` ou import de `@mui/*` em código da `master`.
 
+## A branch `dev` — ambiente de desenvolvimento
+
+**`dev` é o nome da branch de desenvolvimento em toda a organização** — nunca `develop`, nunca `staging`. É a branch ligada ao projeto de hospedagem com as variáveis apontando para o **ambiente de dev**, para olhar a tela no ar antes de ela chegar à mesa do cliente. Commit nela gera build; merge nela **não é entrega**, e o que sai dela não é evidência do que está em produção.
+
+Ela **não é branch de integração** e não substitui nenhuma das duas acima: correção de produção continua saindo da `master` e o redesign continua acumulando na `feat/indoor-v2`. Não abrir PR de spec contra a `dev`, não cortar branch de spec dela.
+
+**Ela não existe neste repo hoje** — conferido em 2026-11-17, não há `dev` no remoto. Confirmar com `git ls-remote --heads origin dev` antes de citá-la. No `delivery-admin` ela já existe e builda no projeto Vercel `sgrande-admin`; aqui o equivalente seria um dos projetos Vercel de mesa deste repo (`ohamburgues-indoor`, `topezeira-board` e os outros), que são por tenante.
+
 ## O fluxo da mesa
 
 ```
