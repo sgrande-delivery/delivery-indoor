@@ -32,6 +32,16 @@ Todas as rotas abaixo levam `x-restaurant-id` com o UUID do restaurante, e **tod
 | `GET /products/v2?environment=board&category_id&page&limit&sort&only_offers&q` | `{ data: [ProductSummary], meta: { total, per_page, current_page, last_page, has_more, facets } }` |
 | `GET /products/v2/{publicId}?environment=board` | produto completo: `option_groups[]`, `size_prices`, `recipe`, `price`, `special_price`, `discount_percent` |
 | `POST /products/v2/{publicId}/price` | preço da montagem, calculado no servidor |
+| `GET /products/v2/most-ordered?window&limit` | os mais pedidos da loja na janela de dias — rota própria, sem login; `window` em dias e `limit` validados |
+| `GET /ingredients?q&limit` | `{ data: [{ id (uuid), name, product_count }] }` — alimenta o filtro por ingrediente (prefixo `api/client/ingredients`) |
+
+**`GET /products/v2` tem lista fechada de parâmetros** e responde **422** a qualquer outro (`environment` incluído, até a [delivery-api#1607](https://github.com/sgrande-delivery/delivery-api/issues/1607) subir): `kinds[]`, `ingredient_id` (uuid, legado), `include_ingredients[]` e `exclude_ingredients[]` (uuid, **até 10 cada**), `category_id`, `q` (≤ 120), `limit` (1–200, padrão 50), `page`, `sort` e `only_offers`. O **mesmo ingrediente em `include` e `exclude` também é 422**.
+
+`sort` ∈ `newest` (padrão da rota) · `price_asc` · `price_desc` · `rating` · `best_selling` · `discount_desc`.
+
+`meta.facets`: `{ categories: [{ id, name, count }], relaxed: [{ filter, value, label, additional_count }] }`. `relaxed` é a sugestão de **afrouxar um filtro**, já com quantos produtos entrariam (`additional_count`).
+
+Item que casou por opção/ingrediente traz `matched_option: { item_name, group_name }`.
 
 `ProductSummary`: `{ id, public_id, name, description, kind, activated, category: { id, name } | null, image_url, price, special_price, discount_percent, rating: { average, total } }`.
 
@@ -51,7 +61,16 @@ Todas as rotas abaixo levam `x-restaurant-id` com o UUID do restaurante, e **tod
 - **RF-08** — Produto sem imagem usa o ícone da categoria, como nas telas do design (bebida com `local_drink`).
 - **RF-09** — Preço, desconto e preço promocional são formatados a partir de centavos, por um único helper.
 - **RF-10** — No tablet, o cardápio é grade de 3 colunas em paisagem e 2 em retrato, com a trilha de categorias fixa no topo e a sacola visível conforme a frente [#22](https://github.com/sgrande-delivery/delivery-indoor/issues/22).
+- **RF-12** — Produto com `special_price` desenha o par de preços e a marca de desconto: o vigente (`special_price`) em `brand-text`, o cheio (`price`) riscado ao lado, a 7 dele, em 11,5/600 `muted`, e `-{discount_percent}%` sobre a foto no selo `secondary` (`ThumbDiscountMark`: 10/800, a 6 do canto, sombra `elevation-thumb-mark`). **O percentual vem do servidor** e nunca é calculado na tela — é a decisão `D6` do `ClientProductDiscountCalculator`. Sem `special_price`, preço único em `ink`. No detalhe, o cheio riscado em 13 `muted` vem antes do vigente em display 26/800 `ink`. Promoção nunca é vermelha: vermelho neste app é erro.
+- **RF-13** — O card e a linha de produto da mesa **não têm o `+` de adicionar**: o card inteiro abre o detalhe, e a adição acontece lá, depois das opções obrigatórias. O `ProductCard` do design system compartilhado desenha o `+` — aqui ele sai, como o `ProductListItem` já prevê ("na lista de resultados com filtro, o `+` pode sair: a linha inteira abre o produto"). Não é correção do primitivo compartilhado: é regra de tela da mesa.
 - **RF-11** — Carregamento usa skeleton com a forma do card; lista vazia usa o empty state do design; falha que impede a tela usa a tela de erro da fundação.
+
+- **RF-14** — A busca tem controle de ordenação com os seis valores de `sort`, rotulados em português: mais vendidos (`best_selling`), melhor avaliados (`rating`), maior desconto (`discount_desc`), menor preço (`price_asc`), maior preço (`price_desc`) e novidades (`newest`). A tela manda `sort=best_selling` por padrão — o padrão da rota é `newest`, e numa mesa o que vende mais é a melhor primeira tela.
+- **RF-15** — Filtro por ingrediente em duas direções: `include_ingredients` ("com") e `exclude_ingredients` ("sem"), alimentados pelo seletor que lê `GET /ingredients?q=` e mostra `product_count` por ingrediente. Cada filtro aplicado vira chip com a direção visível e ação de remover; o limite de 10 de cada lado e a proibição do mesmo ingrediente nos dois são **do contrato** e a tela impede antes de chamar — o controle por linha é com **ou** sem, nunca os dois.
+- **RF-16** — As facetas vêm do servidor, não da tela: `meta.facets.categories` desenha os chips de categoria **com a contagem**, e `meta.facets.relaxed` desenha a faixa "tirando o filtro X aparecem mais N produtos", com ação de tirar aquele filtro.
+- **RF-17** — `only_offers` é o filtro "só promoções", e combina com ordenação e ingrediente sem recarregar a tela.
+- **RF-18** — Card e linha de produto exibem a avaliação do `rating` do payload com a anatomia do `ProductListItem` **medida no código**: grupo em 11/1,2 `muted`, estrela `star` cheia de **13** em `secondary`, nota em **700**, contagem em **500**, e o grupo **dentro da linha do preço, a 9 do par de preços** (`ratingGap`) — nunca em linha própria. No detalhe são **cinco estrelas com `star_half`** de 15 em `secondary`, nota em 12,5/800 `ink` e "· N avaliações" em 12 `muted`, como a tela de produto do cliente desenha. **`average: null` não desenha nada** — nem estrela vazia, nem "0,0", nem "sem avaliações". Nota e contagem vêm formatadas do payload; a tela não calcula média. **Atenção: o `ProductCard` do design system compartilhado não tem avaliação** — só o `ProductListItem` tem. Mostrar a nota no card em grade é decisão da mesa, onde o card é bem maior que os 180 do card de trilha do cliente; não é correção do primitivo compartilhado.
+- **RF-19** — A home do cardápio ganha a trilha "mais pedidos" de `GET /products/v2/most-ordered`, que é rota própria e não um `sort` — janela de dias e limite vão explícitos na chamada.
 
 ## Regras de negócio
 
@@ -67,16 +86,16 @@ Todas as rotas abaixo levam `x-restaurant-id` com o UUID do restaurante, e **tod
 
 ## Referência de design
 
-Projeto [Brasa Punch](https://claude.ai/code/artifact/00f39abb-79e7-4225-ab1a-18a339df7e41): `Brasa Punch - Catalogo`, `Brasa Punch - Produto` e `Brasa Punch - Busca`; a grade do tablet (3 colunas deitado, 2 em pé) e a trilha de categorias fixa saem dos quadros de tablet de `Brasa Punch Indoor - Carrinho`.
+Canvas [Brasa Punch Indoor](https://claude.ai/artifact/E8mKAq2MKaCRXcRVLeDh1u), para o tablet: `Cardápio · tablet deitado · 3 colunas` (trilha de categorias fixa e sacola na coluna lateral), `Cardápio · tablet em pé · 2 colunas` (sacola recolhida na barra inferior), `Produto · tablet deitado · painel sobre o cardápio`, `Produto · tablet em pé · tela cheia`, `Busca · tablet deitado`, `Busca · filtro por ingrediente` (o seletor que lê `GET /ingredients`), `Estado · carregando (skeleton)` e `Estado · vazio`. O celular continua no canvas do cliente, [Brasa Punch](https://claude.ai/code/artifact/00f39abb-79e7-4225-ab1a-18a339df7e41): `Brasa Punch - Catalogo`, `Brasa Punch - Produto` e `Brasa Punch - Busca`.
 
-O protótipo é fonte de **layout, hierarquia, copy e estados**. **Token — cor, fonte, raio, espaçamento, sombra e os três formatos de layout — vem de `.claude/design-system/tokens.json`**, não do protótipo, e a cor da marca vem de `restaurant.primary_color` em runtime. Antes de implementar, carregar a skill `modelo-de-design`.
+O protótipo é fonte de **layout, hierarquia, copy e estados**. **Token — cor, fonte, raio, espaçamento e sombra — vem de `design-system/tokens.json`, e os três formatos de layout da tabela "Os três formatos" do `design-system/README.md`**, não do protótipo, e a cor da marca vem de `restaurant.primary_color` em runtime. Antes de implementar, carregar a skill `modelo-de-design`.
 
 ## Fora do escopo
 
 - Carrinho, sacola e envio do pedido — frente [#22](https://github.com/sgrande-delivery/delivery-indoor/issues/22).
-- Promoções e cupom: `GET /promotions/v2` existe, e a mesa não tem cupom hoje. Entra em frente própria se o produto pedir.
+- Cupom e código de promoção, e a vitrine de promoções como seção própria (`GET /promotions/v2`): a mesa não tem cupom hoje, e isso entra em frente própria se o produto pedir. **Exibir preço promocional não está fora do escopo** — é a RF-09, a RF-12 e os campos `special_price` e `discount_percent` que o `ProductSummary` já devolve em toda listagem.
 - Produto montável de pizza com borda e múltiplos sabores: `kind` e `size_prices` vêm no contrato, mas a mesa não vende pizza montável no desenho atual. Se a loja tiver, o desenho precisa de spec própria.
-- Avaliação de produto (`/products/v2/{publicId}/reviews/summary`).
+- O **resumo de avaliações** e a lista de comentários (`/products/v2/{publicId}/reviews/summary`): a nota e a contagem que o `ProductSummary` e o detalhe já devolvem **são exibidas** (RF-18); o que fica fora é a tela de reviews.
 - A implementação do `environment` nas rotas v2 — é [delivery-api#1607](https://github.com/sgrande-delivery/delivery-api/issues/1607).
 
 ## Critérios de aceitação
@@ -89,6 +108,13 @@ O protótipo é fonte de **layout, hierarquia, copy e estados**. **Token — cor
 - [ ] Buscar um termo que só casa com produto de página avançada devolve o produto.
 - [ ] Todo valor na tela confere com `centavos / 100` do payload.
 - [ ] Em tablet paisagem a grade tem 3 colunas e em retrato 2, sem rolagem horizontal.
+- [ ] Produto com `special_price` mostra o par de preços (vigente em `brand-text`, cheio riscado em `muted`) e o selo `-{discount_percent}%` sobre a foto, com o percentual **igual ao do payload**; produto sem `special_price` mostra um preço só, em `ink`.
+- [ ] Nenhum card ou linha de produto tem o `+` de adicionar, e tocar o card abre o detalhe do produto.
+- [ ] Trocar a ordenação para melhor avaliados muda a ordem dos resultados, e o parâmetro enviado é `sort=rating`.
+- [ ] Marcar "com cheddar" e "sem cebola" envia `include_ingredients` e `exclude_ingredients` com uuid, e o mesmo ingrediente não pode entrar nos dois.
+- [ ] Os chips de categoria mostram a contagem que veio em `meta.facets.categories`, e a faixa de `relaxed` tira o filtro que ela nomeia.
+- [ ] Produto com `rating.average` mostra estrela, nota e contagem; produto com `average: null` não mostra nada no lugar.
+- [ ] Um termo que casa só com ingrediente ou opção devolve o produto, com o trecho casado destacado e `matched_option` na linha.
 
 ## Decisões pendentes
 
