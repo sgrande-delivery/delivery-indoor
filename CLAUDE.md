@@ -31,6 +31,17 @@ Como acessar a Vercel (e a VM): `delivery-infra/docs/acessos.md`. Em resumo: o t
 
 Código copiado do `delivery-client` vem da `feat/app-v2` de lá e **precisa ser traduzido** para a stack de destino. Nunca cole `sx`, `'use client'` ou import de `@mui/*` em código da `master`.
 
+## Ambientes: produção e dev
+
+| | Endereço | Branch | Fala com |
+|---|---|---|---|
+| **Produção** | `mesas.sgrande.delivery` e os demais projetos de mesa, um por restaurante | `master` | `api.sgrande.delivery` — a VM EC2 |
+| **Dev** | local (`yarn dev`) | — | `api-dev.sgrande.delivery` e os outros hosts `*-dev` |
+
+**Este app não tem ambiente de dev publicado** — conferido em 2026-11-19, nenhum dos 8 projetos de mesa tem ambiente ligado a uma branch `dev`. O único host `-dev` da zona é `admin-dev.sgrande.delivery`, que é o **painel**, não este app.
+
+Um endereço `*-dev.sgrande.delivery` **nunca é produção**: são registros A para o IP fixo da rede da máquina de desenvolvimento, e quem responde são os containers dela. Mesa, pedido e pagamento vistos ali não existem em produção — e o contrário também. O mapa completo está em `delivery-infra/docs/ambientes.md`.
+
 ## A branch `dev` — ambiente de desenvolvimento
 
 **`dev` é o nome da branch de desenvolvimento em toda a organização** — nunca `develop`, nunca `staging`. É a branch ligada ao projeto de hospedagem com as variáveis apontando para o **ambiente de dev**, para olhar a tela no ar antes de ela chegar à mesa do cliente. Commit nela gera build; merge nela **não é entrega**, e o que sai dela não é evidência do que está em produção.
