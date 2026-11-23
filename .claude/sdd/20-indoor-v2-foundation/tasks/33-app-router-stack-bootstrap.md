@@ -5,7 +5,7 @@
 **Tipo:** refator
 **Repo:** delivery-indoor
 **Depende de:** (nenhuma). Base `feat/indoor-v2`, que já traz o DS do port `e18a1cd`
-**Status:** pendente
+**Status:** executada
 
 ## Objetivo
 
@@ -412,21 +412,21 @@ A saída esperada é `NEXT_PUBLIC_API` e o UUID; depois `200 <nome da loja>`; de
 
 ## Critérios de aceitação
 
-- [ ] `pages/` não existe. `app/layout.tsx`, `app/page.tsx`, `next.config.ts` e `eslint.config.mts` existem. `next.config.js`, `.eslintrc.json`, `jsconfig.json` e `src/services/api.tsx` não existem
-- [ ] `package.json` tem `next` `15.5.9`, `react`/`react-dom` `^18.3.1`, `@mui/material-nextjs` `^9.1.1`, `@emotion/cache` `^11.13.5`, `@tanstack/react-query` `^5.90.12`, `axios` `^1.7.7`, `typescript` `^5.9.3`, `eslint` `^9.39.2` e `engines.node` `>=18.18.0`. Não tem `next-pwa`, `babel-eslint`, `eslint-config-standard`, `eslint-plugin-import`, `eslint-plugin-n`, `eslint-plugin-promise` nem `eslint-import-resolver-typescript`
-- [ ] `@material-ui/core`, `redux`, `react-redux` e os demais pacotes da v1 **continuam** no `package.json`
-- [ ] `npx next typegen && npx tsc --noEmit` termina com 0 erros, e `tsconfig.json` não tem o campo `types`
-- [ ] `npx eslint src app scripts` termina com 0 erros
-- [ ] `yarn build` com as vars de restaurante conclui, listando só `/` e `/_not-found`
-- [ ] `grep -rlE "data-jss|@@redux/INIT" .next/static` não retorna nada
-- [ ] `git grep -nE "localStorage|window\.|navigator\.|withCredentials|Authorization|RestaurantId" -- src/services/api.ts src/services/api-error-interceptor.ts src/services/restaurant-header.ts` não retorna nada
-- [ ] O script do passo 5 imprime o UUID em `x-restaurant-id`, recebe 200 em `restaurants` e, em `rota-inexistente`, imprime `[api] request failed: 404 …` e rejeita
-- [ ] `src/App.tsx` começa com `'use client'`, cria o `QueryClient` por `useState(createQueryClient)` e não importa nada de `store/redux`, `@material-ui` nem `react-redux`
-- [ ] O HTML de `/?session=00000000-0000-4000-8000-000000000000` tem `<style data-emotion="mui …">`, e não tem `jss-server-side` nem `rel="manifest"`
+- [x] `pages/` não existe. `app/layout.tsx`, `app/page.tsx`, `next.config.ts` e `eslint.config.mts` existem. `next.config.js`, `.eslintrc.json`, `jsconfig.json` e `src/services/api.tsx` não existem
+- [x] `package.json` tem `next` `15.5.9`, `react`/`react-dom` `^18.3.1`, `@mui/material-nextjs` `^9.1.1`, `@emotion/cache` `^11.13.5`, `@tanstack/react-query` `^5.90.12`, `axios` `^1.7.7`, `typescript` `^5.9.3`, `eslint` `^9.39.2` e `engines.node` `>=18.18.0`. Não tem `next-pwa`, `babel-eslint`, `eslint-config-standard`, `eslint-plugin-import`, `eslint-plugin-n`, `eslint-plugin-promise` nem `eslint-import-resolver-typescript`
+- [x] `@material-ui/core`, `redux`, `react-redux` e os demais pacotes da v1 **continuam** no `package.json`
+- [x] `npx next typegen && npx tsc --noEmit` termina com 0 erros, e `tsconfig.json` não tem o campo `types`
+- [x] `npx eslint src app scripts` termina com 0 erros
+- [x] `yarn build` com as vars de restaurante conclui, listando só `/` e `/_not-found`
+- [x] `grep -rlE "data-jss|@@redux/INIT" .next/static` não retorna nada
+- [x] `git grep -nE "localStorage|window\.|navigator\.|withCredentials|Authorization|RestaurantId" -- src/services/api.ts src/services/api-error-interceptor.ts src/services/restaurant-header.ts` não retorna nada
+- [x] O script do passo 5 imprime o UUID em `x-restaurant-id`, recebe 200 em `restaurants` e, em `rota-inexistente`, imprime `[api] request failed: 404 …` e rejeita
+- [x] `src/App.tsx` começa com `'use client'`, cria o `QueryClient` por `useState(createQueryClient)` e não importa nada de `store/redux`, `@material-ui` nem `react-redux`
+- [x] O HTML de `/?session=00000000-0000-4000-8000-000000000000` tem `<style data-emotion="mui …">`, e não tem `jss-server-side` nem `rel="manifest"`
 - [ ] Nenhuma requisição para `fonts.googleapis.com` e nenhum service worker registrado no fluxo de navegador acima
-- [ ] `next.config.ts` autoriza imagem por `remotePatterns` em `s3.sa-east-1.amazonaws.com` com `/sg-delivery/**`, e não tem `withPWA` nem `styledComponents`
-- [ ] Com `yarn start`, a requisição sem `x-forwarded-proto` recebe 302 para https, e a com o header recebe a página
-- [ ] `CLAUDE.md` e `README.md` mostram o comando de lint novo, o `typegen` antes do `tsc` e o build sem fetch
+- [x] `next.config.ts` autoriza imagem por `remotePatterns` em `s3.sa-east-1.amazonaws.com` com `/sg-delivery/**`, e não tem `withPWA` nem `styledComponents`
+- [x] Com `yarn start`, a requisição sem `x-forwarded-proto` recebe 302 para https, e a com o header recebe a página
+- [x] `CLAUDE.md` e `README.md` mostram o comando de lint novo, o `typegen` antes do `tsc` e o build sem fetch
 
 ## Fora de escopo
 
@@ -449,3 +449,55 @@ A saída esperada é `NEXT_PUBLIC_API` e o UUID; depois `200 <nome da loja>`; de
 `task/33-app-router-stack-bootstrap`, base `feat/indoor-v2`, com PR contra `feat/indoor-v2`. É a **onda 1** e roda sozinha.
 
 Desta branch saem, em paralelo, as tasks 02, 03, 05 e 07 (onda 2). Ao fim da onda 2, as quatro são rebaseadas numa fila `33 → 34 → 35 → 36 → 38`, e os conflitos de `src/App.tsx` e `app/layout.tsx` se resolvem uma vez, pelo mapa de encaixe acima. A 06 e a 08 (onda 3) saem da ponta da fila, `task/38-loading-empty-error-offline-states`.
+
+## Implementação
+
+**Concluída em:** 2026-11-23
+
+### Camadas tocadas
+
+- Dependências e scripts: `package.json`, `yarn.lock` (tabela da task aplicada; `dev`/`debug` sem `set`; `engines.node >=18.18.0`).
+- Config: `tsconfig.json` (sem `types`), `next-env.d.ts`, `next.config.ts` (novo; `next.config.js` removido), `eslint.config.mts` com o bloco transitório de `src/**/*.js` (novo; `.eslintrc.json` removido), `jsconfig.json` removido.
+- Serviços: `src/services/api.ts`, `api-error-interceptor.ts`, `restaurant-header.ts` (novos); `api.tsx` removido no mesmo conjunto.
+- Árvore de providers: `src/App.tsx` reescrito (só `QueryClientProvider`, `useState(createQueryClient)`).
+- App Router: `app/layout.tsx`, `app/page.tsx`; `src/styles/global.css` substituído pelo do client; `pages/` removido inteiro.
+- Docs: `CLAUDE.md` e `README.md`.
+
+### Contratos consumidos
+
+- Nenhum endpoint novo. A instância axios manda `x-restaurant-id` com `NEXT_PUBLIC_RESTAURANT_UUID`.
+
+### Variáveis de ambiente novas
+
+- Nenhuma.
+
+### Decisões que tomei por conta própria
+
+- Apliquei o `global.css` do client byte a byte: ele já não traz `background-color` no body nem `.animated-background`.
+- Nos pacotes do `package.json` mantive os ranges da tabela; o yarn resolveu versões mais novas dentro deles. Resolvido no lock: `next` 15.5.9, `react` 18.3.1, `@mui/material` 9.5.0 (inalterado), `@mui/material-nextjs` 9.6.0 (client: 9.1.1), `@tanstack/react-query` 5.108.4 (client: 5.90.16), `axios` 1.21.1 (client: 1.13.2; é o `latest` do registry, maintainer oficial, integrity conferida), `eslint` 9.39.5, `typescript` 5.9.3, `@types/react` 18.3.31.
+- `.env.development` local (gitignored) tem `NEXT_PUBLIC_API=http://localhost/...`, que não estava no ar; o passo 5 foi refeito no review contra a API master do harness `.indoor-qa` em `:8093` (ver abaixo).
+- No review: `ApiResponseError` passou a descrever o envelope real da `delivery-api` (`status_code`, não `statusCode`; todo campo opcional; `detail` pode ser `[]`), porque nenhum campo aparece em todos os ramos (`bootstrap/app.php`, `RestaurantMiddleware`) e as tasks 36 e 38 vão tipar `AxiosError<ApiResponseError>`. Sem consumidor hoje. `app/layout.tsx` e `app/page.tsx` ganharam `import type` e tipo de retorno explícito.
+
+### Como testar
+
+1. `rm -rf .next && yarn install && npx next typegen && npx tsc --noEmit && npx eslint src app scripts`
+2. `NEXT_PUBLIC_RESTAURANT_ID=1 NEXT_PUBLIC_RESTAURANT_UUID=<uuid> yarn build` (só `/` e `/_not-found`).
+3. `PORT=3000 yarn start`: `curl -sI /` dá 302 para https; com `x-forwarded-proto: https` a página traz `data-emotion="mui ..."`.
+
+### Verificado no review (2026-11-23)
+
+- Passo 5 contra a API master local (`NEXT_PUBLIC_API=http://localhost:8093/api/client/`): `x-restaurant-id` com o UUID, `200 SGrande Delivery`, `[api] request failed: 404 rota-inexistente` e `rejeitou com 404`.
+- Navegador (`yarn dev`, `/?session=00000000-0000-4000-8000-000000000000`): página "app de mesa em reconstrução", console sem erro nem aviso de hidratação, 1 `style[data-emotion]`, 0 `style[data-jss]`, sem `link[rel=manifest]`, sem service worker registrado, sem requisição a `fonts.googleapis.com`; o gtag `G-287R3N6K2F` carrega.
+- `tsc`, eslint (0 erros, 2 avisos medidos) e `yarn build` (só `/` e `/_not-found`) refeitos por quem coordena; `yarn start` com 302 sem `x-forwarded-proto` e página com ele, refeito pelo reviewer.
+
+### O que NÃO foi verificado
+
+- `QueryClientProvider` no React DevTools (não instalado no navegador de teste).
+
+## Follow-ups identificados em review
+
+- [ ] **Deploy na Vercel.** A `origin/master` já tem os PRs #31 e #32: produção é Vercel, um projeto por restaurante, publicado da `master`, e o `server.js` é herança do Heroku. A `feat/indoor-v2` não os tem, então esta task tratou o `server.js` como processo de produção e os passos 13–15 validam um caminho que não é o de produção. Antes do `/ship`: trazer a `master` para a `feat/indoor-v2` (o texto da Vercel vence no `CLAUDE.md:26`, fica só o `engines.node >=18.18.0`) e trocar os passos 13–15 por validação num preview da Vercel. O push das branches de task pode disparar builds de preview nos projetos por restaurante.
+- [ ] **`typescript` em runtime.** Com `next.config.ts`, o `next start` do Next 15.5.9 transpila o config e exige `typescript` instalado (tenta instalá-lo se faltar). Irrelevante na Vercel; se o `server.js` continuar sendo caminho de produção em algum lugar, mover `typescript` para `dependencies` ou usar `next.config.mjs`.
+- [ ] **`<title>`, `theme-color` e GA/pixel do tenant sem dono.** A home v1 tinha `<title>{restaurant.name}</title>`; os três dependem de `/restaurants` no servidor, e a feature definiu boot de cliente. Dar dono antes de a v2 ir para a `master`.
+- [ ] **`?session` vai para o Google Analytics.** O gtag da plataforma manda `page_view` com a URL, e a URL da entrada carrega o UUID da movimentação, que funciona como credencial (`PUT /boardMovements/{id}` e `PATCH .../free` estão abertos nas rotas de cliente). O gtag também dispara em `yarn dev`. Já acontecia na v1. Saídas: `page_location` sem query string no `gtag('config', …)`, e gtag só em produção.
+- [ ] **`eslint-plugin-react` sem `settings.react.version`** (aviso "React version not specified" a cada execução). Veio do client; corrigir nos dois repos.

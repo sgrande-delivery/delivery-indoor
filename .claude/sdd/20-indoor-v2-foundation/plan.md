@@ -41,7 +41,7 @@ A frente troca a casca inteira e não entrega tela de domínio. A ordem é: stac
 
 | # | Task | Issue | Arquivo | Depende de | Status |
 |---|------|-------|---------|------------|--------|
-| 01 | Bootstrap da stack: App Router, MUI 9 + Emotion, React Query e camada de serviços | [#33](https://github.com/sgrande-delivery/delivery-indoor/issues/33) | [33-app-router-stack-bootstrap.md](./tasks/33-app-router-stack-bootstrap.md) | — | pendente |
+| 01 | Bootstrap da stack: App Router, MUI 9 + Emotion, React Query e camada de serviços | [#33](https://github.com/sgrande-delivery/delivery-indoor/issues/33) | [33-app-router-stack-bootstrap.md](./tasks/33-app-router-stack-bootstrap.md) | — | executada |
 | 02 | Ligar o tema na árvore: `ThemeProvider`, cor do restaurante em runtime, claro e escuro | [#34](https://github.com/sgrande-delivery/delivery-indoor/issues/34) | [34-theme-provider-runtime-brand.md](./tasks/34-theme-provider-runtime-brand.md) | 01 | pendente |
 | 03 | Ligar fontes e ícones: `next/font` no documento e subset regerado para a lista da mesa | [#35](https://github.com/sgrande-delivery/delivery-indoor/issues/35) | [35-fonts-and-icon-subset.md](./tasks/35-fonts-and-icon-subset.md) | 01 | pendente |
 | 04 | Primitivos do Design System | — | — | — | **entregue pelo port `e18a1cd`** — 38 arquivos em `src/components/ui/`, sem reescrita |
