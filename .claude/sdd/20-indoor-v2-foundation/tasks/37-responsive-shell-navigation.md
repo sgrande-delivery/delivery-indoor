@@ -5,7 +5,7 @@
 **Tipo:** feat
 **Repo:** delivery-indoor
 **Depende de:** 02, 03, 04, 05, 07
-**Status:** pendente
+**Status:** executada
 
 ## Objetivo
 
@@ -447,9 +447,16 @@ Base de código no corte: 01, 02, 03, 05 e 07. A 08 roda na mesma onda, cortada 
 
 ## Follow-ups identificados em review
 
-- [ ] **(média, depois da 39) `src/types/restaurant.ts`:** `image: Image | null`, `image_id: number | null`, `cover: Image | null`, `cover_id: number | null` — as FKs aceitam null com `onDelete('set null')` (migrations `2019_12_10_115313` e `2020_04_04_114414` da `delivery-api`). A barra está protegida pelo `?.` do `AppShell`, mas a próxima tela que ler `restaurant.image.imageUrl` quebra com o `tsc` passando.
+- [x] **(média, depois da 39) `src/types/restaurant.ts`:** feito em `6252ea1`, depois da junção — `image: Image | null`, `image_id: number | null`, `cover: Image | null`, `cover_id: number | null` — as FKs aceitam null com `onDelete('set null')` (migrations `2019_12_10_115313` e `2020_04_04_114414` da `delivery-api`). A barra está protegida pelo `?.` do `AppShell`, mas a próxima tela que ler `restaurant.image.imageUrl` quebra com o `tsc` passando.
 - [ ] **Garçom desabilitado com a pele `field`**, igual à aba ativa — rever o visual quando a task 07 da #23 ligar o `onClick`.
 - [ ] **Paisagem entre 744 e ≈849px com o garçom rotulado:** o nome da loja cai para um caractere. Nenhum tablet real deitado fica nessa faixa; se o dev quiser regra (ex.: colapsar o garçom por largura), é emenda na RF-09, não ajuste de código.
 - [ ] **Safe areas no tablet:** com `viewportFit: 'cover'`, a barra não consome `env(safe-area-inset-top)`, e um rodapé fixo de tela no tablet precisa pagar `env(safe-area-inset-bottom)`. Validar em aparelho real em modo quiosque.
 - [ ] **Design system:** `design-system/components/TableTopBar/preview.html` desenha a mesa como linha de texto em vez do chip em pílula.
 
+## Validação em navegador na junção da onda 3 (2026-11-23)
+
+Na `task/39-…` (fila completa 33 → 34 → 35 → 36 → 38 → 37 → 39), `next dev` com `.next` limpo contra a API master local (`:8093`), Chromium headless.
+
+- Shell na fundação inteira (33 a 39 juntas): 390×844 e 844×390 com navegação inferior e sem barra; 820×1180 e 1180×820 com a `TableTopBar` de 72px mostrando "Mesa 001"; um `<main>` só, `scrollWidth` igual à largura, documento sem rolar, nenhum alvo abaixo de 44px, console sem erro nem aviso.
+- Skeleton da marca com o restaurante atrasado: logo, nome (≈96px em 1180×820, encolhido em 744×600) e chip, sem sobreposição.
+- F1 aplicado depois da 39: `image`/`cover`/`image_id`/`cover_id` anuláveis em `src/types/restaurant.ts` (`6252ea1`).

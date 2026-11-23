@@ -5,7 +5,7 @@
 **Tipo:** chore
 **Repo:** delivery-indoor
 **Depende de:** 01, 02, 03, 05, 07
-**Status:** pendente
+**Status:** executada
 
 ## Objetivo
 
@@ -414,3 +414,9 @@ DS vendorado, `highlight.ts`, `reduced-motion.ts`, `useInfiniteScroll.ts`, `sock
 - [ ] **`.claude/agents/indoor-agent.md`** ainda descreve a exploração da v1 (`pages/`, `src/store/redux/modules/`, `src/services/api.tsx`, `BoardNoMovement`, middleware do `cart`) — tornar a seção ciente da branch.
 - [ ] **(baixa) `src/helpers/numberFormat.js`**, mantido da v1, tem `if` sem chaves e não é tipado — portar para `.ts` quando a #23 o usar.
 
+## Validação em navegador na junção da onda 3 (2026-11-23)
+
+Na `task/39-…` (fila completa 33 → 34 → 35 → 36 → 38 → 37 → 39), `next dev` com `.next` limpo contra a API master local (`:8093`), Chromium headless.
+
+- Depois da junção com a 37 (rebase limpo, sem conflito): `tsc` limpo, eslint sem nenhum aviso (os dois antigos estavam em arquivos v1 removidos), `yarn build` com as 6 rotas, bundle sem `firebase`, `data-jss`, Redux, Google Fonts nem a API de produção.
+- Roteiro completo em Chromium headless sobre a fundação inteira: 42 de 42 verificações, inclusive `/firebase-messaging-sw.js` em 404.

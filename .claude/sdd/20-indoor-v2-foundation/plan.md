@@ -46,9 +46,9 @@ A frente troca a casca inteira e não entrega tela de domínio. A ordem é: stac
 | 03 | Ligar fontes e ícones: `next/font` no documento e subset regerado para a lista da mesa | [#35](https://github.com/sgrande-delivery/delivery-indoor/issues/35) | [35-fonts-and-icon-subset.md](./tasks/35-fonts-and-icon-subset.md) | 01 | executada |
 | 04 | Primitivos do Design System | — | — | — | **entregue pelo port `e18a1cd`** — 38 arquivos em `src/components/ui/`, sem reescrita |
 | 05 | Sessão da mesa: provider, boot e estado "sem mesa" | [#36](https://github.com/sgrande-delivery/delivery-indoor/issues/36) | [36-board-session-provider.md](./tasks/36-board-session-provider.md) | 01 | executada |
-| 06 | Shell responsivo: navegação do celular e barra superior do tablet | [#37](https://github.com/sgrande-delivery/delivery-indoor/issues/37) | [37-responsive-shell-navigation.md](./tasks/37-responsive-shell-navigation.md) | 02, 03, 04, 05, 07 | pendente |
+| 06 | Shell responsivo: navegação do celular e barra superior do tablet | [#37](https://github.com/sgrande-delivery/delivery-indoor/issues/37) | [37-responsive-shell-navigation.md](./tasks/37-responsive-shell-navigation.md) | 02, 03, 04, 05, 07 | executada |
 | 07 | Carregamento, vazio, erro e offline nos quatro formatos do design | [#38](https://github.com/sgrande-delivery/delivery-indoor/issues/38) | [38-loading-empty-error-offline-states.md](./tasks/38-loading-empty-error-offline-states.md) | 01, 04 | executada |
-| 08 | Remoção do que restou da herança do fork | [#39](https://github.com/sgrande-delivery/delivery-indoor/issues/39) | [39-remove-fork-inheritance.md](./tasks/39-remove-fork-inheritance.md) | 01, 02, 03, 05, 07 | pendente |
+| 08 | Remoção do que restou da herança do fork | [#39](https://github.com/sgrande-delivery/delivery-indoor/issues/39) | [39-remove-fork-inheritance.md](./tasks/39-remove-fork-inheritance.md) | 01, 02, 03, 05, 07 | executada |
 
 Status: `a especificar` → `pendente` → `executada` → `shipped`.
 
@@ -74,6 +74,8 @@ Se for preciso escolher uma só: a **`01`**. Nada começa antes dela.
 
 ## Aprendizados que valem para as próximas tasks
 
+- **Tela dentro do `AppShell` não usa `<main>` nem `100dvh`.** A região do shell já é um `<main>` com altura definida; a raiz da tela preenche com `blockSize`/`minBlockSize: 100%`. Com `100dvh`, a tela rola 72px no tablet deitado (a altura da barra) e o leitor de tela ganha dois `main` — a tela "sem mesa", o erro da sessão e o sandbox esbarraram nisso. (task 06)
+- **`next dev` não roda sobre o `.next` de um `next build`.** Misturar os dois dá `Cannot find module './NNN.js'`, 500 e 404 de chunk que parecem bug de app. Antes de validar em dev depois de um build: `rm -rf .next`. E um `next dev` encerrado pelo pai pode deixar o `next-server` filho ouvindo a porta: confira com `ss -ltnp`, não só com `lsof`. (junção da onda 3)
 - **`icon-names.ts` diverge do client por 8 inserções** (`account_balance`, `account_balance_wallet`, `badge`, `cloud_off`, `local_drink`, `restaurant_menu`, `room_service`, `table_restaurant`), nenhuma remoção. Sync com o client: pegar o `icon-names.ts` dele, reaplicar as 8 inserções e rodar `yarn fonts:icons`. O woff2 é artefato derivado e nunca se copia do client (copiá-lo derruba os 8 glifos e o `--check` quebra o build); ele sai byte-idêntico entre duas regerações seguidas, mas não é reproduzível ao longo do tempo, porque o Google atualiza o Material Symbols — não confira o woff2 por hash. (task 03)
 - **No React Query 5, o `refetch` de uma query em erro e sem `data` volta a `pending/fetching` e zera o `error`.** Medido no 5.108.4. Quem mostra uma tela a partir do erro e chama `refetch` vê a tela sumir no meio do retry, a menos que segure o estado anterior (é o `holdNoTableWhileRetrying` da 05). (task 05)
 - **Rota de API do próprio app é superfície pública.** O `/api/log` portado do client aceitava 50 MB, forjava linha de log e era chamável de outra origem sem preflight. Toda rota em `app/api/` exige `content-type: application/json`, tem teto de corpo contado no stream, lista fechada de campos e nunca grava query string (o `?session` é credencial da mesa). (task 07)
