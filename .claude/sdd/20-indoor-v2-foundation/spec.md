@@ -1,6 +1,6 @@
 # Spec — Fundação da stack v2 e identidade visual do redesign
 
-**Status:** rascunho
+**Status:** entregue
 **Criada em:** 2026-11-16
 **Escopo:** front-end
 **Issue:** [#20](https://github.com/sgrande-delivery/delivery-indoor/issues/20)

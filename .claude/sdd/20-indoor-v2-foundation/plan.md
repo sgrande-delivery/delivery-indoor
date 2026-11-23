@@ -41,16 +41,18 @@ A frente troca a casca inteira e não entrega tela de domínio. A ordem é: stac
 
 | # | Task | Issue | Arquivo | Depende de | Status |
 |---|------|-------|---------|------------|--------|
-| 01 | Bootstrap da stack: App Router, MUI 9 + Emotion, React Query e camada de serviços | [#33](https://github.com/sgrande-delivery/delivery-indoor/issues/33) | [33-app-router-stack-bootstrap.md](./tasks/33-app-router-stack-bootstrap.md) | — | executada |
-| 02 | Ligar o tema na árvore: `ThemeProvider`, cor do restaurante em runtime, claro e escuro | [#34](https://github.com/sgrande-delivery/delivery-indoor/issues/34) | [34-theme-provider-runtime-brand.md](./tasks/34-theme-provider-runtime-brand.md) | 01 | executada |
-| 03 | Ligar fontes e ícones: `next/font` no documento e subset regerado para a lista da mesa | [#35](https://github.com/sgrande-delivery/delivery-indoor/issues/35) | [35-fonts-and-icon-subset.md](./tasks/35-fonts-and-icon-subset.md) | 01 | executada |
+| 01 | Bootstrap da stack: App Router, MUI 9 + Emotion, React Query e camada de serviços | [#33](https://github.com/sgrande-delivery/delivery-indoor/issues/33) | [33-app-router-stack-bootstrap.md](./tasks/33-app-router-stack-bootstrap.md) | — | shipped ([PR #69](https://github.com/sgrande-delivery/delivery-indoor/pull/69)) |
+| 02 | Ligar o tema na árvore: `ThemeProvider`, cor do restaurante em runtime, claro e escuro | [#34](https://github.com/sgrande-delivery/delivery-indoor/issues/34) | [34-theme-provider-runtime-brand.md](./tasks/34-theme-provider-runtime-brand.md) | 01 | shipped ([PR #70](https://github.com/sgrande-delivery/delivery-indoor/pull/70)) |
+| 03 | Ligar fontes e ícones: `next/font` no documento e subset regerado para a lista da mesa | [#35](https://github.com/sgrande-delivery/delivery-indoor/issues/35) | [35-fonts-and-icon-subset.md](./tasks/35-fonts-and-icon-subset.md) | 01 | shipped ([PR #71](https://github.com/sgrande-delivery/delivery-indoor/pull/71)) |
 | 04 | Primitivos do Design System | — | — | — | **entregue pelo port `e18a1cd`** — 38 arquivos em `src/components/ui/`, sem reescrita |
-| 05 | Sessão da mesa: provider, boot e estado "sem mesa" | [#36](https://github.com/sgrande-delivery/delivery-indoor/issues/36) | [36-board-session-provider.md](./tasks/36-board-session-provider.md) | 01 | executada |
-| 06 | Shell responsivo: navegação do celular e barra superior do tablet | [#37](https://github.com/sgrande-delivery/delivery-indoor/issues/37) | [37-responsive-shell-navigation.md](./tasks/37-responsive-shell-navigation.md) | 02, 03, 04, 05, 07 | executada |
-| 07 | Carregamento, vazio, erro e offline nos quatro formatos do design | [#38](https://github.com/sgrande-delivery/delivery-indoor/issues/38) | [38-loading-empty-error-offline-states.md](./tasks/38-loading-empty-error-offline-states.md) | 01, 04 | executada |
-| 08 | Remoção do que restou da herança do fork | [#39](https://github.com/sgrande-delivery/delivery-indoor/issues/39) | [39-remove-fork-inheritance.md](./tasks/39-remove-fork-inheritance.md) | 01, 02, 03, 05, 07 | executada |
+| 05 | Sessão da mesa: provider, boot e estado "sem mesa" | [#36](https://github.com/sgrande-delivery/delivery-indoor/issues/36) | [36-board-session-provider.md](./tasks/36-board-session-provider.md) | 01 | shipped ([PR #72](https://github.com/sgrande-delivery/delivery-indoor/pull/72)) |
+| 06 | Shell responsivo: navegação do celular e barra superior do tablet | [#37](https://github.com/sgrande-delivery/delivery-indoor/issues/37) | [37-responsive-shell-navigation.md](./tasks/37-responsive-shell-navigation.md) | 02, 03, 04, 05, 07 | shipped ([PR #74](https://github.com/sgrande-delivery/delivery-indoor/pull/74)) |
+| 07 | Carregamento, vazio, erro e offline nos quatro formatos do design | [#38](https://github.com/sgrande-delivery/delivery-indoor/issues/38) | [38-loading-empty-error-offline-states.md](./tasks/38-loading-empty-error-offline-states.md) | 01, 04 | shipped ([PR #73](https://github.com/sgrande-delivery/delivery-indoor/pull/73)) |
+| 08 | Remoção do que restou da herança do fork | [#39](https://github.com/sgrande-delivery/delivery-indoor/issues/39) | [39-remove-fork-inheritance.md](./tasks/39-remove-fork-inheritance.md) | 01, 02, 03, 05, 07 | shipped ([PR #75](https://github.com/sgrande-delivery/delivery-indoor/pull/75)) |
 
 Status: `a especificar` → `pendente` → `executada` → `shipped`.
+
+A fila foi enviada em 2026-11-23 como PRs empilhados, sobre o [PR #68](https://github.com/sgrande-delivery/delivery-indoor/pull/68) (a `master` trazida para a `feat/indoor-v2`): #69 (01) → #70 (02) → #71 (03) → #72 (05) → #73 (07) → #74 (06) → #75 (08). Mergear nessa ordem. Como a base não é a branch padrão do repo, o `Closes #N` dos PRs **não** fecha as issues #33–#39 no merge na `feat/indoor-v2`: fechar à mão depois do merge.
 
 Nesta feature todas as tasks são deste repo, então o arquivo leva o número da issue (`33-…` a `39-…`), e a coluna `#` guarda a ordem do plan. É diferente da feature 1, que numera os arquivos por ordem por ser cross-repo.
 

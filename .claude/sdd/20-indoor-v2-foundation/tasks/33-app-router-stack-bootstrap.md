@@ -5,7 +5,7 @@
 **Tipo:** refator
 **Repo:** delivery-indoor
 **Depende de:** (nenhuma). Base `feat/indoor-v2`, que já traz o DS do port `e18a1cd`
-**Status:** executada
+**Status:** shipped ([PR #69](https://github.com/sgrande-delivery/delivery-indoor/pull/69))
 
 ## Objetivo
 
@@ -496,7 +496,7 @@ Desta branch saem, em paralelo, as tasks 02, 03, 05 e 07 (onda 2). Ao fim da ond
 
 ## Follow-ups identificados em review
 
-- [ ] **Deploy na Vercel.** A `origin/master` já tem os PRs #31 e #32: produção é Vercel, um projeto por restaurante, publicado da `master`, e o `server.js` é herança do Heroku. A `feat/indoor-v2` não os tem, então esta task tratou o `server.js` como processo de produção e os passos 13–15 validam um caminho que não é o de produção. Antes do `/ship`: trazer a `master` para a `feat/indoor-v2` (o texto da Vercel vence no `CLAUDE.md:26`, fica só o `engines.node >=18.18.0`) e trocar os passos 13–15 por validação num preview da Vercel. O push das branches de task pode disparar builds de preview nos projetos por restaurante.
+- [x] **Deploy na Vercel** — resolvido no ship (2026-11-23): o [PR #68](https://github.com/sgrande-delivery/delivery-indoor/pull/68) traz a `master` (#30, #31, #32) para a `feat/indoor-v2`, e a fila foi rebaseada sobre ele; o `CLAUDE.md` ficou com o texto da Vercel mais o `engines.node >=18.18.0`. Texto original: A `origin/master` já tem os PRs #31 e #32: produção é Vercel, um projeto por restaurante, publicado da `master`, e o `server.js` é herança do Heroku. A `feat/indoor-v2` não os tem, então esta task tratou o `server.js` como processo de produção e os passos 13–15 validam um caminho que não é o de produção. Antes do `/ship`: trazer a `master` para a `feat/indoor-v2` (o texto da Vercel vence no `CLAUDE.md:26`, fica só o `engines.node >=18.18.0`) e trocar os passos 13–15 por validação num preview da Vercel. O push das branches de task pode disparar builds de preview nos projetos por restaurante.
 - [ ] **`typescript` em runtime.** Com `next.config.ts`, o `next start` do Next 15.5.9 transpila o config e exige `typescript` instalado (tenta instalá-lo se faltar). Irrelevante na Vercel; se o `server.js` continuar sendo caminho de produção em algum lugar, mover `typescript` para `dependencies` ou usar `next.config.mjs`.
 - [ ] **`<title>`, `theme-color` e GA/pixel do tenant sem dono.** A home v1 tinha `<title>{restaurant.name}</title>`; os três dependem de `/restaurants` no servidor, e a feature definiu boot de cliente. Dar dono antes de a v2 ir para a `master`.
 - [ ] **`?session` vai para o Google Analytics.** O gtag da plataforma manda `page_view` com a URL, e a URL da entrada carrega o UUID da movimentação, que funciona como credencial (`PUT /boardMovements/{id}` e `PATCH .../free` estão abertos nas rotas de cliente). O gtag também dispara em `yarn dev`. Já acontecia na v1. Saídas: `page_location` sem query string no `gtag('config', …)`, e gtag só em produção.

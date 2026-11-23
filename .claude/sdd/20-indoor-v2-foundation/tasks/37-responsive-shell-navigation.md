@@ -5,7 +5,7 @@
 **Tipo:** feat
 **Repo:** delivery-indoor
 **Depende de:** 02, 03, 04, 05, 07
-**Status:** executada
+**Status:** shipped ([PR #74](https://github.com/sgrande-delivery/delivery-indoor/pull/74))
 
 ## Objetivo
 
