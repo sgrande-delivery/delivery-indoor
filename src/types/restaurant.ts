@@ -67,11 +67,11 @@ export interface Restaurant {
   facebook_link: string | null;
   instagram_link: string | null;
   twitter_link: string | null;
-  image_id: number;
-  cover_id: number;
+  image_id: number | null;
+  cover_id: number | null;
   working_hours: string;
-  image: Image;
-  cover: Image;
+  image: Image | null;
+  cover: Image | null;
   mobile_cover: Image | null;
   configs: RestaurantConfig;
   delivery_max_distance: number;
