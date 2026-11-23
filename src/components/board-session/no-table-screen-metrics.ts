@@ -1,0 +1,17 @@
+export const noTableScreenMetrics = {
+  paddingInline: 80,
+  paddingInlineCompact: 24,
+  paddingBlockCompact: 32,
+  columnGap: 64,
+  stackGap: 32,
+  qrCardSize: 280,
+  qrCardBorderWidth: 1.5,
+  qrCardGap: 14,
+  qrGlyphSize: 132,
+  textMaxInlineSize: 440,
+  textGap: 14,
+  actionsMarginBlockStart: 10,
+  actionsGap: 12,
+  noteMarginBlockStart: 6,
+  badgeLetterSpacing: '0.1em',
+} as const;

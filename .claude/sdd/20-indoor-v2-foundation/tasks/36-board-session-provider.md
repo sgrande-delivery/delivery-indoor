@@ -316,7 +316,8 @@ Em cada passo, abra o DevTools: Network filtrada por `boardMovements`, Applicati
    - Recarregar `/` volta à tela "sem mesa".
 9. Derrubar a API (ou apontar `NEXT_PUBLIC_API` para uma porta fechada) e abrir com `?session=<uuid-aberto>`. Esperado: o bloco "Não conseguimos carregar a mesa" com "Código erro de rede", **não** a tela "sem mesa". Subir a API e clicar em "Tentar novamente": volta para `loading` e depois `ready`.
 10. Com `NEXT_PUBLIC_RESTAURANT_UUID` errado, abrir com `?session=<uuid-aberto>`. Esperado: bloco de erro com "Código erro 404", **não** a tela "sem mesa".
-11. Na tela "sem mesa", a 1180 × 820 (tablet deitado): duas colunas, como no protótipo. A 820 × 1180 e a 390 × 844: uma coluna, sem rolagem horizontal, e nenhum botão abaixo de 44px.
+11. Com a mesa A (aberta) guardada, abrir `?session=<fechada>`. Esperado: o Session Storage não tem mais A, e o reload em `/` (sem `?session`) mostra "sem mesa".
+12. Na tela "sem mesa", a 1180 × 820 (tablet deitado): duas colunas, como no protótipo. A 820 × 1180 e a 390 × 844: uma coluna, sem rolagem horizontal, e nenhum botão abaixo de 44px.
 
 ## Critérios de aceitação
 
@@ -353,3 +354,60 @@ Em cada passo, abra o DevTools: Network filtrada por `boardMovements`, Applicati
 Ao fim da onda 2, as quatro entram numa fila `33 → 34 → 35 → 36 → 38`: esta é rebaseada sobre `task/35-fonts-and-icon-subset`, e o PR do `/ship` abre contra ela. O roteiro em navegador roda na ponta da fila, `task/38-loading-empty-error-offline-states`, que também é a base da 06 (onda 3).
 
 Conflito esperado no rebase: só em `src/App.tsx`, e só na linha do aninhamento (Mudança 10). A resolução é manter os dois lados, com o `BoardSessionProvider` dentro do `ThemeProvider` da 02, como no mapa de encaixe da 01. Quando a 07 for rebaseada sobre esta, é ela que põe o `ConnectivityProvider` por fora do aninhamento.
+
+## Implementação
+
+**Concluída em:** 2026-11-23 (verificação estática; roteiro em navegador pendente na ponta da fila)
+
+### Camadas tocadas
+
+- Tipo: `src/types/board-movement.ts`.
+- Serviço: `src/services/board-movement.ts` (`boardMovementQueryKey`, `fetchBoardMovement`, `isBoardMovementNotFound`, `isBoardMovementId`).
+- Hook: `src/hooks/use-board-movement.ts`.
+- Provider: `src/providers/board-session/` (`entry-session.ts`, `board-session-state.ts`, `BoardSessionProvider.tsx`, `BoardSessionGate.tsx`, `browsable-routes.ts`, `index.ts` barrel).
+- Componentes: `src/components/board-session/` (`NoTableScreen`, `no-table-screen-metrics`, `BoardSessionError`).
+- Árvore: `src/App.tsx`, um aninhamento e um import.
+
+### Contratos consumidos
+
+- `GET /boardMovements/{id}`: aberta 200 (`is_open: true`, `board.number` "001"), fechada 200 (`is_open: false`), inexistente 404 `internal_code: not_found`. Conferido contra a API local `:8093`, que está em `501414ea4` e **não** devolve `discount`; o tipo segue a `origin/master` (`8db44045e`), que devolve.
+
+### Variáveis de ambiente novas
+
+- Nenhuma.
+
+### Decisões que tomei por conta própria
+
+- `retry()` em `no-table` não deixa a tela piscar: a query volta a `pending` ao refazer o GET, então o provider segura o estado `no-table`/`browsing` anterior (mesmo `sessionId`) enquanto o status resolvido for `loading` (`holdNoTableWhileRetrying`). Em `error`, o retry volta para `loading` como a task pede (RN-07).
+- **Quando grava e quando esquece:** `rememberSession(entry)` roda **sempre que `entry` muda**, num efeito declarado antes do que esquece; `forgetSession(entry)` roda quando `reason` é `not-found` ou `closed`. Assim um `?session` fechado ou inexistente sobrescreve a mesa guardada e logo é removido (a anterior não volta no reload). Gravar só em `ready` deixava a mesa antiga viva. `readEntrySession` mantém a assinatura `string | null`.
+- `fetchBoardMovement` reduz `customer` a `{ id, name }` (a rota devolve e-mail, telefone e CPF) e rejeita 200 sem `is_open` booleano com `InvalidBoardMovementResponseError`, que vira `error` (nunca `closed`, então o `forgetSession` não roda). O bloco de erro mostra "Código erro resposta inválida" nesse caso.
+- `use-board-movement` usa `skipToken` no lugar de `enabled` + cast.
+- `BoardSessionError` mantém `main` e põe `role="alert"` num `VisuallyHidden` com título e código (o botão fica fora da região viva). Tipografia do parágrafo e da nota pelos tokens `body1`/`body2` (14/1,5 e 12/1,45, o mais próximo de 15/1,6 e 12,5/1,5). `BoardSessionGate` tem checagem `never` no switch.
+- `MAX_RETRIES = 2` espelha o `retry: 2` do `QueryClient` de `src/App.tsx`, localmente no hook.
+- Barrel `src/providers/board-session/index.ts` para o `App.tsx` importar numa linha só; o import em `App.tsx` é a única linha a mais além do aninhamento.
+- `BoardSessionError` mantém o `main` raiz e põe o `role="alert"` num `VisuallyHidden` com título e código (o botão fica fora da região viva); ocupa `100dvh` provisoriamente (a 37 ajusta ao `Scroller`, a 38 troca pelo `RouteErrorState`).
+- A tela "sem mesa" usa `minBlockSize: 100dvh` pois o shell/barra superior é da 06.
+
+### Como testar
+
+Estático: `npx next typegen && npx tsc --noEmit`; `npx eslint src app scripts`; `yarn build` com as vars. Lógica de decisão: `resolveBoardSessionState` + `fetchBoardMovement` por jiti contra `:8093` (ssr -> loading; sem id -> no-table/missing; `nao-e-uuid` -> not-found; aberta -> ready; fechada -> no-table/closed; inexistente -> no-table/not-found; erro de rede -> error; browsing). Roteiro em navegador: passos 1 a 12 da seção Testes, na ponta da fila.
+
+### Ordem dos efeitos (sem navegador)
+
+Não há jsdom nem react-test-renderer no repo, e `react-dom/server` não roda efeitos. A garantia de que os efeitos de um componente rodam na ordem de declaração é do React; o script jiti simulou os dois corpos em ordem (`rememberSession(C)` e depois `forgetSession(C)`) sobre um `sessionStorage` falso, com A guardada e C fechada: o storage ficou vazio e `readEntrySession()` sem `?session` devolveu `null`. O caso "200 sem `is_open`" foi simulado com um servidor HTTP local devolvendo HTML: status `error`.
+
+### O que NÃO foi verificado
+
+- Todo o roteiro em navegador (precisa do `ThemeProvider` da 34): requisições únicas, sessionStorage, reload sem piscar, "Ver o cardápio", layout 1180/820/390, alvos de 44px.
+- Passos 9 e 10 (erro de rede e restaurante errado) só pela lógica pura, sem a UI.
+
+## Follow-ups identificados em review
+
+- [ ] **(alta, task 37)** `NoTableScreen` e `BoardSessionError` usam `Root = styled('main')` com `minBlockSize: 100dvh`. Dentro do shell da 37 isso dá `<main>` dentro do `<main>` do `Scroller` e uma região que rola 72px no tablet deitado (RN-08). Trocar por um contêiner que preencha o `Scroller` (`flex: 1` / `minBlockSize: 100%`), sem `main` — registrado também na task 37.
+- [ ] **(média, 36/38)** Ao trocar o bloco provisório pelo `RouteErrorState`, unificar o código de erro com o `resolveErrorCode` da 38: hoje HTTP sai `Código erro 503 · x` aqui (como no artboard) e `erro 503 · x` lá, e a 38 não tem o ramo "resposta inválida".
+- [ ] **(média, #23)** Antes de consumir `discount`, confirmar que o `2aaf0d30d` da `delivery-api` está no deploy, e atualizar a API master do harness `.indoor-qa` (hoje em `501414ea4`, sem o campo).
+- [ ] **(baixa, convenção)** Registrar na rule `componentes-e-estilos` que o código v2 importa por `@/` (o DS e a 38 usam; a 33 e a 34 usam relativo ou `src/`).
+- [ ] **(baixa)** Exportar a constante de retry do `QueryClient` e usá-la no `use-board-movement.ts` no lugar do `MAX_RETRIES` local.
+- [ ] **(baixa)** `isBrowsing` não volta a `false` quando a mesa chega a `ready`: se a mesa fechar depois, o estado cai em `browsing` em vez de `no-table`.
+- [ ] **(navegador)** Aparelho offline no boot: a query fica pausada em `loading`, sem request nem erro, e o "Tentar de novo" gira até a rede voltar — conferir junto com o banner da 38.
+

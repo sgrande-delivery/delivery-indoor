@@ -4,6 +4,7 @@ import React, { PropsWithChildren, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ThemeProvider from './providers/theme/ThemeProvider';
 import RestaurantBrandStyles from './providers/theme/RestaurantBrandStyles';
+import { BoardSessionGate, BoardSessionProvider } from '@/providers/board-session';
 
 function createQueryClient(): QueryClient {
   return new QueryClient({
@@ -20,7 +21,9 @@ const App: React.FC<PropsWithChildren> = ({ children }) => {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <RestaurantBrandStyles />
-        {children}
+        <BoardSessionProvider>
+          <BoardSessionGate>{children}</BoardSessionGate>
+        </BoardSessionProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
