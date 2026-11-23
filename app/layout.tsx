@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next';
 import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import App from 'src/App';
+import { bricolageGrotesque, sora } from 'src/fonts';
 // Import direto do módulo puro, e não do barrel src/theme: o barrel arrasta createTheme e components,
 // que dependem de @mui/material, para o grafo deste server component.
 import { COLOR_SCHEME_ATTRIBUTE, DEFAULT_COLOR_SCHEME_MODE } from 'src/theme/color-scheme';
@@ -27,7 +28,7 @@ function createAnalyticsTag(id: string): { __html: string } {
 
 export default function RootLayout({ children }: PropsWithChildren): ReactElement {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang="pt-BR" className={`${sora.variable} ${bricolageGrotesque.variable}`} suppressHydrationWarning>
       <head>
         <script async src={`https://www.googletagmanager.com/gtag/js?id=${PLATFORM_ANALYTICS_ID}`} />
         <script dangerouslySetInnerHTML={createAnalyticsTag(PLATFORM_ANALYTICS_ID)} />

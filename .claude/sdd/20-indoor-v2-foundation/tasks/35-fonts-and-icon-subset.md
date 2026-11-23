@@ -337,3 +337,55 @@ Coordenação com as outras tasks:
 - **Na feature inteira, só a 03 toca `icon-names.ts` e o woff2.** Se outra task precisar de um nome fora da união atual, ela pede aqui, sem regerar o font na própria branch. A 07 tem `wifi_off`, `error`, `refresh`, `search_off` e `qr_code_2` desde já; `cloud_off` só existe depois desta task.
 - **A 06 depende desta task, não só da 05.** `table_restaurant`, `room_service` e `restaurant_menu` (chip da mesa, garçom e aba Cardápio) **não existem na união sem a 03**. A 06 é cortada da ponta da fila, que já contém esta task, e por isso não regera nada.
 - **`app/layout.tsx`:** a mudança aqui é um import e a `className` do `<html>`. O conflito com a 02 e a 07 fica nessas duas linhas, e na linearização a resolução é manter os dois lados.
+
+## Implementação
+
+**Concluída em:** 2026-11-23 (validação estática; roteiro em navegador, passos 10 a 13, fica para a ponta da fila)
+
+### Camadas tocadas
+
+- `src/fonts/index.ts`: idêntico ao `delivery-client@ceed49a9` (Bricolage por `next/font/google`, 700 e 800).
+- `src/fonts/BricolageGrotesque-ExtraBold.ttf` e `src/fonts/OFL.txt`: removidos com `git rm`.
+- `app/layout.tsx`: import de `src/fonts` e `className` com `sora.variable` e `bricolageGrotesque.variable` no `<html>`. Mais nada.
+- `src/components/ui/icon-names.ts`: 8 inserções, nenhuma remoção (111 para 119).
+- `src/fonts/material-symbols-rounded.woff2`: regerado com `yarn fonts:icons` (155.916 → 169.012 bytes, 119 ícones, 200 ligaturas).
+- `package.json`: só `scripts.build` virou `node scripts/generate-icon-font.mjs --check && next build`.
+
+### Contratos consumidos
+
+- API do Google Fonts (CSS2) pelo gerador de ícones, e `next/font/google` no build. Nenhum endpoint da delivery-api ou do socket.
+
+### Variáveis de ambiente novas
+
+- Nenhuma.
+
+### Decisões que tomei por conta própria
+
+- Import `from 'src/fonts'` (como na task), coerente com `import App from 'src/App'` do layout.
+- Mudança 8 (registro do fork no `plan.md`) **não aplicada**: a instrução de execução proibiu editar o `plan.md`. O texto proposto está no relatório para o coordenador aplicar.
+- Mudança 4: conferida no review — `src/styles/global.css` é idêntico ao do client e a `:16` tem `font-family: var(--font-sora), sans-serif;`.
+
+### Como testar
+
+1. `yarn fonts:check` deve imprimir 119 ícones e 200 ligaturas.
+2. `NEXT_PUBLIC_RESTAURANT_ID=1 NEXT_PUBLIC_RESTAURANT_UUID=38691b7e-6dbe-46e6-97a0-971147ac02ad yarn build`: a primeira linha é o `fonts:check`, e o `next build` conclui.
+3. Passos 10 a 13 da seção Testes, na ponta da fila.
+
+### O que NÃO foi verificado
+
+- Navegador: famílias vindas de `/_next/static/media/`, Rendered Fonts e glifos dos 8 nomes novos. Dependem do `ThemeProvider` da 34 e rodam na ponta da fila.
+
+### Verificado no review (2026-11-23)
+
+- `grep` de `fonts.googleapis|fonts.gstatic` vazio em `app`, `src`, `.next/static` e `.next/server`; todos os `src:url(...)` do CSS gerado apontam para `/_next/static/media/`.
+- `Icon.tsx`, os dois scripts, `src/fonts/index.ts` e `global.css` com `diff` vazio contra `delivery-client@ceed49a9`; `icon-names.ts` com 119 nomes, 8 inserções e 0 remoções.
+- O woff2 foi **regerado, não copiado**: regerado numa cópia com o mesmo `icon-names.ts`, saiu byte-idêntico ao da branch (sha256 `3096519b…`, 169.012 bytes), diferente do client e da base.
+- Negativos rodados fora da worktree: `'table_bar'` quebra o `tsc` (TS2322); `table_bar` na união sem regerar faz o `yarn build` sair com 1 antes do `next build`; o woff2 da base faz o build sair com 1 listando os 8 nomes.
+- `yarn build` com as vars de restaurante: exit 0, `fonts:check — 119…` na primeira linha.
+
+## Follow-ups identificados em review
+
+- [ ] **Licença do Material Symbols.** O woff2 do subset é derivado de obra Apache-2.0 e está versionado num repo público sem o aviso de licença. Já era assim, e é igual no client; decidir lá, junto do sync do DS.
+- [ ] **Fork zero do `icon-names.ts`.** Levar as 8 inserções ao `icon-names.ts` do `delivery-client` — decisão do dev.
+- [ ] **Podar o subset** para o conjunto usado (≈46 kB) depois das frentes #21–#24.
+- [ ] **Eixo `opsz` do Bricolage**, que o canvas carrega e o `next/font` não serve em 700/800 — nasce no client.

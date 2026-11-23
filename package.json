@@ -47,7 +47,7 @@
   "scripts": {
     "dev": "next dev",
     "debug": "NODE_OPTIONS=--inspect next dev",
-    "build": "next build",
+    "build": "node scripts/generate-icon-font.mjs --check && next build",
     "start": "NODE_ENV=production node server.js -p $PORT",
     "createXml": "node sitemapGenerator.js",
     "fonts:icons": "node scripts/generate-icon-font.mjs",
