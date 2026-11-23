@@ -7,7 +7,7 @@ import BrandPanel from './BrandPanel';
 import ColorSchemePanel from './ColorSchemePanel';
 
 const Container = styled('div')(({ theme }) => ({
-  height: '100dvh',
+  blockSize: '100%',
   width: '100%',
   overflowY: 'auto',
   backgroundColor: theme.vars.palette.background.default,

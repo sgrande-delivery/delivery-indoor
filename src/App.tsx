@@ -2,7 +2,7 @@
 
 import React, { PropsWithChildren, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import OfflineBanner from '@/components/offline/OfflineBanner';
+import AppShell from '@/components/shell/AppShell';
 import { ToastProvider } from '@/components/ui';
 import ConnectivityProvider from '@/providers/connectivity/ConnectivityProvider';
 import ThemeProvider from './providers/theme/ThemeProvider';
@@ -26,9 +26,10 @@ const App: React.FC<PropsWithChildren> = ({ children }) => {
         <RestaurantBrandStyles />
         <ToastProvider>
           <ConnectivityProvider>
-            <OfflineBanner />
             <BoardSessionProvider>
-              <BoardSessionGate>{children}</BoardSessionGate>
+              <AppShell>
+                <BoardSessionGate>{children}</BoardSessionGate>
+              </AppShell>
             </BoardSessionProvider>
           </ConnectivityProvider>
         </ToastProvider>

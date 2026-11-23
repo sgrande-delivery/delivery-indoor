@@ -59,8 +59,8 @@ export interface Restaurant {
   is_kitchen_open: boolean;
   name: string;
   description: string;
-  logo?: string;
-  favicon?: string;
+  logo: string | null;
+  favicon: string | null;
   keywords?: string;
   title?: string;
   url: string;
@@ -69,9 +69,9 @@ export interface Restaurant {
   email: string;
   primary_color: string;
   secondary_color: string;
-  facebook_link?: string;
-  instagram_link?: string;
-  twitter_link?: string;
+  facebook_link: string | null;
+  instagram_link: string | null;
+  twitter_link: string | null;
   image_id: number;
   cover_id: number;
   working_hours: string;

@@ -9,11 +9,11 @@ import { useBoardSession } from '@/providers/board-session/BoardSessionProvider'
 import { dialogMetrics, elevations, overlayMediaQuery, typographyTokens } from '@/theme';
 import { noTableScreenMetrics as metrics } from './no-table-screen-metrics';
 
-const Root = styled('main')({
+const Root = styled('div')({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  minBlockSize: '100dvh',
+  minBlockSize: '100%',
   boxSizing: 'border-box',
   paddingInline: metrics.paddingInlineCompact,
   paddingBlock: metrics.paddingBlockCompact,

@@ -237,7 +237,7 @@ Duas mudanças no arquivo: o `<AppShell>` entra entre o `BoardSessionProvider` e
 Medidas nos reviews das tasks 34, 36 e 38, na base desta task (`task/38-…`):
 
 - **A tela "sem mesa" e o bloco de erro da 36 ocupam a área do shell, não a viewport.** `src/components/board-session/NoTableScreen.tsx` e `BoardSessionError.tsx` usam `Root = styled('main')` com `minBlockSize: 100dvh`. Dentro do `Scroller` (que já é `<main>`) isso dá `<main>` aninhado e uma região que rola 72px no tablet deitado (RN-08). Trocar a raiz das duas por um contêiner sem landmark que preencha o `Scroller` (`flex: 1` / `minBlockSize: 100%`). É a única edição desta task fora das pastas dela, além de `browsable-routes.ts`.
-- **`src/types/restaurant.ts` mente para quem lê a marca.** Medido em `GET /restaurants` (API local, 2026-11-23): `logo`, `favicon` e os links sociais chegam `null` (declarados `?: string`); `minimum_order`, `configs.id`, `configs.restaurant_id` e `configs.preserve_cart` não vêm. A `TableTopBar` lê `logo` e `name` pelo `useRestaurant()`: declarar `logo: string | null` (e os demais campos lidos aqui) e tratar loja sem logo — nunca `<img src={null}>`. Os campos que não vêm saem na 39.
+- **`src/types/restaurant.ts` mente para quem lê a marca.** Medido em `GET /restaurants` (API local, 2026-11-23): `logo`, `favicon` e os links sociais chegam `null` (declarados `?: string`); `minimum_order`, `configs.id`, `configs.restaurant_id` e `configs.preserve_cart` não vêm. A `TableTopBar` lê a marca de `restaurant.image` (`imageThumbUrl`/`imageUrl`) e `name` pelo `useRestaurant()`; `logo` chega `null` no tenant de teste e foi declarado `string | null`. Tratar loja sem imagem — nunca `<img src={null}>`. Os campos que não vêm saem na 39.
 - **O `OfflineBanner` entra na coluna flex do `AppShell`** (já previsto na mudança 7): hoje a 38 o deixa acima de `{children}` em `src/App.tsx`, e uma tela de altura 100% perde embaixo a altura do banner.
 
 ## Testes
@@ -364,3 +364,92 @@ git diff --stat task/38-loading-empty-error-offline-states... -- src/components/
 `task/37-responsive-shell-navigation`, **onda 3**, cortada da ponta da fila linearizada da onda 2, `task/38-loading-empty-error-offline-states` (`33 → 34 → 35 → 36 → 38`). O PR do `/ship` abre contra `task/38-loading-empty-error-offline-states`.
 
 Base de código no corte: 01, 02, 03, 05 e 07. A 08 roda na mesma onda, cortada da mesma ponta, e não toca nos arquivos desta task.
+
+## Implementação
+
+**Concluída em:** 2026-11-23
+
+### Camadas tocadas
+
+- **Rotas:** `src/routes/app-routes.ts` (novo); `src/providers/board-session/browsable-routes.ts` deriva de `HOME_ROUTE`.
+- **Shell:** `src/components/shell/` ganhou `shell-tabs.ts` (tabela de abas, `resolveActiveTab`, `shellTabsFor`), `TableTopBar.tsx`, `ShellNav.tsx`, `AppShell.tsx` (`useAppScroller` com a assinatura do client) e a extensão de `shell-metrics.ts` (`tabletPortraitMediaQuery`, `tableTopBarMetrics`).
+- **Garçom:** `src/components/waiter/WaiterCallButton.tsx` (`onClick?`, `collapsible`; `disabled` sem handler).
+- **Árvore:** `src/App.tsx` monta `BoardSessionProvider > AppShell > BoardSessionGate`; o `<OfflineBanner />` saiu dali e é filho do `Root` do `AppShell`, entre a barra e o `Frame`.
+- **Emendas (mudança 9):** `NoTableScreen` e `BoardSessionError` trocaram `main`/`100dvh` por `div`/`minBlockSize: 100%`; `src/types/restaurant.ts` declara `logo`, `favicon` e os três links sociais como `string | null`.
+- Não editados: `src/theme/`, `src/components/ui/`, `src/fonts/`.
+
+### Contratos consumidos
+
+- `useBoardSession()` da 05 (`status`, `movement.board.number` em `ready`, `isLoading`, `hasTable`) e `useRestaurant()` da 02 (`name`, `image.imageThumbUrl`/`imageUrl`). `GET /restaurants` local confere: `logo`/`favicon`/links chegam `null`; `image` vem preenchida.
+- Nenhuma rota nem evento novo; o garçom não faz requisição.
+
+### Variáveis de ambiente novas
+
+- Nenhuma.
+
+### Decisões que tomei por conta própria
+
+- `ShellNav` recebe `activeTab` (chave) e resolve o `href` da aba; o `AppShell` calcula a chave por formato.
+- O `ChromeBlock` é sempre renderizado e só fica `display: none` (tablet ou "sem mesa"), com o `ShellNav` dentro apenas quando há mesa ou carregando. Assim o `ResizeObserver` publica `0px` em vez de deixar o fallback de 73px do `Toast` valendo.
+- Barra com `status` `browsing` e `error`: variante "sem mesa" (a confirmar no review, como a task já previa).
+- `Restaurant.image` ficou `Image` (não nulo): `src/components/index/Info.tsx` (v1, removido pela 39) lê `image.imageUrl` sem guarda e o `tsc` quebraria. A barra lê com `?.` e cai no quadrado neutro. A 39 pode ajustar o tipo depois de apagar o `Info.tsx`.
+- Nome da loja: tokens `typographyTokens.h5` com peso 800 e 15px (o DS pede display 15/800 e não há token exato).
+- Chip da mesa: `paddingInline` 14 (o README não dá o número).
+- Aba inerte no tablet e no celular é `button` sem destino (comportamento do `BottomNav`); aba Cardápio é a única com `href` (`/`).
+- O canvas em `/tmp/brasa-design.b3tQsA/` não existia mais; o visual foi conferido só contra o README do `TableTopBar` e do `WaiterCallButton`.
+
+### Como testar
+
+1. `yarn dev` com `NEXT_PUBLIC_API` e `NEXT_PUBLIC_RESTAURANT_UUID`.
+2. Abrir `/?session=c10e064f-c565-46f8-9a86-db69b8ed2993` nos tamanhos da tabela da seção Testes.
+3. Teste do `resolveActiveTab` com `jiti` (comando da seção Testes).
+
+### Verificado (Chromium headless, Playwright, `next dev`, API local :8093, mesa 001 aberta)
+
+- `tsc`, `eslint src app scripts` (0 erros; 2 warnings preexistentes) e `yarn build` passam. `resolveActiveTab`: `/` e `/menu` dão `menu menu`, `/search` dá `search menu`, `/cart` dá `cart menu`, `/board` e `/board/pay` dão `board board`.
+- 390×844, 844×390, 743×1000, 744×599: `BottomNav` com 4 abas (Cardápio `/` ativo, `aria-current=page`; as outras sem `href`), nenhuma barra superior, nav com `bottom` = `innerHeight`, inset 73px, sem rolagem horizontal, `scrollTop` do documento 0, alvos < 44px: nenhum.
+- 820×1180, 744×1133: `header` 72px com `top` 0, "Mesa 001", garçom 44×44 `disabled`, inset `0px`, nenhuma navegação inferior visível.
+- 1180×820, 744×600, 1024×600: o mesmo, com garçom 191,8×44 rotulado e `disabled`.
+- Console sem erro nem aviso de hidratação em todos os tamanhos.
+- Logo `null` e `image` `null` (via `page.route`): 0 `<img>`, quadrado neutro. Nome longo em 744×1133 e 1024×600: reticências, `scrollWidth` = `innerWidth`.
+- Carregando (atraso de 2,5 s no `GET /boardMovements`): `role="status"` "Carregando a mesa", 104×36, e as 2 abas já visíveis.
+- Sem mesa (aba nova, sem `session`; uuid zerado; mesa fechada): tablet mostra só marca + "Sem mesa identificada", 0 abas, sem garçom; celular sem navegação; um só `<main>`, região sem rolagem (`scrollHeight` = `clientHeight`, 748 em 1180×820); inset `0px`.
+- `/nao-existe` dentro da moldura mantém "Mesa 001"; tocar em Cardápio vai para `/` sem novo `GET /boardMovements`; recarregar em `/` sem `?session` mantém a mesa.
+- Tocar nas abas inertes e no garçom: URL igual, 0 requisições externas.
+- Offline: banner abaixo da barra no tablet (top 72) e no topo no celular (top 0), fora do `<main>`.
+- Modo escuro: screenshot sem anomalia aparente (`/tmp/t37/dark-820x1180.png`).
+- Varreduras da seção Testes: vazias; `git diff` em `src/components/ui`, `src/theme`, `src/fonts`: vazio.
+- Screenshots: `/tmp/t37/*.png`.
+
+### O que NÃO foi verificado
+
+- "Slow 3G" real e o `/sandbox` claro/escuro com troca de esquema (usei atraso na rota e `data-color-scheme` manual).
+- Conferência pixel a pixel contra o canvas (arquivo ausente).
+- `next start` em produção com `.env.production`; só `yarn build` e `next dev`.
+- Teclado/foco visível e leitor de tela.
+- Em 744×600 (paisagem, garçom rotulado) o nome da loja encolhe para "S…": é o comportamento previsto na armadilha de largura mínima, mas vale o dev olhar.
+
+### Correções do review (2026-11-23)
+
+- `TableTopBar` quebrada em pai + `TableTopBarTabs` (nav + map) + `TableTopBarTab` (item: botão inerte ou link com `aria-current`), um componente por arquivo.
+- **Decisão:** em `status: 'error'` a barra mostra só a marca (`table.kind: 'unavailable'`): sem chip, sem texto, sem abas, sem garçom, porque a mesa foi identificada e o corpo já mostra o erro. `browsing` e `no-table` seguem com "Sem mesa identificada".
+- O skeleton do nome da loja vive num contêiner que encolhe (`flex: 0 1 96px`, `overflow: hidden`), e não invade mais o chip em 744×600.
+- Aba usa `typographyTokens.subtitle1` e o nome usa `h5` (só o peso 800 é sobrescrito); saíram `nameFontSize` e `tabFontSize` das métricas.
+- O garçom colapsa sob `tabletShellMediaQuery and (orientation: portrait)`.
+- `ShellNav` usa constante de módulo; `Spacer` vazio removido; `hasTable` local virou `showsNavigation`; `tabs` é `readonly ShellTab[]`.
+- `ThemeSandbox` usa `blockSize: '100%'` dentro do shell.
+- Texto da mudança 9 corrigido: a marca vem de `restaurant.image`.
+
+### Correções finais do re-review (2026-11-23)
+
+- `TableTopBarTab.tsx`: `pxToRem` sem uso saiu do import (o lint voltou aos 2 avisos antigos).
+- `TableTopBar.tsx`: o `Skeleton` do nome recebe `width={metrics.nameSkeletonWidth}` — sem largura ele contava 0 no tamanho natural do `Brand` e sumia. Conferido em Chromium headless com `/restaurants` e `/boardMovements` atrasados: logo, nome (≈96px em 1180×820, encolhido em 744×600) e chip aparecem, sem sobreposição e sem rolagem horizontal.
+
+## Follow-ups identificados em review
+
+- [ ] **(média, depois da 39) `src/types/restaurant.ts`:** `image: Image | null`, `image_id: number | null`, `cover: Image | null`, `cover_id: number | null` — as FKs aceitam null com `onDelete('set null')` (migrations `2019_12_10_115313` e `2020_04_04_114414` da `delivery-api`). A barra está protegida pelo `?.` do `AppShell`, mas a próxima tela que ler `restaurant.image.imageUrl` quebra com o `tsc` passando.
+- [ ] **Garçom desabilitado com a pele `field`**, igual à aba ativa — rever o visual quando a task 07 da #23 ligar o `onClick`.
+- [ ] **Paisagem entre 744 e ≈849px com o garçom rotulado:** o nome da loja cai para um caractere. Nenhum tablet real deitado fica nessa faixa; se o dev quiser regra (ex.: colapsar o garçom por largura), é emenda na RF-09, não ajuste de código.
+- [ ] **Safe areas no tablet:** com `viewportFit: 'cover'`, a barra não consome `env(safe-area-inset-top)`, e um rodapé fixo de tela no tablet precisa pagar `env(safe-area-inset-bottom)`. Validar em aparelho real em modo quiosque.
+- [ ] **Design system:** `design-system/components/TableTopBar/preview.html` desenha a mesa como linha de texto em vez do chip em pílula.
+

@@ -10,12 +10,12 @@ import { readErrorCode } from '@/services/api-error-interceptor';
 import { InvalidBoardMovementResponseError } from '@/services/board-movement';
 import { typographyTokens } from '@/theme';
 
-const Root = styled('main')({
+const Root = styled('div')({
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
   justifyContent: 'center',
-  minBlockSize: '100dvh',
+  minBlockSize: '100%',
 });
 
 const Code = styled('p')(({ theme }) => ({
