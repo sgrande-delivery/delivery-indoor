@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** 01
-**Status:** pendente
+**Status:** executada
 
 ## Objetivo
 
@@ -411,3 +411,11 @@ Não há jsdom nem react-test-renderer no repo, e `react-dom/server` não roda e
 - [ ] **(baixa)** `isBrowsing` não volta a `false` quando a mesa chega a `ready`: se a mesa fechar depois, o estado cai em `browsing` em vez de `no-table`.
 - [ ] **(navegador)** Aparelho offline no boot: a query fica pausada em `loading`, sem request nem erro, e o "Tentar de novo" gira até a rede voltar — conferir junto com o banner da 38.
 
+## Validação em navegador na ponta da fila (2026-11-23)
+
+Na `task/38-…` com 33 → 34 → 35 → 36 → 38 juntas, `next dev` contra a API master local (`:8093`), restaurante 1, Chromium headless (Playwright). 36 de 37 verificações passaram de primeira; a que falhou era a heurística do roteiro (media o `span` de fora do ícone) e foi refeita no elemento certo.
+
+- Mesa aberta (`c10e064f…`): rota renderiza, uma `GET /boardMovements/{id}`, sessão gravada no `sessionStorage`; reload sem `?session` mantém a mesa **sem piscar "sem mesa"** (MutationObserver desde o primeiro paint).
+- Passo 11: com a aberta guardada, `?session=<fechada>` mostra "sem mesa", o storage fica sem as duas, e reload em `/` continua "sem mesa".
+- Inexistente: "sem mesa" com uma GET; id fora do formato e aba nova: "sem mesa" sem GET.
+- 503 da movimentação: bloco de erro com o código, três tentativas, nunca "sem mesa".

@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** 01, 04
-**Status:** pendente
+**Status:** executada
 
 ## Objetivo
 
@@ -558,3 +558,10 @@ Roteiro da seção `## Testes`, na ponta da fila (precisa do `ThemeProvider` da 
 - [ ] **`useQueryScreenState`:** a sequência conta para menos quando a chave da query troca entre duas queries que nunca tiveram sucesso (as duas com `dataUpdatedAt` 0).
 - [ ] **Confirmação do dev:** a copy derivada (descrição genérica, linha de instabilidade, as duas linhas do banner) e os dígitos grandes `5◯0` ao lado de `erro de rede`/`erro 503`.
 
+## Validação em navegador na ponta da fila (2026-11-23)
+
+Na `task/38-…` com 33 → 34 → 35 → 36 → 38 juntas, `next dev` contra a API master local (`:8093`), restaurante 1, Chromium headless (Playwright). 36 de 37 verificações passaram de primeira; a que falhou era a heurística do roteiro (media o `span` de fora do ícone) e foi refeita no elemento certo.
+
+- Forma do erro de rota (sandbox "quebrar a rota"): tela cheia em 390×844 e 844×390; `Sheet` de 480 colado embaixo em 820×1180; painel centrado de 540 em 1180×820 e 1440×900; código visível; sem rolagem horizontal.
+- Offline (`context.setOffline`): banner "Sem conexão" com o horário, conteúdo carregado mantido; na volta o banner sai e `/restaurants` é relido.
+- `global-error` com o `ThemeProvider` da 34 e `suppressHydrationWarning` (aplicado na linearização).

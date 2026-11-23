@@ -95,7 +95,7 @@ A fonte é `design-system/components/TableTopBar/README.md`, conferida contra os
 - **Aba ativa por formato.** No celular cada uma das quatro rotas acende a sua aba. No tablet, `/search` e `/cart` acendem **Cardápio**, porque a busca é chip do cardápio (artboard `Busca · tablet deitado`) e a sacola é coluna do cardápio.
 - **Aba sem tela fica inerte.** Uma aba só tem `href` quando a rota dela é servida pelo App Router. Tocar numa aba inerte não navega, não dá 404 e não troca a URL: é o comportamento nativo do `BottomNav` (`:12`–`:13`), repetido na `TableTopBar`. Não há rota v1 para onde linkar: a 01 removeu `pages/`. Quando a 06 começar, só a aba Cardápio (`/`, o `app/page.tsx` da 01) terá destino. Cada frente liga a sua aba ao entregar a tela.
 - **Os links de aba não carregam `?session`.** O `href` de cada aba é a rota pura (`/`, `/board`…). A mesa atravessa a navegação no provider da 05, e o reload a recupera do `sessionStorage` (05, decisão 1).
-- **O garçom aparece e fica desabilitado.** Ele é visível porque o design o põe em todo artboard de tablet, e porque sem ele o lado direito da barra (e o colapso para ícone em retrato) nunca é validado. Ele fica `disabled` porque a chamada depende de [delivery-api#1610](https://github.com/sgrande-delivery/delivery-api/issues/1610) e [delivery-socket-api#65](https://github.com/sgrande-delivery/delivery-socket-api/issues/65), que não existem. Na 06 o componente nem aceita handler: não há request, socket nem estado de "chamado". Ocultar seria uma linha a menos no shell, mas trocaria um botão inerte por um desenho que ninguém conferiu.
+- **O garçom aparece e fica desabilitado.** Ele é visível porque o design o põe em todo artboard de tablet, e porque sem ele o lado direito da barra (e o colapso para ícone em retrato) nunca é validado. A chamada, o estado "Garçom chamado" e o intervalo mínimo são **escopo** da task 07 da #23, que os implementa contra o contrato de [delivery-api#1610](https://github.com/sgrande-delivery/delivery-api/issues/1610) e [delivery-socket-api#65](https://github.com/sgrande-delivery/delivery-socket-api/issues/65) — não é por a rota não estar publicada (o `CLAUDE.md` proíbe esconder ou travar UI por isso). Por isso o componente aceita um `onClick` opcional e fica `disabled` só enquanto ninguém o liga; o shell da 37 não passa handler. Ocultar seria uma linha a menos no shell, mas trocaria um botão inerte por um desenho que ninguém conferiu.
 
 ### Armadilhas
 
@@ -181,7 +181,7 @@ Também entra `tableTopBarMetrics` com os números da anatomia acima. Onde já e
 
 - **Composição:** `Button variant="neutral" size="md" startIcon="room_service"`, rótulo "Chamar garçom" e `aria-label="Chamar garçom"`. A pele `neutral` é exatamente o botão fantasma do design: borda de 1,5px em `line`, texto `ink`, 44 de altura (`Button.tsx:36`, `:90`–`:98`). O raio é 14 no código, contra 13 no desenho, e vale o código.
 - **Prop `collapsible`:** sob `tabletPortraitMediaQuery`, o rótulo some e o botão vira quadrado de 44 (`inlineSize: 44`, `paddingInline: 0`), com o mesmo `aria-label`. A barra liga essa prop. O bloco de ações da conta no celular (#23) não liga.
-- **Na 06 é sempre `disabled`, sem `onClick` na API do componente.** Fica com a pele de desabilitado do próprio `Button` (`Button.tsx:127`–`:134`). A chamada, o estado "Garçom chamado às 20:12" e o intervalo mínimo são da task 07 da #23.
+- **`onClick?: () => void` na API do componente; sem handler, `disabled`.** Fica com a pele de desabilitado do próprio `Button` (`Button.tsx:127`–`:134`) enquanto a task 07 da #23 não liga a chamada, o estado "Garçom chamado às 20:12" e o intervalo mínimo. O shell da 37 não passa handler.
 - Mora em `src/components/waiter/`, e não em `shell/`, porque a conta do celular também o usa.
 
 ### 6. `ShellNav`
@@ -231,6 +231,14 @@ QueryClientProvider                 (01)
 ```
 
 Duas mudanças no arquivo: o `<AppShell>` entra entre o `BoardSessionProvider` e o `BoardSessionGate`, e a linha do `<OfflineBanner />` sai (ele passa para o `AppShell`, mudança 7).
+
+### 9. Emendas vindas da execução da onda 2 (2026-11-23)
+
+Medidas nos reviews das tasks 34, 36 e 38, na base desta task (`task/38-…`):
+
+- **A tela "sem mesa" e o bloco de erro da 36 ocupam a área do shell, não a viewport.** `src/components/board-session/NoTableScreen.tsx` e `BoardSessionError.tsx` usam `Root = styled('main')` com `minBlockSize: 100dvh`. Dentro do `Scroller` (que já é `<main>`) isso dá `<main>` aninhado e uma região que rola 72px no tablet deitado (RN-08). Trocar a raiz das duas por um contêiner sem landmark que preencha o `Scroller` (`flex: 1` / `minBlockSize: 100%`). É a única edição desta task fora das pastas dela, além de `browsable-routes.ts`.
+- **`src/types/restaurant.ts` mente para quem lê a marca.** Medido em `GET /restaurants` (API local, 2026-11-23): `logo`, `favicon` e os links sociais chegam `null` (declarados `?: string`); `minimum_order`, `configs.id`, `configs.restaurant_id` e `configs.preserve_cart` não vêm. A `TableTopBar` lê `logo` e `name` pelo `useRestaurant()`: declarar `logo: string | null` (e os demais campos lidos aqui) e tratar loja sem logo — nunca `<img src={null}>`. Os campos que não vêm saem na 39.
+- **O `OfflineBanner` entra na coluna flex do `AppShell`** (já previsto na mudança 7): hoje a 38 o deixa acima de `{children}` em `src/App.tsx`, e uma tela de altura 100% perde embaixo a altura do banner.
 
 ## Testes
 
@@ -333,6 +341,9 @@ git diff --stat task/38-loading-empty-error-offline-states... -- src/components/
 - [ ] `useMediaQuery`, hex e resto de login não aparecem no shell (varreduras acima).
 - [ ] `useAppScroller` é exportado de `src/components/shell/AppShell.tsx` com a assinatura do client.
 - [ ] `npx tsc --noEmit`, o lint e `yarn build` passam.
+
+- [ ] A tela "sem mesa" e o bloco de erro da sessão, dentro do shell, não criam `<main>` aninhado nem rolagem de 72px no tablet deitado.
+- [ ] Loja sem logo (`logo: null`) mostra a barra sem `<img>` quebrada.
 
 ## Fora de escopo
 

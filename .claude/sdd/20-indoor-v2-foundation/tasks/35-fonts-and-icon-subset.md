@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** 01
-**Status:** pendente
+**Status:** executada
 
 ## Objetivo
 
@@ -389,3 +389,10 @@ Coordenação com as outras tasks:
 - [ ] **Fork zero do `icon-names.ts`.** Levar as 8 inserções ao `icon-names.ts` do `delivery-client` — decisão do dev.
 - [ ] **Podar o subset** para o conjunto usado (≈46 kB) depois das frentes #21–#24.
 - [ ] **Eixo `opsz` do Bricolage**, que o canvas carrega e o `next/font` não serve em 700/800 — nasce no client.
+
+## Validação em navegador na ponta da fila (2026-11-23)
+
+Na `task/38-…` com 33 → 34 → 35 → 36 → 38 juntas, `next dev` contra a API master local (`:8093`), restaurante 1, Chromium headless (Playwright). 36 de 37 verificações passaram de primeira; a que falhou era a heurística do roteiro (media o `span` de fora do ícone) e foi refeita no elemento certo.
+
+- As três famílias vêm de `/_next/static/media/` (3 woff2), nenhuma requisição a `fonts.googleapis.com`/`fonts.gstatic.com`; `<html>` com as classes `__variable_*`; body em Sora, título da tela "sem mesa" em Bricolage.
+- Ícones como glifo: `refresh` com 22px e `qr_code_2` no tamanho de 132px da tela "sem mesa", fonte `materialSymbolsRounded` carregada (screenshot conferido).

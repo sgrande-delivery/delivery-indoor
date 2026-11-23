@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** 01
-**Status:** pendente
+**Status:** executada
 
 ## Objetivo
 
@@ -394,3 +394,10 @@ Roteiro da seção `## Testes`, na ponta da fila.
 - [ ] **Seletor de modo em produção:** se sair do sandbox, rótulos em minúsculo e alvo de toque de 44px medido (o `ToggleButton` padrão não foi medido).
 - [ ] **Chunk do `/sandbox` no build de produção** (35.7 kB; a rota responde 404). Mesmo comportamento do client; decidir se vale excluir.
 
+## Validação em navegador na ponta da fila (2026-11-23)
+
+Na `task/38-…` com 33 → 34 → 35 → 36 → 38 juntas, `next dev` contra a API master local (`:8093`), restaurante 1, Chromium headless (Playwright). 36 de 37 verificações passaram de primeira; a que falhou era a heurística do roteiro (media o `span` de fora do ícone) e foi refeita no elemento certo.
+
+- Cor do restaurante em runtime: `--mui-palette-primary-main` = `#f4744f` (loja 1), vindo de `GET /restaurants`; com `/restaurants` abortado, fica no fallback `#FF5A1F` e a rota segue renderizando.
+- Escuro: `mui-mode=dark` + reload abre com `data-color-scheme="dark"`, mantém a primária da loja, console sem erro nem aviso.
+- Uma `GET /restaurants` por carga; console sem aviso de hidratação (com o `suppressHydrationWarning`).
