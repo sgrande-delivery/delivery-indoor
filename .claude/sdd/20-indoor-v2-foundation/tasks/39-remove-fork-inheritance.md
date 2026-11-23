@@ -345,3 +345,72 @@ Depois da mudança 9, repita os passos 1 a 8 sobre o resultado com a `06`. Nos p
 ## Branch
 
 `task/39-remove-fork-inheritance`, **onda 3**, cortada da ponta da fila linearizada da onda 2, `task/38-loading-empty-error-offline-states` (`33 → 34 → 35 → 36 → 38`). Roda em paralelo com a `06`, cortada da mesma ponta. O PR abre contra `task/38-loading-empty-error-offline-states`. Ela entra por último, depois da `06`, e só depois da conferência da mudança 9.
+
+## Implementação
+
+**Concluída em:** 2026-11-23 (sem a conferência da mudança 9, que depende da `06` e fica para a junção)
+
+### O que saiu
+
+264 arquivos removidos (21.687 linhas), mais 1.362 linhas apagadas de arquivos alterados (a maior parte do `yarn.lock`). A lista saiu de `git ls-files` cruzado com `69761e1`: só entrou arquivo que existia lá e que `git diff 69761e1 HEAD` mostra sem mudança (327 dos 332 em comum; os 5 alterados são `App.tsx`, `global.css`, `icon-names.ts`, `fonts/index.ts` e o woff2, e todos ficam). Remoção por `git rm` arquivo a arquivo.
+
+| Grupo | Arquivos |
+|---|---|
+| Push/Firebase | `src/providers/FirebaseProvider.tsx`, `src/config/FirebaseConfig.js` (a pasta deixou de existir), `public/firebase-messaging-sw.js` |
+| Redux | `src/store/redux/` (26) |
+| MUI v4, JSS, styled-components | `src/theme-v4.ts`, `src/helpers/createTheme.js`, `src/styles/animatedBackground.tsx`, `src/components/slider/` (2) |
+| Componentes v1 | 175 arquivos nas 21 pastas de `src/components/` (inclui `icons/`, 3) |
+| Providers, hooks, helpers, serviços | 4 providers (o `FirebaseProvider` está no grupo Push) + `google-maps/` (3); 12 hooks; `cardBrandValidation`, `cpfValidation`, `formatOrderId`, `MobileCheck`, `isFacebookNavigator`; `postalCodeSearch.js` |
+| Tipos | 22 de `src/types/` (ficam `restaurant.ts`, `image.ts` e os novos da 02 e da 05) |
+| Assets | `public/images/{facebook_icon,google_icon,picpay_icon,play_store,playstore,mark_map}.png` |
+| Raiz | `sitemapGenerator.js`, `yarn-error.log` (versionado, agora no `.gitignore`) |
+
+### Dependências removidas
+
+`@date-io/date-fns`, `@material-ui/core`, `@material-ui/icons`, `@material-ui/pickers`, `@reduxjs/toolkit`, `date-fns`, `dotenv`, `firebase`, `react-ga`, `react-icons`, `react-redux`, `react-text-mask`, `redux`, `styled-components`, `uuid`, `yup`, `@types/{facebook-js-sdk,facebook-pixel,gapi.auth2,google.maps,gtag.js,react-redux,react-text-mask,styled-components,uuid,yup}` e o script `createXml`. `yarn.lock` regenerado por `yarn install` num `node_modules` próprio da worktree (o symlink foi removido antes). `yarn why` não acha `@material-ui/core`, `styled-components`, `redux`, `react-redux`, `firebase` nem `react-text-mask`.
+
+### Alterados (não só remoção)
+
+`package.json`, `yarn.lock`, `.env.production` (ficam `NEXT_PUBLIC_API` e `NEXT_PUBLIC_SOCKET`; sem var nova), `.gitignore` (entra `yarn-error.log`, sai `public/sitemap.xml`), `eslint.config.mts` (sai o bloco `src/**/*.js`), `CLAUDE.md` (regra da linha 128, como na task), `src/constants/constants.ts` (só `SOCKET_APP`; as outras cinco constantes não tinham importador), `src/types/restaurant.ts` (saem `formattedTax`, `formattedOrderMinimumValue`, `minimum_order`, `configs.id`, `configs.restaurant_id`, `configs.preserve_cart`). O `.env.development` local (não versionado) também perdeu Firebase, Google API key, `LOCALSTORAGE_CART` e `TOKEN_NAME`.
+
+### O que ficou e por quê
+
+DS vendorado, `highlight.ts`, `reduced-motion.ts`, `useInfiniteScroll.ts`, `socket-store.ts`, `numberFormat.js`, `server.js`, `App.tsx`, `global.css`, `types/image.ts`, `public/images/{favicon,logo192,logo192g}.png` (marca/PWA, conforme a tabela). O gtag da plataforma continua no layout (inline, sem `@types/gtag.js`).
+
+### Decisões que tomei por conta própria
+
+- **`src/types/restaurant.ts` perdeu 6 campos, não 2.** A task previa só `formattedTax`/`formattedOrderMinimumValue`; saíram também `minimum_order`, `configs.id`, `configs.restaurant_id` e `configs.preserve_cart`, porque `GET /restaurants` (API local, restaurante `38691b7e-…`, 2026-11-23) não devolve nenhum dos seis — com eles o tipo mentia — e nenhum leitor restou (nem na 37).
+- **`NEXT_PUBLIC_SOCKET` fica no `.env.production` sem leitor hoje.** Os últimos (`use-board-socket.ts`/`use-client-socket.ts`) saíram com a v1, mas é a URL base de que a #23 precisa para montar o `/board` sobre o `SocketStore` (que fica), e é pública (a RN-13 não se aplica).
+
+- `README`/docs não foram tocados; `NEXT_PUBLIC_RESTAURANT_ID` continua no comando de build, sem leitor (fora de escopo).
+- `numberFormat.js` passa no eslint sem o bloco transitório, sem ajuste.
+
+### Como testar
+
+1. `rm -rf .next tsconfig.tsbuildinfo && npx next typegen && npx tsc --noEmit && npx eslint src app scripts`
+2. `NEXT_PUBLIC_API=http://localhost:8093/api/client/ NEXT_PUBLIC_RESTAURANT_ID=1 NEXT_PUBLIC_RESTAURANT_UUID=<uuid> yarn build`, depois `grep -rli 'firebase\|data-jss' .next/static` (vazio).
+3. `yarn dev` com as vars acima, abrir `/?session=<uuid>` e `/`.
+
+### Verificado
+
+- Os `grep` de ausência (critério da spec, `firebase|push-tokens`, Redux/MUI v4/styled-components/`next/router` em `src app`, pacotes no `package.json`, imports de `react-ga|react-icons|...`) voltam vazios; `git diff --stat` contra a base no DS e nos arquivos que ficam: vazio; `fonts:check` passa; `git diff --diff-filter=D` não aponta nada fora de `69761e1`.
+- `tsc` 0 erros, `eslint src app scripts` 0 erros, `yarn build` conclui (6 rotas), `.next/static` sem `firebase` nem `data-jss`.
+- Navegador (Playwright headless, `next dev -p 3439`, API local, mesa `c10e064f-…`): `/?session=` renderiza o mesmo placeholder da base ("app de mesa em reconstrução"), `/` mostra "mesa não identificada"; console sem erro nem aviso; só `googletagmanager`/`google-analytics` externos; `/firebase-messaging-sw.js` 404; 0 `style[data-jss]`; 0 service workers.
+
+### O que NÃO foi verificado
+
+- A mudança 9 (junção com a `06`): a `06` roda em paralelo e não estava disponível. Na junção, rodar o passo 9 da task, em especial "deleted by us" e `TS2307`.
+- O `yarn install --frozen-lockfile` a partir de `node_modules` apagado inteiro foi substituído por um `yarn install` limpo (sem `node_modules`), com cache local.
+- Não rodei o roteiro na base para comparar lado a lado; a comparação é contra o que a base renderiza segundo o código (`app/page.tsx` não mudou).
+
+## Follow-ups identificados em review
+
+- [ ] **(média) `?session` vaza para o GA da plataforma.** Medido: o `page_view` sai com `dl=…/?session=<uuid>`. Vem do gtag do `app/layout.tsx` (33), herdado do `_document` da `master`, que tem o mesmo problema em produção. Correção: `gtag('config', id, { page_location: location.origin + location.pathname })`. Já registrado na task 33.
+- [ ] **`NEXT_PUBLIC_RESTAURANT_ID` sem leitor em nenhuma branch** (nem na `origin/master`); o último era o `sitemapGenerator.js`. `CLAUDE.md` e `README.md` ainda dizem que o build precisa dela — tirar da doc e do provisionamento é decisão do dev.
+- [ ] **Doc de deploy.** O `CLAUDE.md` da `feat/indoor-v2` ainda descreve Heroku por `server.js`; a `origin/master` (#31/#32) documenta Vercel. Trazer a doc da `master`; depois, `server.js`, `express`, `heroku-ssl-redirect` e o script `start` viram candidatos a remoção numa task com spec, se o dashboard confirmar que nenhum projeto usa `node server.js`.
+- [ ] **Antes do merge `feat/indoor-v2 → master`:** conferir no dashboard de cada projeto Vercel o Build/Install Command, a versão de Node e a origem de `NEXT_PUBLIC_API`/`NEXT_PUBLIC_SOCKET` (não há `vercel.json` no repo).
+- [ ] **Service workers da v1** (`firebase-messaging-sw.js`, saído aqui, e o `sw.js` do `next-pwa`, saído na 33) continuam registrados nos navegadores que abriram a v1; um 404 no update não desregistra, e o do `next-pwa` pode servir HTML e chunks da v1 em rede ruim. No corte para a `master`, publicar um `sw.js` que se desregistra (frente de PWA).
+- [ ] **`RestaurantConfig` sem leitor na v2** e com eixos de login e entrega (`google_login`, `facebook_login`, `require_login`, `tax_mode`, `use_postalcode`, `shipment_*`…); `google_analytics_id` e `facebook_pixel_id` chegam `null` tipados `string`. Enxugar depois do merge com a 37, que mexe no mesmo arquivo.
+- [ ] **`.claude/agents/indoor-agent.md`** ainda descreve a exploração da v1 (`pages/`, `src/store/redux/modules/`, `src/services/api.tsx`, `BoardNoMovement`, middleware do `cart`) — tornar a seção ciente da branch.
+- [ ] **(baixa) `src/helpers/numberFormat.js`**, mantido da v1, tem `if` sem chaves e não é tipado — portar para `.ts` quando a #23 o usar.
+

@@ -4,24 +4,19 @@ export type RestaurantConfigTaxMode = 'district' | 'distance' | 'no_tax' | 'orde
 export type RestaurantConfigPizzaCalculate = 'higher_value' | 'average_value';
 
 export interface RestaurantConfig {
-  id: number;
-  restaurant_id: number;
   pizza_calculate: RestaurantConfigPizzaCalculate;
   require_login: boolean;
   customer_collect: boolean;
   tax_mode: RestaurantConfigTaxMode;
   tax_value: number;
-  formattedTax: string;
   delivery_time: number;
   board_time: number;
   order_minimum_value: number;
-  formattedOrderMinimumValue: string;
   order_auto_approve: boolean;
   use_postalcode: boolean;
   shipment_schedule: boolean;
   shipment_date_schedule: boolean;
   use_deliverer: boolean;
-  preserve_cart: boolean;
   google_analytics_id: string;
   facebook_pixel_id: string;
   google_login: boolean;
@@ -75,7 +70,6 @@ export interface Restaurant {
   image_id: number;
   cover_id: number;
   working_hours: string;
-  minimum_order: number;
   image: Image;
   cover: Image;
   mobile_cover: Image | null;

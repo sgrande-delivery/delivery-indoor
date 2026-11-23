@@ -4,8 +4,8 @@
 /public/manifest.json
 /public/*sw*
 /public/*workbox*
-public/sitemap.xml
 .env.development
 tsconfig.tsbuildinfo
 
 .claude/worktrees
+yarn-error.log

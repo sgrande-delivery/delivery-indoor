@@ -147,7 +147,7 @@ Fora do ciclo: `/review-task` confere a entrega contra o que a task prometeu, `/
 - **Não** assuma `per_page` no envelope da v1 — lá o campo é `current_page`
 - **Não** coloque segredo em var `NEXT_PUBLIC_*`
 - **Não** calcule total do carrinho em componente — é o middleware do módulo `cart` (na `master`) ou o servidor (na v2)
-- **Não** construa em cima de `AuthProvider`, `GoogleProvider`, `FacebookProvider` ou `src/components/login/` — é herança morta do fork, cuja remoção está na [#20](https://github.com/sgrande-delivery/delivery-indoor/issues/20)
+- **Não** reintroduza login, push ou identidade de usuário — a herança do fork saiu na [#20](https://github.com/sgrande-delivery/delivery-indoor/issues/20), e a identidade é a movimentação da mesa
 - **Não** migre rota para v2 nem ramifique por versão da plataforma sem spec que peça
 - Se o contrato real da API divergir do que a task diz, **pare e reporte** em vez de adaptar em silêncio
 

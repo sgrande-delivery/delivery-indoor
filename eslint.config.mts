@@ -42,12 +42,6 @@ export default defineConfig([
     },
   },
 
-  {
-    files: ['src/**/*.js'],
-    languageOptions: { globals: { process: 'readonly', fbq: 'readonly' } },
-    rules: { 'react/display-name': 'off' },
-  },
-
   // <-- coloque o Prettier por ÚLTIMO
   prettierRecommended,
 
