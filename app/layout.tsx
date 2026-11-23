@@ -2,6 +2,7 @@ import type { PropsWithChildren, ReactElement } from 'react';
 import type { Metadata, Viewport } from 'next';
 import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
+import ClientErrorReporter from '@/components/error/client-error-reporter';
 import App from 'src/App';
 import { bricolageGrotesque, sora } from 'src/fonts';
 // Import direto do módulo puro, e não do barrel src/theme: o barrel arrasta createTheme e components,
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: PropsWithChildren): ReactElemen
       </head>
       <body>
         <InitColorSchemeScript attribute={COLOR_SCHEME_ATTRIBUTE} defaultMode={DEFAULT_COLOR_SCHEME_MODE} />
+        <ClientErrorReporter />
         <AppRouterCacheProvider>
           <App>{children}</App>
         </AppRouterCacheProvider>

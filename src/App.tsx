@@ -2,6 +2,9 @@
 
 import React, { PropsWithChildren, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import OfflineBanner from '@/components/offline/OfflineBanner';
+import { ToastProvider } from '@/components/ui';
+import ConnectivityProvider from '@/providers/connectivity/ConnectivityProvider';
 import ThemeProvider from './providers/theme/ThemeProvider';
 import RestaurantBrandStyles from './providers/theme/RestaurantBrandStyles';
 import { BoardSessionGate, BoardSessionProvider } from '@/providers/board-session';
@@ -21,9 +24,14 @@ const App: React.FC<PropsWithChildren> = ({ children }) => {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <RestaurantBrandStyles />
-        <BoardSessionProvider>
-          <BoardSessionGate>{children}</BoardSessionGate>
-        </BoardSessionProvider>
+        <ToastProvider>
+          <ConnectivityProvider>
+            <OfflineBanner />
+            <BoardSessionProvider>
+              <BoardSessionGate>{children}</BoardSessionGate>
+            </BoardSessionProvider>
+          </ConnectivityProvider>
+        </ToastProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

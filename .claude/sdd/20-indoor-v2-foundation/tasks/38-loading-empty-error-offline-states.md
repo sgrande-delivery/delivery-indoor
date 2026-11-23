@@ -243,7 +243,7 @@ As medidas próprias da mesa (padding 34/34/28, gap 14) ficam em `src/components
 
 `src/components/error/route-error-copy.ts` (novo) guarda `INSTABILITY_THRESHOLD` e `INSTABILITY_DESCRIPTION`.
 
-`src/components/error/route-failure-streak.ts` (novo) é a sequência do boundary. `recordRouteFailure(pathname, error): number` só soma `error` ainda não visto (`WeakSet`) e recomeça em 1 quando o `pathname` muda. Sucesso depois do retry no mesmo `pathname` não zera, porque o boundary não fica sabendo. O caso é aceito e fica documentado no arquivo.
+`src/components/error/route-failure-streak.ts` (novo) é a sequência do boundary. `recordRouteFailure(pathname, error, now?): number` só soma `error` ainda não visto (`WeakSet`) e recomeça em 1 quando o `pathname` muda ou quando a falha chega **mais de 60 s depois da anterior**. O boundary não fica sabendo de um sucesso depois do retry, então a janela de 60 s é o que faz uma falha isolada, bem depois, voltar a ser a primeira. Documentado no arquivo.
 
 ### 6. Estado da tela a partir da query
 
@@ -438,7 +438,7 @@ Não há suíte automatizada. Verificação estática, que vale na branch sozinh
 - [ ] O erro de rota não fecha por backdrop, `Esc` nem arrasto.
 - [ ] O código do erro aparece no primeiro paint, inclusive sem resposta HTTP (`erro de rede`). A referência se junta quando `/api/log` responde, e é a mesma que aparece no log do servidor.
 - [ ] "Tentar novamente" leva ao skeleton, sem spinner sobre o erro.
-- [ ] Na terceira falha seguida, a linha de apoio vira a de instabilidade, e um sucesso zera a sequência, tanto na query quanto no `app/error.tsx`.
+- [ ] Na terceira falha seguida, a linha de apoio vira a de instabilidade. Na query, um sucesso zera a sequência; no `app/error.tsx`, a sequência zera quando o `pathname` muda ou quando a falha chega mais de 60 s depois da anterior.
 - [ ] Offline com conteúdo na tela: o banner aparece com o horário do último dado, o conteúdo fica, não há tela de erro, e o "Pagar conta" do sandbox desabilita com a explicação.
 - [ ] Wi-Fi sem internet (`navigator.onLine` verdadeiro) é detectado pelo probe.
 - [ ] API fora com a internet de pé dá erro de rota, nunca banner.
@@ -473,3 +473,88 @@ Coordenação que esta branch cria:
 - **`src/components/shell/shell-metrics.ts`.** A 06 é cortada desta branch e estende o arquivo. Não há add/add.
 - **`<OfflineBanner />`.** A 06 o tira de `src/App.tsx` e o põe no `AppShell`, sob a `TableTopBar`.
 - **`app/global-error.tsx`.** Ele repete o documento do layout: as fontes no `<html>` e o tema. Na linearização a 02 e a 03 já estão na base, então o `global-error` nasce com o `<html>` e o tema que elas deixaram.
+
+## Implementação
+
+**Concluída em:** 2026-11-23 (código e verificação estática; o roteiro em navegador roda na ponta da fila)
+
+### Camadas tocadas
+
+- **Serviços e helpers:** `src/services/http-error-code.ts` (`resolveErrorCode`, usa o `readErrorCode` da 01), `src/services/connection-probe.ts` (`/api/ping`), `src/helpers/clock-time.ts`.
+- **Rotas de API:** `app/api/ping/route.ts` (`HEAD`/`GET` 204, `no-store`, `force-dynamic`), `app/api/log/route.ts`.
+- **Erro (`src/components/error/`):** `ErrorPage`, `ErrorPageCode`, `ErrorPageHeader` (props `logoUrl`/`name`), `ErrorPagePrimaryAction`, `ErrorPageSecondaryAction`, `ErrorPageReference` (`Código {code}` e `· {reference}` depois do log), `error-page-action`, `error-page-container`, `error-reference`, `server-error-copy`, `use-error-report` (fonte `route-query`, payload com `code`), `client-error-reporter`, e os novos `RouteErrorState`, `RouteErrorPanel`, `route-error-metrics`, `route-error-copy`, `route-failure-streak`, `ErrorHomeAction`, `InlineError`.
+- **Shell:** `src/components/shell/shell-metrics.ts` com só `tabletShellMediaQuery`.
+- **Conectividade:** `src/providers/connectivity/ConnectivityProvider.tsx` (`useConnectivity`, `useIsOffline`, `useOfflineBannerMessage`, mais `useOfflineBannerContent`, de uso interno do banner), `src/components/offline/` (`OfflineBanner`, métricas e copy).
+- **Hook:** `src/hooks/use-query-screen-state.ts`.
+- **Rotas do App Router:** `app/error.tsx`, `app/not-found.tsx`, `app/global-error.tsx`.
+- **Sandbox:** `app/sandbox/estados/` (`page.tsx` e `_components/`).
+- **Ligação (mudança 11):** `src/App.tsx` e `app/layout.tsx`, inserção mínima.
+
+### Contratos consumidos
+
+- `GET /restaurants` pela `api` (só no sandbox). Resposta conferida na API local: objeto com `name` e `is_open`.
+- `/api/ping` e `/api/log`, do próprio app.
+- Envelope de erro da `delivery-api` via `readErrorCode` (`internal_code` ou `code`) e `response.status`.
+
+### Variáveis de ambiente novas
+
+Nenhuma.
+
+### Decisões que tomei por conta própria
+
+- **Overline do `ErrorPage` no `server-error` virou só "Erro".** O client escreve "Erro 500", mas aqui o código real pode ser `erro de rede` ou `erro 503`, e "Erro 500" ao lado contradiria a pílula. O `not-found` mantém "Erro 404".
+- **`RouteErrorState` ganhou a prop opcional `reportSource`** (padrão `route-query`). O `app/error.tsx` passa `next-error-boundary`, para o log distinguir o boundary da query. Não muda o contrato das frentes.
+- **`ErrorHomeAction` é client component com prop `tone`** (`primary` no 404, `secondary` no erro). O `not-found` é server component e não pode passar `component={Link}` por prop sem a fronteira.
+- **`useOfflineBannerContent`** é exportado pelo provider para o banner ler a linha registrada. O banner e o provider ficam em pastas diferentes, e o contexto da mensagem é separado do de conectividade para uma tela que registra a linha não re-renderizar todo consumidor de `useIsOffline`.
+- **Linha genérica sem horário** ("O que está na tela pode estar desatualizado…") quando ainda não houve nenhuma resposta bem-sucedida (`lastSyncedAt === null`). Frase derivada, entra na confirmação do dev junto com as outras.
+- **`onlineManager.setEventListener(() => () => undefined)`** desliga os listeners `online`/`offline` do próprio React Query; o provider chama `onlineManager.setOnline` direto. `setOnline(true)` vem antes do `refetchQueries`, senão a releitura nasce pausada.
+- **O probe é deduplicado** (uma promessa em voo): `online`, `visibilitychange`, o poll e a falha da `api` na mesma rajada geram um `HEAD` só.
+- **O `failureStreak` da query** guarda o `errorUpdateCount` do último `dataUpdatedAt` em `useState` ajustado durante o render, sem efeito. Conferido num script com `QueryObserver` (`errorUpdateCount` sobe por falha final, depois dos retries, e não zera no sucesso, por isso a base).
+- **Sandbox:** `retryDelay` de 300 ms para o teste de três falhas não demorar; "recarregar" faz `resetQueries` (volta a `pending`, o que exercita o skeleton), e há um segundo botão "reler sem apagar" para exercitar o `InlineError`. O ícone do compacto é `shopping_bag`.
+- **`global-error.tsx`** usa `ThemeProvider` de `@mui/material/styles` com `appTheme` e `defaultMode`, e `className` do `<html>` com `sora.variable` e `bricolageGrotesque.variable`. A 34 e a 35 mexem no `<html>` do layout; na linearização o `global-error` precisa ser conferido contra o `<html>` que elas deixarem.
+- **`ClientErrorReporter`** entra no `<body>` antes do `AppRouterCacheProvider`. O `InitColorSchemeScript` da 34 ainda não existe aqui; ao linearizar, ele fica antes do reporter.
+
+### Como testar
+
+Roteiro da seção `## Testes`, na ponta da fila (precisa do `ThemeProvider` da 34 e das fontes da 35):
+
+1. `yarn dev`, desregistrar service workers de `localhost:3000`.
+2. Abrir `http://localhost:3000/sandbox/estados?session=<uuid>` com `NEXT_PUBLIC_API=http://localhost:8093/api/client/`.
+3. Seguir os passos 1 a 10 do roteiro.
+
+### O que NÃO foi verificado
+
+- **Tudo o que exige navegador:** skeleton sem pulo, formas por largura (tela cheia, `Sheet`, painel), não fechar por backdrop/`Esc`/arrasto, banner e toast de volta da rede, releitura única por query ativa, Wi-Fi sem internet, alvos de 44px, 404 e `global-error` com tema e fontes. Sem o `ThemeProvider` (34) os primitivos quebram em runtime.
+- **`yarn build` nesta branch isolada falha em `/_not-found`** ("Cannot read properties of undefined (reading 'palette')"): o 404 agora renderiza a `ErrorPage`, que lê `theme.vars`, e não há `ThemeProvider` na árvore até a 34. Confirmei que é só isso: com um `ThemeProvider theme={appTheme}` temporário em `src/App.tsx` o build conclui, com `/api/log` e `/api/ping` dinâmicos e `/sandbox/estados` pré-renderizado como 404 (`.next/server/app/sandbox/estados.meta` com `status: 404`). O wrapper temporário foi revertido.
+- `yarn start` não foi rodado; o 404 do sandbox em produção foi conferido pelo `.meta` do build.
+
+### Verificações rodadas
+
+- `npx next typegen && npx tsc --noEmit`: limpo.
+- `npx eslint src app scripts`: 0 erros, 2 avisos que já existiam (`DialogFullscreen.js`, `promotion/types.ts`).
+- Script sem navegador (TS transpilado em `/tmp`): `resolveErrorCode` (`erro de rede`, `erro 500` para erro de render, `erro 503`, `erro 503 · <internal_code>`, `erro 401 · <code>`), `recordRouteFailure` (idempotente por identidade, 1-2-3, recomeça em 1 ao trocar de `pathname`), `formatClockTime` (`20:07`, `09:05`).
+- `next dev`: `HEAD` e `GET /api/ping` respondem 204 com `cache-control: no-store`; `POST /api/log` responde `{"ok":true}` e escreve `[client-error]` no stdout.
+- `grep min-width` em `error/` e `offline/`: só o `error-page-container.ts` (o corte de container do `overlayBreakpoint`). `git diff --stat` em `src/theme`, `src/components/ui` e `package.json`: vazio.
+
+### Correções do review (2026-11-23)
+
+- **`/api/log` endurecido (bloqueante).** `app/api/log/route.ts` exige `content-type: application/json` (415), lê o corpo contando bytes do stream com teto de 16 KB (413, inclusive `chunked`), aceita só objeto simples com lista fechada de campos (`source`, `code`, `message`, `stack`, `digest`, `reference`, `url`, `userAgent`, `timestamp`, `filename`, `lineno`, `colno`), cada um convertido para string e truncado (2 KB; `stack` 8 KB), tira `?` e `#` do `url` e escreve uma linha `[client-error] <JSON.stringify>`. Payload inválido responde 400. O `use-error-report` só guarda a referência quando `response.ok`, então 400/413/415 não mostram referência de algo não gravado. O cliente (`use-error-report.ts`, `client-error-reporter.tsx`) manda `origin + pathname` em vez de `location.href`.
+- **M1:** janela de 60 s em `route-failure-streak.ts` (decisão do review), com critério de aceitação e Mudança 5 reescritos acima.
+- **M2:** `lastSyncedAt` vive num `ref` (escrito a cada resposta) e só é copiado para o estado em `markOffline`, então o contexto não muda a cada resposta.
+- **L2:** a limpeza do efeito principal faz `onlineManager.setOnline(true)`, e a do efeito do `setEventListener` restaura o listener padrão (`online`/`offline` da janela).
+- **L3:** `isAxiosError(error) && error.response === undefined && !isCancel(error)`.
+- **Nits:** `RouteErrorPanel` usa `SERVER_ERROR_RETRY_LABEL`; medidas do `InlineError` em `inline-error-metrics.ts`; tipos de retorno explícitos nos exports default de `app/error.tsx`, `app/global-error.tsx`, `app/not-found.tsx`, `ThrowOnDemand.tsx` e `client-error-reporter.tsx`.
+- **Provas:** `curl` contra `next dev`: `application/json` válido 200 com uma linha no stdout e sem query string (`SECRET` ausente do log); `text/plain` e sem content-type 415; string JSON, campo extra, array, JSON inválido e objeto vazio 400; corpo de 20 KB com `content-length`, 20 KB `chunked` e 50 MB `chunked` 413. Script da sequência com janela (1, 2, 3, 4 a exatos 60 s, 1 depois de 60 s, 1 em outro `pathname`) e script do `onlineManager` (volta a online no cleanup, listener restaurado) passam.
+- **Fora desta rodada:** L1 (`global-error` com o `ThemeProvider` da 34 e `suppressHydrationWarning`) fica para a linearização; L4, L5 e o timeout do axios (F4) viram follow-up.
+
+## Follow-ups identificados em review
+
+- [ ] **`delivery-client`:** levar o mesmo endurecimento do `/api/log` (JSON obrigatório, teto de 16 KB no stream, lista fechada de campos, uma linha por evento) e o `origin + pathname` no cliente — a rota original está em produção lá.
+- [ ] **Rate limit no `/api/log`.**
+- [x] **(linearização)** `app/global-error.tsx` passa a usar o `ThemeProvider` da 34 (que traz o `CssBaseline`) e ganha `suppressHydrationWarning` no `<html>`, como o layout — feito no rebase sobre a 36.
+- [ ] **(task 37)** Pôr o `OfflineBanner` na coluna flex do `AppShell`: hoje ele fica acima de `{children}` em `src/App.tsx`, e uma tela de altura 100% perde embaixo a altura do banner.
+- [ ] **(dono de `src/services/api.ts`)** A instância `api` não tem `timeout`: uma requisição pendurada deixa o skeleton para sempre e nunca dispara o probe de conectividade.
+- [ ] **Janela da sequência a partir do `reset()`.** A janela de 60 s conta de falha a falha e inclui o tempo que o cliente passa lendo a tela de erro; quem toca "tentar novamente" a cada 70 s nunca vê "Estamos com instabilidade". Contar a janela a partir do toque.
+- [ ] **`useQueryScreenState`:** a sequência conta para menos quando a chave da query troca entre duas queries que nunca tiveram sucesso (as duas com `dataUpdatedAt` 0).
+- [ ] **Confirmação do dev:** a copy derivada (descrição genérica, linha de instabilidade, as duas linhas do banner) e os dígitos grandes `5◯0` ao lado de `erro de rede`/`erro 503`.
+
