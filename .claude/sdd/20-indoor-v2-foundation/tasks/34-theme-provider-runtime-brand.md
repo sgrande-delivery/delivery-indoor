@@ -341,3 +341,56 @@ yarn dev
 `task/34-theme-provider-runtime-brand`, cortada de `task/33-app-router-stack-bootstrap` depois da 01 executada. Roda na onda 2, em paralelo com 03, 05 e 07, todas cortadas da mesma branch da 01. Dentro da branch a validação é **estática** (`tsc`, eslint, `yarn build`).
 
 Ao fim da onda 2, as quatro entram numa fila `33 → 34 → 35 → 36 → 38`. Esta é a primeira depois da 01 e não precisa de rebase. O PR do `/ship` abre contra `task/33-app-router-stack-bootstrap`. O roteiro em navegador roda na ponta da fila, `task/38-loading-empty-error-offline-states`.
+
+## Implementação
+
+**Concluída em:** 2026-11-23 (validação estática; o roteiro em navegador roda na ponta da fila)
+
+### Camadas tocadas
+
+- Serviço: `src/services/restaurant.ts` (`GET /restaurants`, sem `try/catch`).
+- Hook: `src/hooks/use-restaurant.ts` (React Query, `staleTime: Infinity`), `src/hooks/use-color-scheme-mode.ts` (único `useColorScheme()` do repo).
+- Branding: `src/branding/branding.ts` (reduzido: `palette` e `paletteSource`).
+- Providers: `src/providers/theme/ThemeProvider.tsx` (`appTheme` + `CssBaseline`) e `src/providers/theme/RestaurantBrandStyles.tsx` (`GlobalStyles` com as variáveis da marca).
+- Componente: `src/components/color-scheme/ColorSchemeToggle.tsx`.
+- Sandbox de dev: `app/sandbox/page.tsx`, `_components/{ThemeSandbox,SandboxSection,ColorSwatch,ColorSchemePanel,BrandPanel}.tsx`.
+- Ligação: `src/App.tsx` (`ThemeProvider` com `RestaurantBrandStyles` como primeiro filho) e `app/layout.tsx` (só `InitColorSchemeScript` + import das constantes de `src/theme/color-scheme`).
+
+### Contratos consumidos
+
+- `GET /restaurants` com `x-restaurant-id` (UUID). Confirmado contra a API local `:8093`: loja 1 devolve `primary_color #f4744f` e `secondary_color #e0a82e`. Tipo `Restaurant` reaproveitado sem mudança.
+
+### Variáveis de ambiente novas
+
+- Nenhuma.
+
+### Decisões que tomei por conta própria
+
+- `ThemeSandbox` ficou com três seções (cabeçalho, "Modo de cor", "Marca"), com textos em português acentuado, e não o texto do client sem acento.
+- `BrandPanel`: o `Button` do DS (variante `primary`) só aparece na linha da primária, onde a comparação com a amostra em JS faz sentido.
+- `suppressHydrationWarning` no `<html>` (exceção da mudança 8): aplicado no review. O React do App Router (19.2 canary vendorado no Next 15.5.9) avisa de todo atributo do `<html>` que não está nas props (`diffHydratedProperties` → `warnForExtraAttributes`), e o `InitColorSchemeScript` grava `data-color-scheme` antes da hidratação — o aviso apareceria em toda carga.
+
+### Como testar
+
+Roteiro da seção `## Testes`, na ponta da fila.
+
+### O que foi verificado
+
+- `npx next typegen && npx tsc --noEmit`: sem erros.
+- `npx eslint src app scripts`: 0 erros, 2 warnings que já existiam (`DialogFullscreen.js`, `promotion/types.ts`).
+- `yarn build` com as vars de restaurante e `NEXT_PUBLIC_API=http://localhost:8093/api/client/`: passou. Rotas `/`, `/_not-found` e `/sandbox`.
+- `git diff --stat task/33-app-router-stack-bootstrap -- src/theme src/components/ui package.json`: vazio.
+- `useColorScheme(` só em `src/hooks/use-color-scheme-mode.ts`. Nenhum `ff5a1f` fora de `src/theme/`.
+- Script com jiti contra a `:8093`: loja 1 dá primária `#F4744F` com texto `#1C1714` e as duas origens "restaurante". Com `primary_color = 'laranja'`, a primária cai em `#FF5A1F` (origem "default", tenant `null`) e a secundária continua `#E0A82E`. Com `null`, tudo cai no default.
+
+### O que NÃO foi verificado
+
+- Tudo o que exige navegador: troca de cor com reload, falha bloqueada, flash em Slow 3G, escuro e persistência sem quadro claro, sistema, hidratação no console, e o 404 do `/sandbox` em `next start` (o build só marca a rota como estática).
+- Desvio do critério `theme.palette.`: o grep ainda encontra ocorrências, todas em componentes v1 (MUI v4, `makeStyles`) que saem na 39. Nenhum arquivo novo desta task usa.
+
+## Follow-ups identificados em review
+
+- [ ] **`src/types/restaurant.ts` diverge de `GET /restaurants`** (medido na API local em 2026-11-23): não vêm `minimum_order`, `configs.id`, `configs.restaurant_id` nem `configs.preserve_cart`; `logo`, `favicon`, `facebook_link`, `instagram_link` e `twitter_link` chegam `null` e estão declarados `?: string`. O código desta task só lê `primary_color`/`secondary_color`, que estão corretos. Corrigir na task 37 (primeira leitora de `logo`/nome pelo `useRestaurant`) ou na 39, junto de `formattedTax`/`formattedOrderMinimumValue`.
+- [ ] **Seletor de modo em produção:** se sair do sandbox, rótulos em minúsculo e alvo de toque de 44px medido (o `ToggleButton` padrão não foi medido).
+- [ ] **Chunk do `/sandbox` no build de produção** (35.7 kB; a rota responde 404). Mesmo comportamento do client; decidir se vale excluir.
+

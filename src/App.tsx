@@ -2,6 +2,8 @@
 
 import React, { PropsWithChildren, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import ThemeProvider from './providers/theme/ThemeProvider';
+import RestaurantBrandStyles from './providers/theme/RestaurantBrandStyles';
 
 function createQueryClient(): QueryClient {
   return new QueryClient({
@@ -14,7 +16,14 @@ function createQueryClient(): QueryClient {
 const App: React.FC<PropsWithChildren> = ({ children }) => {
   const [queryClient] = useState(createQueryClient);
 
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <RestaurantBrandStyles />
+        {children}
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
 };
 
 export default App;
