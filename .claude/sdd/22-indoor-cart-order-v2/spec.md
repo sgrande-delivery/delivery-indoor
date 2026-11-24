@@ -64,7 +64,7 @@ Item da sacola na resposta: `{ id, product_id, product_public_id, name, image_ur
 - **RN-06 — Envio é idempotente pelo lado do servidor, e o app não depende disso.** As rotas de escrita do carrinho aceitam `Idempotency-Key`. O app manda a chave e, além disso, bloqueia o segundo toque — dois pedidos iguais na cozinha é erro visível para o cliente e para a loja.
 - **RN-07 — Sem endereço, sem frete, sem pagamento.** O checkout de mesa não tem `customer_address_id`, não calcula frete e não cobra: o pedido entra na conta e o pagamento é outra frente ([#24](https://github.com/sgrande-delivery/delivery-indoor/issues/24)). Campo de endereço no payload daqui é sinal de código copiado sem tradução.
 - **RN-08 — A mesa pode fechar enquanto a sacola está aberta.** O garçom pode liberar a mesa no PDV a qualquer momento. Envio em movimentação fechada é recusado pelo servidor, e o app precisa dizer isso ao cliente em vez de mostrar erro genérico — e oferecer o caminho de ler o QR de novo.
-- **RN-09 — Loja ou cozinha fechada bloqueia o envio, não a composição.** `is_open` e `is_kitchen_open` vêm do restaurante e mudam por socket. O cliente pode montar a sacola; o que trava é o botão de enviar, com o motivo escrito.
+- **RN-09 — Cozinha fechada bloqueia o envio, não a composição; loja fechada não bloqueia.** *(Reescrita em 2026-11-23. O texto original dizia "loja ou cozinha fechada"; ver "Decisões tomadas".)* `is_kitchen_open` vem do restaurante e muda por socket. O cliente pode montar a sacola; o que trava é o botão de enviar, com o motivo escrito. `is_open = false` com a cozinha aberta não trava nada: o servidor cria o pedido de mesa.
 - **RN-10 — O gate `orders.v2` do restaurante vale para o preview e para o checkout.** Loja que não migrou responde `403 v2_orders_disabled`. Como o app de mesa passa a existir só na v2, essa resposta é condição de loja não migrada — e a tela precisa de uma mensagem própria, não de "erro inesperado".
 
 ## Referência de design
@@ -92,6 +92,14 @@ O protótipo é fonte de **layout, hierarquia, copy e estados**. **Token — cor
 - [ ] Com a movimentação liberada no PDV, o envio mostra a mensagem de mesa fechada.
 - [ ] Em tablet paisagem a sacola fica visível ao lado do cardápio; em retrato abre como painel inferior; nenhum alvo abaixo de 44px.
 - [ ] Com o teclado aberto no tablet, o diálogo de nome continua inteiro na tela.
+
+## Decisões tomadas
+
+| Data | Decisão | Por quê |
+|---|---|---|
+| 2026-11-23 | **O envio trava só pela cozinha** (RN-09 reescrita). Loja fechada (`is_open = false`) com a cozinha aberta não trava, e o pedido de mesa nasce. | O dono do contrato é a api, e a [delivery-api#1608](https://github.com/sgrande-delivery/delivery-api/issues/1608) fixou que o pedido de mesa segue a cozinha, e não a loja (RN-10 de lá, reescrita no mesmo dia, e a #1767). `is_open` é o "aceitando pedidos" do canal de entrega, anunciado aos canais como `RestaurantAcceptingOrdersChangedEvent`, e a cozinha tem chave própria. A v1 separa os dois por escrito (`CreateOrderUseCase.php:131-137`), a v2 também, com teste (`CreateOrderRestaurantOpeningTest::test_board_order_is_created_when_only_the_delivery_is_closed`), e o app de mesa v1 em produção trava só pela cozinha (`CartButtonts.tsx:53-56`). Travar a mesa por `is_open` impediria o salão de pedir quando a loja pausa só a entrega, uma mudança de comportamento que ninguém pediu. |
+| 2026-11-23 | **Recusas do envio com código fixado**: `404 board_movement_not_found_for_cart`, `422 board_movement_freed` (conferida antes de `is_open`), `422 board_movement_closed`, `422 product_unavailable` (item fora do ambiente do carrinho, ao adicionar e no envio), `422 kitchen_closed` e `403 v2_orders_disabled`. | RN-11 e a tabela "Recusas do caminho de mesa" da 1608. A [#50](./tasks/50-send-refusals-cart-states.md) mapeia por `internal_code`, e a proposta dela foi adotada lá, com "fechada" e "liberada" em 422 em vez de 409. |
+| 2026-11-23 | **A posse da sacola é só pelo `x-cart-session-token`**, sem header de movimentação. | [delivery-api#1629](https://github.com/sgrande-delivery/delivery-api/issues/1629), reescrita: `board_movement_id` é propriedade do carrinho, e não eixo de posse. É a RN-01 daqui: a sacola é do aparelho. |
 
 ## Decisões pendentes
 

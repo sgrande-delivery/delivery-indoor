@@ -18,6 +18,8 @@ A plataforma cortou para a v2, e o catálogo v2 fala outra língua: `public_id` 
 
 Servir o catálogo de entrega na mesa não é um detalhe cosmético: medido em 2026-11-06 na loja 6, `GET /categories` sem o parâmetro devolve 9 categorias e com `environment=board` devolve 10 — "Doces de balcão" só existe na mesa. O inverso também vale: produto que a loja não vende no salão apareceria no cardápio da mesa. A frente irmã [delivery-api#1607](https://github.com/sgrande-delivery/delivery-api/issues/1607) abre o parâmetro; esta spec carrega o contrato inline e **não espera** a api subir.
 
+**Emenda de 2026-11-23.** A materialização das tasks mediu o ambiente cravado em mais pontos, e a #1607 os absorveu: o detalhe passa a usar o `environment` (#1627: 404 para produto que a mesa não vende), a faceta de categoria da busca passa a ser a da mesa (#1626), o `special_price` e o `discount_percent` dos cards e os `size_prices[]` do detalhe passam a sair da promoção de mesa (#1765), e `GET /ingredients` passa a aceitar `environment` e a contar só o que a mesa vende (#1764). O contrato abaixo foi alinhado a isso.
+
 ## Objetivo
 
 Cardápio, categoria, detalhe de produto e busca passam a ler o catálogo v2 no ambiente mesa, com o desenho novo, em celular e tablet. O produto que o cliente monta na tela sai dela com a seleção de opções no formato que o carrinho v2 recebe.
@@ -30,10 +32,10 @@ Todas as rotas abaixo levam `x-restaurant-id` com o UUID do restaurante, e **tod
 |---|---|
 | `GET /categories/v2?environment=board` | `{ data: [{ id, name, relevance, activated, is_available_on_delivery, products_count }] }` — lista simples, sem paginação |
 | `GET /products/v2?environment=board&category_id&page&limit&sort&only_offers&q` | `{ data: [ProductSummary], meta: { total, per_page, current_page, last_page, has_more, facets } }` |
-| `GET /products/v2/{publicId}?environment=board` | produto completo: `option_groups[]`, `size_prices`, `recipe`, `price`, `special_price`, `discount_percent` |
+| `GET /products/v2/{publicId}?environment=board` | produto completo: `option_groups[]`, `size_prices`, `recipe`, `price`, `special_price`, `discount_percent`. **404** para produto que a mesa não vende (delivery-api#1627) |
 | `POST /products/v2/{publicId}/price` | preço da montagem, calculado no servidor |
 | `GET /products/v2/most-ordered?window&limit` | os mais pedidos da loja na janela de dias — rota própria, sem login; `window` em dias e `limit` validados |
-| `GET /ingredients?q&limit` | `{ data: [{ id (uuid), name, product_count }] }` — alimenta o filtro por ingrediente (prefixo `api/client/ingredients`) |
+| `GET /ingredients?environment=board&q&limit` | `{ data: [{ id (uuid), name, product_count }] }`, com `product_count` do ambiente pedido — alimenta o filtro por ingrediente (prefixo `api/client/ingredients`; lista fechada `q`, `limit` 1–200 e `environment`, delivery-api#1764) |
 
 **`GET /products/v2` tem lista fechada de parâmetros** e responde **422** a qualquer outro (`environment` incluído, até a [delivery-api#1607](https://github.com/sgrande-delivery/delivery-api/issues/1607) subir): `kinds[]`, `ingredient_id` (uuid, legado), `include_ingredients[]` e `exclude_ingredients[]` (uuid, **até 10 cada**), `category_id`, `q` (≤ 120), `limit` (1–200, padrão 50), `page`, `sort` e `only_offers`. O **mesmo ingrediente em `include` e `exclude` também é 422**.
 
@@ -47,7 +49,9 @@ Item que casou por opção/ingrediente traz `matched_option: { item_name, group_
 
 `option_groups[]`: `{ id, public_id, name, kind, min_quantity, max_quantity, is_required, items: [{ id, product_public_id, name, description, price_override, taste_amount, flavor_slots, position, is_default }] }`.
 
-**`price`, `special_price` e `price_override` são inteiros em centavos.**
+**`price`, `special_price` e `price_override` são inteiros em centavos.** Com `environment=board`, `special_price`, `discount_percent` e `size_prices[]` são os da promoção de mesa, a mesma que o `/price` e o carrinho cobram (delivery-api#1765).
+
+**`only_offers` é `boolean` do Laravel:** em query string vale `1` ou `0`, e `only_offers=true` responde 422.
 
 ## Requisitos funcionais
 
@@ -123,4 +127,4 @@ O protótipo é fonte de **layout, hierarquia, copy e estados**. **Token — cor
 | 1 | Rota da categoria no App Router | `/menu?category=<id>` em vez de `/menu/[url]`: a v2 não tem recurso de categoria por `url`, e manter a rota antiga exigiria resolver `url → id` no cliente |
 | 2 | `kinds` que o cardápio pede | O default da api (`standard` + `buildable`). Pedir menos esconderia produto montável que a loja tenha na mesa |
 | 3 | Ordenação default da listagem | `sort=newest`, o default da api, até o produto definir outra |
-| 4 | Ofertas da mesa | `only_offers=true` na mesma rota, como trilha na home — é o que a v1 fazia com `GET /products?environment=board` e o que a task 09 da feature 1 corrigiu |
+| 4 | Ofertas da mesa | `only_offers=1` na mesma rota, como trilha na home (*corrigido em 2026-11-23: dizia `only_offers=true`, que a api recusa com 422*) — é o que a v1 fazia com `GET /products?environment=board` e o que a task 09 da feature 1 corrigiu |
