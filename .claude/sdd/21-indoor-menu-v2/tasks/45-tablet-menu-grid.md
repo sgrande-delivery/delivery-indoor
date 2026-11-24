@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** 02 (#41), 03 (#42), 04 (#43), 05 (#44)
-**Status:** pendente
+**Status:** shipped ([PR #78](https://github.com/sgrande-delivery/delivery-indoor/pull/78))
 **Reconciliado com a #22 (2026-11-23):** a coluna e a barra da sacola do tablet têm um dono só, o `AppShell`, pela [#49](../../22-indoor-cart-order-v2/tasks/49-tablet-cart-panel.md). Saíram daqui o `MenuFrame` e o slot `aside`, e esta task não altera mais `app/(menu)/layout.tsx`. A tela do cardápio é dona só do conteúdo do `Scroller`, que, com a coluna montada, já é a área real (`100% − 380`); a grade mede contra ele, nunca contra a viewport. Os cortes de orientação são as constantes que a 01 cria em `shell-metrics.ts`, as mesmas da #49.
 **Alinhado às emendas da delivery-api#1607 (2026-11-23):** a linha 07, [#67](https://github.com/sgrande-delivery/delivery-indoor/issues/67), acrescenta o filtro por ingrediente à busca, e as chips dele ("com cheddar", "sem cebola", "+ ingrediente") moram na `SearchControlsRail` da 05, a "trilha de controles" que esta task fixa no tablet. Quem entrar depois rebaseia, e nenhuma das duas cria trilha nova para isso. Nada mais muda aqui.
 
@@ -164,4 +164,78 @@ O `EmptyState` da 03 fica centrado na região que rola (o artboard `Estado · va
 
 ## Branch
 
-`task/45-tablet-menu-grid`, base sugerida: `feat/indoor-v2` depois que a 02 (#41), a 03 (#42), a 04 (#43) e a 05 (#44) entrarem; antes disso, a ponta da cadeia (`task/44-menu-search-v2`, rebaseada sobre a 04 se ela ainda não tiver entrado).
+`task/45-tablet-menu-grid`, cortada em 2026-11-24 de `task/44-menu-search-v2` (`b91ccde`) com `task/43-product-detail-composer` (`f72d151`) mesclada por cima (`438478d`): nenhuma das quatro dependências entrou na `feat/indoor-v2` ainda, e a 04 corre noutra linha.
+
+## Implementação
+
+**Concluída em:** 2026-11-24
+
+### Camadas tocadas
+
+- Novos em `src/components/menu/`: `MenuScreenLayout` (cabeçalho fixo + região que rola), `menu-scroller.ts` (`useIsTabletShell`, `useMenuScreenScroller`), `ProductGridCard`, `ProductGrid`, `ProductGridSkeleton`, `PhoneOnly`, `MenuSearchChip`, `product-grid-metrics.ts`.
+- Alterados: `MenuHomeScreen`, `MenuCategoryRail` (padding de tablet), `MenuCategoryScreen`, `CategoryProductList` (`variant`/`renderGridItem`; sentinela segue incondicional e fora da grade), `SearchResultsScreen`, `SearchResultsCount` (padding de tablet).
+- Não tocados: `app/(menu)/layout.tsx`, `src/components/shell/`, `src/theme/`, `src/components/ui/`, `SearchControlsRail`, `SearchProductItem` (a linha `.hit` mora no `ProductGridCard`, o que deixa o rebase da #67 sem conflito).
+
+### Contratos consumidos
+
+- `GET /products/v2` e `GET /categories/v2`, nos shapes das tasks 01-05, via `page.route`. Nenhuma rota nova.
+
+### Variáveis de ambiente novas
+
+- Nenhuma.
+
+### Decisões que tomei por conta própria
+
+- A task pedia `useMenuScroller()` por contexto. Como a tela chama o hook acima da moldura que provê o contexto, fiz `useMenuScreenScroller()` devolver `{ regionRef, scrollerRef }`; a tela passa `regionRef` ao `MenuScreenLayout` e `scrollerRef` ao `useLoadMore` e à volta ao topo. Sem contexto.
+- `MenuHomeScreen` também usa a moldura (trilha fixa); o skeleton da home não tem trilha fixa.
+- `MenuSearchChip` entra sempre no `trailing`; no celular fica `display: none`, então a `MenuCategoryRail` deixa de devolver `null` com zero categorias (sobra o padding da trilha vazia).
+- Ícone do placeholder: dois glifos (44 e 48) alternados por media query, porque `Icon` tem tamanho fixo por prop.
+- Margem lateral do tablet (24 deitado, 22 em pé) num só helper, `menu/tablet-gutter.ts`, usado pela grade, rodapé da grade, rótulo, avisos, skeleton, trilhas e cabeçalho da busca (`SearchHeader`, `SearchControlsRail`, `CategoryFacetRail`, `RelaxSuggestionBand`, `SearchResultsCount`). Na `SearchControlsRail` a mudança é só a linha da media no `Rail`.
+- Rodapé da grade (carregando, erro, fim) num slot com a mesma margem; carregando na grade é só a linha de status com spinner (`CategoryLoadingRow withSkeleton={false}`). A sentinela segue fora e incondicional.
+- Vazio da categoria centrado no tablet por `EmptySlot` (`minBlockSize: 100%`, `0 90px 40px`).
+- `MenuCategoryRail` vazia fica `display: none` fora do tablet; `regionRef` opcional (a home não usa o scroller); região sem barra de rolagem; `useMenuScreenScroller` devolve `isTablet`; aviso de falha ao atualizar da home volta para cima da trilha; chip de busca no estilo `.chip` (card, borda 1,5 `line`, pill).
+- A busca no tablet mostra o `matched_option` numa linha própria abaixo da descrição, não no lugar dela.
+
+### Como testar
+
+1. `yarn dev` com mesa aberta (ou mock de `/categories/v2`, `/products/v2` e `/boardMovements/*`).
+2. 1180x820, `/menu?category=<id>&session=<uuid>`: 3 colunas, trilha com chip de busca fixa; rolar a região dispara a página 2; `document` e `<main>` ficam em `scrollTop` 0.
+3. 820x1180: 2 colunas. 390x844: linhas, como antes.
+4. `/search?q=<termo>`: campo e trilhas fixos, `<mark>` no nome e linha `tune` no item com `matched_option`.
+
+### O que NÃO foi verificado
+
+- Contra a api real (sem `/products/v2` local): tudo com `page.route`; a movimentação `c10e064f-...` não existe no restaurante 18 local, então `/boardMovements/*` também foi mockado.
+- Medido no navegador (390/820/1180): colunas 1/2/3 na categoria e na busca, sem rolagem horizontal (`scrollWidth == innerWidth`, com nome longo sem espaço), trilha parada ao rolar a região, página 2 pedida, documento e `<main>` em 0. Screenshot só de 1180 na busca.
+- Medido após a revisão (1180 e 820, mocks): com a página 2 pendente e com ela falhando, o rodapé e os cards começam em x=24/22; a busca (cabeçalho, trilhas, cards) alinha em 24/22; `region.scrollWidth === clientWidth`.
+- Não verificado: girar o aparelho no meio da lista, home no tablet, alvos de 44px por medição, estado vazio/erro/skeleton do tablet, selo e riscado no retrato, passo 16 (#49 não está na base), `yarn build`, e todas as imagens reais (os fixtures não têm `image_url`, só o placeholder foi exercitado).
+
+## Follow-ups identificados em review
+
+Corrigido no navegador (2026-11-24, medido com `getBoundingClientRect` a 1055 e 455 de viewport):
+- No tablet, o `...tabletGutter()` espalhado no estilo da `MenuCategoryRail` tinha a mesma chave `@media` do bloco de tablet e o apagava: a trilha perdia os 16 de cima e de baixo, e o rótulo da categoria ficava a 4 dela. O gutter agora vai como argumento à parte do `styled`, e o JSDoc do helper avisa.
+- No celular, o rótulo "PASTÉIS · 18 ITENS" estava a 4 da trilha e a 12 da lista. Ganhou 16 + 4 acima, o ritmo do artboard do tablet, e ficou com 20 acima e 12 abaixo nos dois formatos.
+- No celular, a categoria e a busca misturavam 18 (trilha, rótulo, contagem) e 16 (cards, trilhas da busca, cabeçalho). Agora tudo fica em 18 (`phoneGutter`, a margem da trilha de categorias).
+
+Corrigido no review (2026-11-24):
+- Rodapé da grade (carregando, erro e fim) na margem lateral dos cards, e carga em forma de linha de status em vez da linha-esqueleto do celular.
+- Busca e categoria alinhadas em 24/22 no tablet, com `tablet-gutter.ts`, como no artboard `Busca-Tablet-Deitado`.
+- Vazio da categoria centrado no tablet (mudança 6).
+- Trilha de categorias vazia escondida no celular.
+- `regionRef` opcional, e a home sem `useMenuScreenScroller`.
+- Barra de rolagem da região escondida.
+- Chip de busca no formato do `.chip` do canvas.
+- Números soltos movidos para `product-grid-metrics.ts`, e skeleton do retrato com mídia de 150.
+- Aviso de falha da home de volta acima da trilha no celular.
+
+- [ ] Helper de apresentação compartilhado para a contagem da nota (`(N)`) e para o texto do `matched_option`: hoje em `ProductGridCard`, `CategoryProductItem` e `SearchProductItem`.
+- [x] Margens laterais da home no tablet: alinhadas em 24/22 com a trilha e a grade (2026-11-24, pedido do dev ao ver a tela).
+- [ ] Tablet pequeno deitado (1024×600): o cabeçalho fixo da busca ocupa cerca de 260px e sobra uma fileira de cards.
+- [ ] Navegador, ainda não exercitado:
+  - girar no meio da lista;
+  - home no tablet;
+  - alvos de 44 medidos;
+  - imagem real, selo e riscado no retrato;
+  - vazio centrado e erro de rota no tablet;
+  - 390 depois das correções;
+  - a coluna da sacola com a #49.

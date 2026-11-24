@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** #20 (fundação v2 inteira, tasks 33 a 39)
-**Status:** pendente
+**Status:** shipped ([PR #78](https://github.com/sgrande-delivery/delivery-indoor/pull/78))
 **Reconciliado com a #22 (2026-11-23):** esta task passa a criar `src/types/product-selection.ts` (`OptionSelection` e `ProductSelection`, o corpo de `POST /cart/{cartId}/items`), que o detalhe (04) monta e a [#46](../../22-indoor-cart-order-v2/tasks/46-board-cart-v2.md) manda sem tradução, e os dois cortes de orientação do tablet em `shell-metrics.ts`, que a grade (06) e a sacola do tablet ([#49](../../22-indoor-cart-order-v2/tasks/49-tablet-cart-panel.md)) leem. O `app/(menu)/layout.tsx` não recebe moldura de tablet: a coluna da sacola é do `AppShell` (#49). Ver mudanças 1, 7 e 8.
 **Alinhado às emendas da delivery-api#1607 (2026-11-23):** o detalhe passa a **usar** o `?environment=board` (#1627: 404 para produto que a mesa não vende), `special_price`, `discount_percent` e `size_prices[]` passam a ser os do ambiente pedido (#1765), a faceta de categoria da busca passa a ser a da mesa (#1626, mudança 6), e `GET /ingredients` passa a aceitar `environment` (#1764), o que destrava a linha 07 ([#67](https://github.com/sgrande-delivery/delivery-indoor/issues/67)). A tabela "Estado de cada rota", a decisão 1 e as armadilhas foram atualizadas; nenhuma mudança de código desta task muda.
 
@@ -334,18 +334,18 @@ Não há suíte automatizada.
 
 ## Critérios de aceitação
 
-- [ ] Os quatro arquivos de tipo declaram exatamente os campos do presenter da seção Contrato, com `price`, `special_price` e `price_override` como centavos, e `ProductPrice` com os 12 campos do `ProductItemPricePresenter`.
-- [ ] `productSorts` tem os seis valores da RF-14.
-- [ ] Toda chamada a `/categories/v2` e `/products/v2*` passa por `boardCatalogParams` ou `boardCatalogBody`, e nenhuma função de serviço recebe `environment` do chamador.
-- [ ] `only_offers` sai como `1` e some quando desligado; nenhum parâmetro fora da lista fechada do `SearchProductsRequest` é enviado.
-- [ ] `selectProductPage` descarta `meta.facets` em código.
-- [ ] `selectVisibleCategories` não filtra por `is_available_on_delivery`.
-- [ ] `formatCents` é o único formatador de centavos do código novo; `moneyFormat` (reais) não é chamado com valor da v2.
-- [ ] `app/(menu)/page.tsx` existe com o conteúdo do antigo `app/page.tsx`, e `/` continua respondendo.
-- [ ] `src/types/product-selection.ts` declara `OptionSelection` e `ProductSelection` em snake_case, com ids numéricos, e o `fetchProductPrice` usa o mesmo `OptionSelection`.
-- [ ] `shell-metrics.ts` ganha `tabletLandscapeMediaQuery` e `tabletPortraitShellMediaQuery`, derivadas de `tabletShellMediaQuery`, sem corte de largura novo.
-- [ ] Nenhum arquivo de `src/theme/` ou `src/components/ui/` é alterado.
-- [ ] `npx tsc --noEmit`, o lint e o `yarn build` com as vars de restaurante passam.
+- [x] Os quatro arquivos de tipo declaram exatamente os campos do presenter da seção Contrato, com `price`, `special_price` e `price_override` como centavos, e `ProductPrice` com os 12 campos do `ProductItemPricePresenter`.
+- [x] `productSorts` tem os seis valores da RF-14.
+- [x] Toda chamada a `/categories/v2` e `/products/v2*` passa por `boardCatalogParams` ou `boardCatalogBody`, e nenhuma função de serviço recebe `environment` do chamador.
+- [x] `only_offers` sai como `1` e some quando desligado; nenhum parâmetro fora da lista fechada do `SearchProductsRequest` é enviado.
+- [x] `selectProductPage` descarta `meta.facets` em código.
+- [x] `selectVisibleCategories` não filtra por `is_available_on_delivery`.
+- [x] `formatCents` é o único formatador de centavos do código novo; `moneyFormat` (reais) não é chamado com valor da v2.
+- [x] `app/(menu)/page.tsx` existe com o conteúdo do antigo `app/page.tsx`, e `/` continua respondendo.
+- [x] `src/types/product-selection.ts` declara `OptionSelection` e `ProductSelection` em snake_case, com ids numéricos, e o `fetchProductPrice` usa o mesmo `OptionSelection`.
+- [x] `shell-metrics.ts` ganha `tabletLandscapeMediaQuery` e `tabletPortraitShellMediaQuery`, derivadas de `tabletShellMediaQuery`, sem corte de largura novo.
+- [x] Nenhum arquivo de `src/theme/` ou `src/components/ui/` é alterado.
+- [x] `npx tsc --noEmit`, o lint e o `yarn build` com as vars de restaurante passam.
 
 ## Fora de escopo
 
@@ -359,4 +359,58 @@ Não há suíte automatizada.
 
 ## Branch
 
-`task/40-catalog-v2-services-types`, base sugerida: `feat/indoor-v2` depois que a fila da #20 (33 → … → 39) entrar nela; até lá, a ponta da fila, `task/39-remove-fork-inheritance`.
+`task/40-catalog-v2-services-types`, cortada de `feat/indoor-v2` (`28d2b0f`, com a fundação #20) em 2026-11-24.
+
+## Implementação
+
+**Concluída em:** 2026-11-24
+
+### Camadas tocadas
+
+- Tipos: `src/types/{menu-category,product,product-page,product-detail,product-selection}.ts`
+- Serviços: `src/services/{catalog-environment,menu,product,home}.ts`
+- Helpers: `src/helpers/{money,rating,sheet-route,scroll-behavior}.ts`; `src/components/product/product-route.ts`
+- Hook: `src/hooks/use-menu-categories.ts` (`useMenuCategories`, `selectVisibleCategories`, `menuCategoriesQueryKey`)
+- Shell: `src/components/shell/shell-metrics.ts` ganha `tabletLandscapeMediaQuery` e `tabletPortraitShellMediaQuery`
+- Rotas: `app/page.tsx` movido (`git mv`) para `app/(menu)/page.tsx`, conteúdo idêntico
+
+### Contratos consumidos
+
+- `GET /categories/v2`, `GET /products/v2`, `GET /products/v2/most-ordered`, `GET /products/v2/{publicId}`, `POST /products/v2/{publicId}/price`, com os shapes inline da task. Não reconferi na `delivery-api` (a task os transcreve de `8db44045e`).
+
+### Variáveis de ambiente novas
+
+- Nenhuma.
+
+### Decisões que tomei por conta própria
+
+- `SearchFacets` (e `SearchFacetCategory`/`SearchFacetRelaxed`) declarados em `product-page.ts`, porque a task os cita sem definir; a 05 os reutiliza.
+- `CATALOG_PAGE_LIMIT = 24` conforme a decisão 4 da task (ainda a confirmar com o dev).
+- `fetchProductPrice` aplica `encodeURIComponent` também no `/price`, além do detalhe.
+- Hook em `use-menu-categories.ts` usa o alias `@/` (como `board-movement.ts`), e `selectVisibleCategories` ordena uma cópia filtrada (o `filter` já cria o array novo, sem mutar a entrada).
+- `money.ts` e `sheet-route.ts`/`product-route.ts`/`scroll-behavior.ts` portados sem mudança de lógica; só saiu `toCents`.
+- `menu-category.ts`: comentário do tipo reescrito (o do client falava de "app-v2 client").
+
+### Como testar
+
+1. `npx next typegen && npx tsc --noEmit`, `npx eslint src app scripts`, `yarn build` com as vars (ver abaixo).
+2. Script jiti fora do repo (`/tmp/t40/run.ts`; copiado para a raiz só para rodar, `JITI_ALIAS` para o `@/`) chamando os serviços contra `http://localhost:8093/api/client/`.
+
+### O que NÃO foi verificado
+
+- **A API local (master antiga `501414ea4`) não tem nenhuma rota v2 de catálogo**: `/categories/v2` cai em `categories/{uri}` (404 "Category with uri v2 was not found"), `/products/v2` em `products/{id}` (404 "Product não encontrado"), e `most-ordered`, detalhe e `/price` dão `route_not_found`. Os testes 8 a 10 da task, portanto, só provam a **URL e o corpo enviados**, não o 200/422: `GET /categories/v2?environment=board`, `GET /products/v2?category_id=1&page=1&limit=24&environment=board`, `GET /products/v2?only_offers=1&sort=discount_desc&limit=8&environment=board`, `GET /products/v2/most-ordered?window=30&limit=10&environment=board`, `POST …/price` com corpo `{ quantity: 2, option_selections: [], environment: 'board' }`. O `only_offers=true` via curl também deu 404 (rota inexistente), então a decisão 2 não foi confirmada por 422 aqui.
+- Testes 11 e 12 (helpers puros) passaram: `formatCents(2690)` = `R$ 26,90`; `resolveShowcasePrice` devolveu `{R$ 26,90, R$ 33,90, -21%}`, riscado sem selo para 1600/1599/0, e `null` para `price: 0`; `resolveRatingDisplay` devolveu `null` para `{null,0}` e `{4,8; 1.234}` para `{4.75,1234}`.
+- `/` continua prerenderizada (`○ /` no build). Nenhum teste em navegador (a task não os pede).
+- Grep 6: `console.error` aparece em `src/services/api-error-interceptor.ts:37` (fundação da 38, não é código desta task); `src/services/{menu,product,home}.ts` e `money.ts` estão limpos. Grep 5: `is_available_on_delivery` aparece na declaração do tipo e em dois comentários explicando por que não se filtra.
+- Ordem de deploy: tudo aqui exige delivery-api#1607 (e #1625/#1626/#1627/#1765) publicadas; antes disso o cardápio da mesa falha em 404/422.
+
+## Follow-ups identificados em review
+
+- [ ] **`fetchMenuProducts` trunca em 200 sem avisar** (`limit=200`, o `meta.has_more` se perde): loja com mais de 200 produtos de mesa fica com as trilhas da home incompletas. Decidir na #41.
+- [ ] **RN-09 de produto (`activated`) sem helper comum:** filtrar nas telas #41, #42 e #44, ou criar um helper.
+- [ ] **#43:** descartar `ingredient_public_id` nulo antes de montar `removed_ingredients` — a API valida `uuid`.
+- [ ] **Confirmar `CATALOG_PAGE_LIMIT = 24` com o dev** (decisão 4).
+- [ ] (opcional) `boardCatalogParams`/`boardCatalogBody` com `T extends object`, para aceitar `interface` sem index signature.
+
+Corrigido no review (2026-11-24): comentários de `money.ts` e `sheet-route.ts` portados com referências do client que não valem aqui (RN e issues de lá, CEP, favoritos, `loadBoot`), e o comparador de `use-menu-categories.ts` sem abreviação.
+

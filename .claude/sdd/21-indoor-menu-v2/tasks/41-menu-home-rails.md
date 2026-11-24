@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** 01 (#40)
-**Status:** pendente
+**Status:** shipped ([PR #78](https://github.com/sgrande-delivery/delivery-indoor/pull/78))
 **Reconciliado com a #22 (2026-11-23):** a coluna da sacola do tablet saiu do "Fora de escopo → 06": é da [#49](../../22-indoor-cart-order-v2/tasks/49-tablet-cart-panel.md), no `AppShell`. Nada mais muda aqui.
 **Alinhado às emendas da delivery-api#1607 (2026-11-23):** o `special_price` e o `discount_percent` dos cards passam a ser os da promoção de mesa (#1765), e o `products_count` das categorias, o da mesa (#1625). O contrato e o roteiro dizem o que o QA vê antes e depois; nenhuma mudança de código desta task muda.
 
@@ -199,4 +199,63 @@ export interface UseMenuHome {
 
 ## Branch
 
-`task/41-menu-home-rails`, base sugerida: `feat/indoor-v2` depois que a fila da #20 entrar nela e a 01 (#40) estiver mergeada; antes disso, `task/40-catalog-v2-services-types`.
+`task/41-menu-home-rails`, cortada de `task/40-catalog-v2-services-types` (`792b461`) em 2026-11-24.
+
+## Implementação
+
+**Concluída em:** 2026-11-24
+
+### Camadas tocadas
+
+- Rotas: `src/routes/app-routes.ts` (`CATEGORY_SEARCH_PARAM`, `categoryRouteHref`); `app/(menu)/page.tsx` renderiza `<MenuHomeScreen />` (continua estática, `○ /`)
+- Hook: `src/components/menu/use-menu-home.ts` (quatro queries, `HomeRail<T>`, chaves `menu/products|offers|most-ordered`)
+- Tela: `MenuHomeScreen.tsx`, `MenuSkeleton.tsx`, `MenuSectionList.tsx`, `MenuSection.tsx`
+- Trilha de categorias: `MenuCategoryRail.tsx`, `MenuCategoryChip.tsx`
+- Cards e trilhas: `MenuProductCard.tsx`, `OfferCard.tsx`, `HomeOfferRail.tsx`, `HomeProductRail.tsx`, `HomeRailSkeleton.tsx`, `HomeRailError.tsx`
+- Estrutura/puros: `MenuRail.tsx`, `MenuSectionHeader.tsx`, `MenuSectionTitle.tsx`, `HomeSectionHeader.tsx`, `menu-sections.ts`, `home-offers.ts`
+- `src/theme/` e `src/components/ui/` sem alteração.
+
+### Contratos consumidos
+
+- As quatro rotas da task, via serviços da 01. URLs medidas no navegador: `/categories/v2?environment=board`, `/products/v2?limit=200&environment=board`, `/products/v2?only_offers=1&sort=discount_desc&limit=8&environment=board`, `/products/v2/most-ordered?window=30&limit=10&environment=board`. Respostas simuladas com `page.route` (a API local não tem rotas v2).
+
+### Variáveis de ambiente novas
+
+- Nenhuma.
+
+### Decisões que tomei por conta própria
+
+- `HomeRailError.tsx` (novo): o `InlineError` "Não foi possível carregar esta seção." compartilhado pelas duas trilhas, em vez de duplicar o slot com padding.
+- `HomeSectionHeader` sem `actionLabel`/`actionHref`: nenhuma trilha tem destino de "ver todos".
+- `OfferCard.tsx` portado sem alteração do `@ceed49a9`.
+- `isLoading`/`isError` das trilhas consideram só a ausência de dado: durante o "Tentar de novo" a trilha volta ao skeleton, e com dado em cache uma falha de releitura não derruba a trilha.
+- RN-09 (`activated`): filtrado em `createMenuSections`, `toOffer` e, via `select`, em "Mais pedidos". Sem helper comum (follow-up da 01 segue aberto para a #42/#44).
+- Truncamento em 200 de `fetchMenuProducts` (follow-up da 01): **mantido, sem aviso na UI**, como a task manda ("não se pagina a home"); a listagem completa é a da #42 a uma chip de distância. Não alterei o serviço.
+- `createMenuSections` ordena o resultado de `filter` (cópia), sem `.slice()`.
+- Aviso de releitura falha (`isRefreshFailed`) e erro de categorias usam o mesmo `InlineError`, no topo/no lugar da trilha.
+- Canvas do design (`/tmp/brasa-indoor-canvas.yzmPZk/`) não existia na máquina; layout veio do port, dos tokens e da task.
+
+### Como testar
+
+1. `yarn dev` com `.env.development`; abrir `/?session=<uuid>`.
+2. Interceptar `/categories/v2` e `/products/v2*` (como em `/tmp/t41/run.js`) e conferir chips, "Ofertas", "Mais pedidos", trilhas por categoria, sem `+`.
+3. Tocar num card: a URL ganha `&product=<public_id>`. Tocar numa chip: `/menu?category=<id>`.
+
+### O que NÃO foi verificado
+
+- Nenhuma resposta real das rotas v2 (a API local é a master antiga, tudo 404): só fixtures. Ordem de deploy: tudo depende da delivery-api#1607 (#1625/#1626/#1765); antes dela a home mostra o erro de rota (422) ou, em categorias/mais pedidos, o catálogo de entrega.
+- Categoria só de mesa e preço promocional da mesa (dependem do payload real).
+- Teste 11 (`/` sem session, sessionStorage limpo) e DevTools "Request blocking" reais (simulei com 500 por `page.route`).
+- Medido: chips 44px em 390 e 820, sem `aria-current` na home, sem `+`, sem rolagem horizontal da página, console sem erro, skeleton, vazio ("Nenhum produto para mostrar"), erro 422 com código (`erro 422 · …`) e `InlineError` de "Mais pedidos" com retry refazendo 1 requisição. Viewport de 1180×820 não foi rodado (usei 820×1180).
+
+## Follow-ups identificados em review
+
+Corrigido no review (2026-11-24): categoria **desativada** não vira mais trilha órfã no fim da home (o grupo dela sai antes da ordenação — bug portado do client; conferido com teste da função pura); `HomeOfferItem` extraído para o `.map()` das ofertas não ter callback próprio; `MenuCategoryRail` não some quando há `trailing` (a chip de busca da #45 sobrevive a loja sem categoria visível); `InlineError` de releitura e de categorias com `isRetrying`.
+
+- [ ] **Skeleton das chips enquanto `categories.isPending`:** se os produtos chegam antes, a home abre sem a trilha e reordena quando as categorias chegam.
+- [ ] **#45:** `EmptyState` depende só de `sections`; com seções vazias e "Ofertas"/"Mais pedidos" com itens, a home mostra produtos e "Nenhum produto para mostrar" juntos.
+- [ ] **#42:** a chave da listagem não pode começar com `['menu','products']`, senão invalidar a home invalida a paginação da categoria.
+- [ ] **delivery-api#1607:** confirmar se `/products/v2` já exclui produto de categoria desativada (se sim, o filtro daqui é defesa).
+- [ ] Linha de WHY no `as typeof Chip` de `MenuCategoryChip.tsx` (o `styled()` perde a tipagem polimórfica de `component={Link}`).
+- [ ] Conferir o espaçamento das trilhas contra `Cardapio-Tablet-*` do canvas (não foi conferido na implementação).
+

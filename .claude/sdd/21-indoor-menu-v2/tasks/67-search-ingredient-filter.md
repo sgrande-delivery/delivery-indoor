@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** 05 (#44)
-**Status:** pendente
+**Status:** shipped ([PR #78](https://github.com/sgrande-delivery/delivery-indoor/pull/78))
 **Alinhado à delivery-api#1764 (2026-11-23):** a task foi materializada no dia em que a #1764 resolveu a divergência D1 do plan. O contrato de `GET /ingredients` abaixo é o dela.
 
 ## Objetivo
@@ -294,4 +294,78 @@ Não há suíte automatizada.
 
 ## Branch
 
-`task/67-search-ingredient-filter`, base sugerida: `feat/indoor-v2` depois que a 05 (#44) entrar; antes disso, `task/44-menu-search-v2`. Corre em paralelo com a 06 (#45), e as duas tocam `SearchControlsRail.tsx` e `SearchProductItem.tsx`: quem entrar depois rebaseia.
+`task/67-search-ingredient-filter`, cortada em 2026-11-24 de `task/44-menu-search-v2` (`b91ccde`): a 05 ainda não entrou na `feat/indoor-v2`. Corre em paralelo com a 06 (#45), e as duas tocam `SearchControlsRail.tsx` e `SearchProductItem.tsx`: quem entrar depois rebaseia.
+
+## Implementação
+
+**Concluída em:** 2026-11-24
+
+### Camadas tocadas
+
+- Tipo e serviço: `src/types/ingredient.ts`, `src/services/ingredients.ts` (`fetchIngredients`, `ingredientsQueryKey`, `INGREDIENTS_LIMIT`), `src/hooks/use-debounced-value.ts`.
+- Endereço e busca: `src/helpers/search-params.ts` (listas, `SEARCH_INGREDIENTS_MAX`, parser com conflito resolvido em favor de "com", `hasActiveSearch`), `src/services/search.ts` (`searchPageParams` com nome base, `fetchSearchPendingTotal`, `searchPendingQueryKey`), `src/types/search.ts` (comentário).
+- `src/components/search/ingredients/` (novos): `ingredient-direction.ts`, `visible-ingredients.ts`, `use-ingredients.ts`, `ingredient-metrics.ts`, `IngredientFilterChips`, `IngredientFilterChip`, `IngredientFilterOverlay`, `IngredientSearchField`, `IngredientList`, `IngredientRow`, `IngredientDirectionToggle`, `IngredientFilterFooter`.
+- Alterados: `SearchControlsRail.tsx` (uma linha: monta `IngredientFilterChips` depois de "Só promoções"), `SearchProductItem.tsx` (prop `includedIngredients`, destaque na descrição), `SearchResultsScreen.tsx` (nomes incluídos e `hidesStaleResults`), `use-search-results.ts`, `relax-suggestion.ts` (os dois ramos de ingrediente). `src/theme/` e `src/components/ui/` intactos; nenhum ícone novo.
+
+### Contratos consumidos
+
+- `GET /ingredients?environment=board&limit=200[&q]` → `{ data: [{ id, name, product_count }] }` e `GET /products/v2` com `include_ingredients[]`/`exclude_ingredients[]` (e `limit=1` na contagem pendente), conforme a task (delivery-api#1764 e #1626). Não conferidos contra a api local, que não tem as rotas; verificação por `page.route`.
+
+### Variáveis de ambiente novas
+
+- nenhuma.
+
+### Correções da revisão
+
+- `close` da chip aplicada com alvo de 44 (`::after` em `styled(RemovableChip)`, chip com `minBlockSize` de 44; medido 44 de altura e 44x44 de alvo, a 1180 e a 390). `AppliedIngredientChipList` (fragmento, uma lista `[{ id, direction }]`) tirou os dois `.map()` de `IngredientFilterChips`.
+- `useSearchPendingTotal` em `use-ingredients.ts`; `term` do seletor zera ao fechar; comentário de colchete reescrito (grep 3 vazio); métricas nomeadas (`segmentFontSize`, `statusFontSize`); milhar por `Intl`; comentários de "o quê" removidos.
+- Teste 16 refeito com `activated: true`: a descrição marca `cheddar` em `<b>`.
+
+### Decisões que tomei por conta própria
+
+- `hidesStaleResults` ignora falha da página seguinte (`isFetchNextPageError`): a primeira página já foi confirmada com o filtro. Durante o retry da falha escondida a tela mostra skeleton, não o erro.
+- A chip aplicada usa `RemovableChip` sem corpo clicável e o rótulo é texto simples "com cheddar" (o `ChipContent` não aceita negrito parcial).
+- Seleção pendente reiniciada por ajuste de estado durante o render quando `open` vira `true` (sem efeito); o termo do campo também zera.
+- A contagem pendente só roda com algum filtro ativo e usa `keepPreviousData`; erro ou sem filtro vira "Ver resultados".
+- Resumo vazio em minúsculo: "o mesmo ingrediente não pode estar nos dois". Lista vazia sem termo: "Nenhum ingrediente".
+- `SearchProductItem` marca a descrição só quando não há `matched_option`; o card de grade da 06 não existe nesta base.
+- Cor do "com"/"sem" ligado vem do tema (`success`/`error`), a divergência com o canvas já registrada na task.
+
+### Como testar
+
+1. `NEXT_PUBLIC_API=http://localhost:8093/api/client/ yarn dev`, abrir `/search?q=smash&session=<uuid>` (a mesa `c10e064f…` está fechada no banco local; usei mock de `boardMovements`).
+2. Tocar "+ ingrediente", marcar "com" e "sem", conferir o rodapé e o Network (`limit=1` por mudança), "Ver N resultados" e as chips na trilha.
+
+### O que NÃO foi verificado
+
+- Contra a api real: sem `/products/v2` nem `/ingredients?environment`. Playwright com `page.route` em 1180 e 390: seletor com "N produtos", marcar com/sem, troca de lado sem par nos dois, CTA "Ver 4 resultados", URL com as duas listas, chips na trilha, faixa "Tirando o filtro sem cebola…", remoção pela chip, alvo de 44.
+- Não exercitados: debounce de 300 ms com termo, limite de 10 (só por leitura do código), erro 422 do seletor, `hidesStaleResults`, endereço com id nos dois lados, destaque da descrição (o mock de produto não passou pelo filtro de produto ativo), scripts puros dos itens 5 a 7.
+- **Ordem de deploy:** delivery-api#1764 (`environment` em `/ingredients`) e #1626 antes desta tela.
+
+## Follow-ups identificados em review
+
+Corrigido no navegador (2026-11-24): a ajuda do seletor ia no `subtitle` do `PanelHeader`, que é de uma linha com reticências, e o "Até 10 de cada." não aparecia. Ela passou ao corpo, acima do campo, e quebra como no artboard. O painel continua com 540px contra os 720px do canvas (follow-up de design acima: o `Overlay` do DS não expõe largura).
+
+Corrigido no review (2026-11-24):
+- O `close` da chip aplicada tem alvo de 44×44 (`::after`) e a chip tem 44 de altura; antes era um glifo de 15 sem padding.
+- As chips aplicadas saíram para `AppliedIngredientChipList`, uma lista só, em fragmento.
+- A contagem pendente virou o hook `useSearchPendingTotal`.
+- O termo do seletor zera ao fechar.
+- Saíram os colchetes literais do comentário de `search.ts`, que faziam o grep 3 dar falso positivo.
+- Métricas com nome no lugar de `nameFontSize - 1`; milhar por `Intl`.
+
+Corrigido no navegador (2026-11-24, Helium contra mock do contrato): a linha tocada subia para o topo na hora, e o toque seguinte caía noutra linha. `pinChosenIngredients` agora só antecipa o escolhido que não está na resposta do termo atual; o resto fica no lugar.
+
+Provado por script no review: parse (par repetido fica em `include`, limite de 10, round trip), guarda do relaxamento nos ramos de ingrediente e saída do skeleton de `hidesStaleResults`. O "Nada encontrado" do primeiro teste era mock sem `activated` (RN-09), não bug.
+
+- [ ] Rebase com a 06 (#45): aplicar o destaque da decisão 9 no `ProductGridCard` e resolver o conflito em `SearchControlsRail`, `SearchProductItem` e `SearchResultsScreen`.
+- [ ] DS: o `RemovableChip` tem `close` com alvo de 15 px, e o `ChipContent` não permite negrito parcial ("com **cheddar**"). O `TouchChip` alcança o botão por `& > button:last-of-type`, então depende da estrutura interna do primitivo.
+- [ ] Design:
+  - a cor de "com" e "sem" (o `exclude` é vermelho, e vermelho é erro na RF-12);
+  - o campo de busca rolando junto com a lista;
+  - a altura variável do painel contra os 720×660 do canvas;
+  - as copies "Nenhum ingrediente" e "o mesmo ingrediente não pode estar nos dois".
+- [ ] Usar o `meta.total` da lista como semente da primeira contagem pendente.
+- [ ] A chave `search-results` depende da ordem dos ids: o mesmo conjunto em outra ordem vira outra entrada de cache.
+- [ ] O id escolhido que não está no catálogo (fora dos 200, ou que saiu do cardápio) não aparece no seletor, e só sai pela chip ou por "Limpar". A tela de erro não mostra a trilha.
+- [ ] Navegador, contra a api com a delivery-api#1764 e a #1626: testes 8 a 19, em especial o 422 com código, um request por pausa de 300 ms, o limite de 10, o escolhido fixado no topo e `hidesStaleResults` com `products/v2` bloqueado. **Ordem de deploy: a #1764 e a #1626 antes desta tela.**

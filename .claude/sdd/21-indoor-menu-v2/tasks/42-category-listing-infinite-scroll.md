@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** 01 (#40), 02 (#41)
-**Status:** pendente
+**Status:** shipped ([PR #78](https://github.com/sgrande-delivery/delivery-indoor/pull/78))
 **Alinhado às emendas da delivery-api#1607 (2026-11-23):** o filtro por ingrediente deixou de estar parado e é a linha 07, [#67](https://github.com/sgrande-delivery/delivery-indoor/issues/67), na busca, e não nesta tela. O `special_price` dos itens passa a ser o da promoção de mesa com a #1765. Nada mais muda aqui.
 
 ## Objetivo
@@ -208,4 +208,52 @@ export default async function MenuPage({ searchParams }: MenuPageProps) {
 
 ## Branch
 
-`task/42-category-listing-infinite-scroll`, base sugerida: `feat/indoor-v2` depois que a 01 (#40) e a 02 (#41) entrarem; antes disso, `task/41-menu-home-rails`.
+`task/42-category-listing-infinite-scroll`, cortada de `task/41-menu-home-rails` (`87d5bc9`, com a #40) em 2026-11-24.
+
+## Implementação
+
+**Concluída em:** 2026-11-24
+
+### Camadas tocadas
+
+- Rota: `app/(menu)/menu/page.tsx` (server component; `redirect` sem `category`, `notFound` em valor inválido).
+- Tela e lista em `src/components/category/`: `MenuCategoryScreen`, `CategoryProductList`, `CategoryProductItem`, `CategoryListSkeleton`, `CategorySkeletonItem`, `CategoryLoadingRow`, `CategoryListEnd`, `use-category-products.ts`.
+- Hook `src/hooks/use-load-more.ts` (porta literal, `root` = scroller do shell por `useAppScroller`); `src/hooks/useInfiniteScroll.ts` removido (nenhum import).
+- `src/routes/app-routes.ts` ganha `parseCategoryId`; `browsable-routes.ts` passa a abrir `/menu` sem mesa.
+
+### Contratos consumidos
+
+- `GET /products/v2?environment=board&category_id=<int>&page=<n>&limit=24` via `fetchCategoryPage` (#40), envelope `{ data, meta }`; cursor só de `meta.has_more` + `meta.current_page`. `GET /categories/v2` via `useMenuCategories`. Ordem de deploy: sem a delivery-api#1626 a listagem responde 422 e a tela mostra o erro de rota com código.
+
+### Variáveis de ambiente novas
+
+- Nenhuma.
+
+### Decisões que tomei por conta própria
+
+- `UseCategoryProducts.query` tipado como `UseInfiniteQueryResult<InfiniteData<ProductPage>, Error>` (o `number` do contrato da task não compila: a inferência de `pageParam` do `useInfiniteQuery` devolve `unknown`).
+- `CategoryListEnd` aparece também quando `nextPageError` é falso e `!hasNextPage`; com `nextPageError` o fim não aparece (hasNextPage segue verdadeiro).
+- O `InlineError` do topo (`isRefetchError`) usa a copy "Não foi possível atualizar o cardápio." da home.
+- Retry da página seguinte reaproveita `fetchNextPage` (mesma `page`); o retry da primeira página usa `refetch` de `useQueryScreenState`.
+- Dedupe em `flattenUniqueProducts` (exportada para a busca).
+
+### Como testar
+
+1. `yarn dev` com `.env.development` apontando para uma API com `/products/v2` e `/categories/v2` com `environment=board`.
+2. `/?session=<uuid>`, tocar numa chip de categoria, rolar: `page=2` sai antes do fim; "Você viu todos os itens desta categoria" no fim.
+
+### O que NÃO foi verificado
+
+- Contra a API real: a API local não tem as rotas v2 de catálogo; tudo foi medido com `page.route` (Playwright, 390 e 820): skeleton, 24 itens + rótulo "Burgers · 72 itens", falha da página 2 (o React Query tenta 3 vezes e para; 1,5 s sem request novo; "Tentar de novo" pede `page=2` uma vez, sem perder itens), página 3, fim da lista, 71 únicos de 72 (duplicata fixture removida), offline sem request de página e releitura ao voltar, troca de categoria com `scrollTop` 0 e `aria-current` na chip, vazio com "Vazia está sem itens…" e "Ver Burgers", `/menu` → `/`, `abc` e `0` → 404.
+- Console limpo salvo os 500 injetados e os 404 de `/products/v2/most-ordered` da home (rota sem mock).
+- Passos de `browsing` (sem mesa) e inspeção visual dos pixels contra o canvas.
+
+## Follow-ups identificados em review
+
+Corrigido no review (2026-11-24): **RN-09** — `flattenUniqueProducts` deixa de fora produto desativado (conferido com teste: `[p1 ativo, p2 inativo] + [p1, p3]` → `p1, p3`), e o vazio só aparece sem página seguinte (a primeira página pode vir só com desativados, e a sentinela precisa continuar); sem dois avisos ao mesmo tempo no retry da página seguinte; comentário do `use-load-more` portado do client reescrito para este app; a copy de erro do cardápio passou para `src/components/menu/menu-copy.ts`, usada pela home e pela categoria (a busca, #44, importa de lá).
+
+- [ ] **delivery-api#1607:** confirmar se `/products/v2` já exclui `activated: false`. Se não excluir, o rótulo "N itens" (`meta.total`) conta desativados.
+- [ ] Decidir se o `retry` da página seguinte deve ser menor que 3 (hoje até ~7 s de spinner antes do "tentar de novo").
+- [ ] Com `isRefetchError` e `hasNextPage`, o observer continua pedindo página por cima de páginas velhas enquanto o topo avisa que não atualizou — aceitável, registrado.
+- [ ] Navegador: o fluxo `browsing` (sem mesa → "Ver o cardápio" → chip) e 390px contra o canvas não foram exercitados.
+

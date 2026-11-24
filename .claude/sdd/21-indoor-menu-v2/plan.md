@@ -30,13 +30,13 @@ O cardápio é a área onde o `delivery-client` dá mais código pronto, porque 
 
 | # | Task | Issue | Arquivo | Depende de | Status |
 |---|------|-------|---------|------------|--------|
-| 01 | Serviços e tipos do catálogo v2, com centavos e envelope da v2 | [#40](https://github.com/sgrande-delivery/delivery-indoor/issues/40) | [40-catalog-v2-services-types.md](./tasks/40-catalog-v2-services-types.md) | #20 | pendente |
-| 02 | Home do cardápio: categorias, trilhas e ofertas do ambiente mesa | [#41](https://github.com/sgrande-delivery/delivery-indoor/issues/41) | [41-menu-home-rails.md](./tasks/41-menu-home-rails.md) | 01 | pendente |
-| 03 | Listagem da categoria com paginação e scroll infinito | [#42](https://github.com/sgrande-delivery/delivery-indoor/issues/42) | [42-category-listing-infinite-scroll.md](./tasks/42-category-listing-infinite-scroll.md) | 01, 02 | pendente |
-| 04 | Detalhe do produto: grupos de opção, receita e preço do servidor | [#43](https://github.com/sgrande-delivery/delivery-indoor/issues/43) | [43-product-detail-composer.md](./tasks/43-product-detail-composer.md) | 01 | pendente |
-| 05 | Busca no cardápio pela rota v2 | [#44](https://github.com/sgrande-delivery/delivery-indoor/issues/44) | [44-menu-search-v2.md](./tasks/44-menu-search-v2.md) | 03 | pendente |
-| 06 | Tablet: grade 3/2 colunas e trilha de categorias fixa | [#45](https://github.com/sgrande-delivery/delivery-indoor/issues/45) | [45-tablet-menu-grid.md](./tasks/45-tablet-menu-grid.md) | 02, 03, 04, 05 | pendente |
-| 07 | Filtro por ingrediente na busca: seletor de `GET /ingredients`, "com" e "sem" (RF-15) | [#67](https://github.com/sgrande-delivery/delivery-indoor/issues/67) | [67-search-ingredient-filter.md](./tasks/67-search-ingredient-filter.md) | 05 | pendente |
+| 01 | Serviços e tipos do catálogo v2, com centavos e envelope da v2 | [#40](https://github.com/sgrande-delivery/delivery-indoor/issues/40) | [40-catalog-v2-services-types.md](./tasks/40-catalog-v2-services-types.md) | #20 | shipped ([PR #78](https://github.com/sgrande-delivery/delivery-indoor/pull/78)) |
+| 02 | Home do cardápio: categorias, trilhas e ofertas do ambiente mesa | [#41](https://github.com/sgrande-delivery/delivery-indoor/issues/41) | [41-menu-home-rails.md](./tasks/41-menu-home-rails.md) | 01 | shipped ([PR #78](https://github.com/sgrande-delivery/delivery-indoor/pull/78)) |
+| 03 | Listagem da categoria com paginação e scroll infinito | [#42](https://github.com/sgrande-delivery/delivery-indoor/issues/42) | [42-category-listing-infinite-scroll.md](./tasks/42-category-listing-infinite-scroll.md) | 01, 02 | shipped ([PR #78](https://github.com/sgrande-delivery/delivery-indoor/pull/78)) |
+| 04 | Detalhe do produto: grupos de opção, receita e preço do servidor | [#43](https://github.com/sgrande-delivery/delivery-indoor/issues/43) | [43-product-detail-composer.md](./tasks/43-product-detail-composer.md) | 01 | shipped ([PR #78](https://github.com/sgrande-delivery/delivery-indoor/pull/78)) |
+| 05 | Busca no cardápio pela rota v2 | [#44](https://github.com/sgrande-delivery/delivery-indoor/issues/44) | [44-menu-search-v2.md](./tasks/44-menu-search-v2.md) | 03 | shipped ([PR #78](https://github.com/sgrande-delivery/delivery-indoor/pull/78)) |
+| 06 | Tablet: grade 3/2 colunas e trilha de categorias fixa | [#45](https://github.com/sgrande-delivery/delivery-indoor/issues/45) | [45-tablet-menu-grid.md](./tasks/45-tablet-menu-grid.md) | 02, 03, 04, 05 | shipped ([PR #78](https://github.com/sgrande-delivery/delivery-indoor/pull/78)) |
+| 07 | Filtro por ingrediente na busca: seletor de `GET /ingredients`, "com" e "sem" (RF-15) | [#67](https://github.com/sgrande-delivery/delivery-indoor/issues/67) | [67-search-ingredient-filter.md](./tasks/67-search-ingredient-filter.md) | 05 | shipped ([PR #78](https://github.com/sgrande-delivery/delivery-indoor/pull/78)) |
 
 Status: `a especificar` → `pendente` → `executada` → `shipped`.
 

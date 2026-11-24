@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** 03 (#42)
-**Status:** pendente
+**Status:** shipped ([PR #78](https://github.com/sgrande-delivery/delivery-indoor/pull/78))
 **Alinhado às emendas da delivery-api#1607 (2026-11-23):** a lista de categorias da faceta e o `label` do relaxamento de categoria passam a ser os da mesa (mudança 6 da #1626, que antes dizia "sem mudança"), e o `special_price` dos resultados passa a ser o da promoção de mesa (#1765). O filtro por ingrediente deixou de estar parado: a #1764 abriu `environment` em `GET /ingredients`, e ele é a linha 07, [#67](https://github.com/sgrande-delivery/delivery-indoor/issues/67), que depende desta. O escopo desta task não muda.
 
 ## Objetivo
@@ -216,17 +216,17 @@ Os seis ícones já estão em `src/components/ui/icon-names.ts` — **nenhum nom
 
 ## Critérios de aceitação
 
-- [ ] Toda busca é `GET /products/v2` com `environment=board`; nenhuma tela filtra no cliente o que já foi carregado.
-- [ ] As seis ordenações aparecem com os rótulos da RF-14; o padrão enviado é `sort=best_selling`; trocar para "Melhor avaliados" envia `sort=rating`.
-- [ ] "Só promoções" envia `only_offers=1` e combina com ordenação e categoria; desligado, a chave não vai.
-- [ ] As chips de categoria mostram o `count` de `meta.facets.categories`, sem recontagem, e escondem as de zero (salvo a selecionada).
-- [ ] A faixa de relaxamento usa `label` e `additional_count` do servidor e a ação tira exatamente o filtro nomeado.
-- [ ] O termo aparece marcado no nome, e o item com `matched_option` mostra grupo e item na linha.
-- [ ] O estado da busca vive na URL: recarregar, voltar e abrir o link reproduzem termo, ordenação, categoria e promoção.
-- [ ] A aba Busca do celular está ativa e `/search` abre em `browsing`.
-- [ ] Nenhum histórico de busca é gravado; nenhum ingrediente é enviado.
-- [ ] Nenhum arquivo de `src/theme/` ou `src/components/ui/` muda, e nenhum ícone novo entra na união.
-- [ ] `npx tsc --noEmit`, o lint e o `yarn build` passam.
+- [x] Toda busca é `GET /products/v2` com `environment=board`; nenhuma tela filtra no cliente o que já foi carregado.
+- [x] As seis ordenações aparecem com os rótulos da RF-14; o padrão enviado é `sort=best_selling`; trocar para "Melhor avaliados" envia `sort=rating`.
+- [x] "Só promoções" envia `only_offers=1` e combina com ordenação e categoria; desligado, a chave não vai.
+- [x] As chips de categoria mostram o `count` de `meta.facets.categories`, sem recontagem, e escondem as de zero (salvo a selecionada).
+- [x] A faixa de relaxamento usa `label` e `additional_count` do servidor e a ação tira exatamente o filtro nomeado.
+- [x] O termo aparece marcado no nome, e o item com `matched_option` mostra grupo e item na linha.
+- [x] O estado da busca vive na URL: recarregar, voltar e abrir o link reproduzem termo, ordenação, categoria e promoção.
+- [x] A aba Busca do celular está ativa e `/search` abre em `browsing`.
+- [x] Nenhum histórico de busca é gravado; nenhum ingrediente é enviado.
+- [x] Nenhum arquivo de `src/theme/` ou `src/components/ui/` muda, e nenhum ícone novo entra na união.
+- [x] `npx tsc --noEmit`, o lint e o `yarn build` passam.
 
 ## Fora de escopo
 
@@ -238,4 +238,58 @@ Os seis ícones já estão em `src/components/ui/icon-names.ts` — **nenhum nom
 
 ## Branch
 
-`task/44-menu-search-v2`, base sugerida: `feat/indoor-v2` depois que a 03 (#42) entrar; antes disso, `task/42-category-listing-infinite-scroll`.
+`task/44-menu-search-v2`, cortada de `task/42-category-listing-infinite-scroll` (`e019432`, com a #40 e a #41) em 2026-11-24.
+
+## Implementação
+
+**Concluída em:** 2026-11-24
+
+### Camadas tocadas
+
+- Rota: `app/(menu)/search/page.tsx` (server component; `parseSearchFilters` + `hasActiveSearch` escolhem entrada ou resultados).
+- Helpers/serviço/tipos: `src/helpers/search-params.ts`, `src/services/search.ts` (`searchPageParams`, `searchResultsQueryKey`, `selectSearchResultsPage` que mantém as facetas, `fetchSearchResultsPage`), `src/types/search.ts`.
+- `src/components/search/`: `use-search-results`, `use-search-navigation`, `search-sort`, `search-metrics`, `relax-suggestion`, `SearchScreen`, `SearchResultsScreen`, `SearchHeader`, `SearchField`, `SearchTermField`, `SearchControlsRail`, `SearchSortChip`, `SearchSortOverlay`, `SearchSortOptionItem`, `CategoryFacetRail`, `CategoryFacetChip`, `RelaxSuggestionBand`, `SearchResultsCount`, `SearchProductItem`, `SearchCategoryGrid`, `SearchCategoryCard`.
+- Alterados: `shell-tabs.ts` (aba `search` disponível), `browsable-routes.ts` (+ `SEARCH_ROUTE`), `CategoryProductList`/`CategoryListEnd` (prop opcional `endLabel`, para o rodapé não dizer "categoria" na busca).
+
+### Contratos consumidos
+
+- `GET /products/v2?environment=board&sort=<sort>&page&limit=24[&q][&category_id][&only_offers=1]`; resposta `{ data, meta: { total, per_page, current_page, last_page, has_more, facets: { categories, relaxed } } }`, conforme a task (não conferida contra a api local, que não tem as rotas v2 da busca).
+
+### Variáveis de ambiente novas
+
+- nenhuma.
+
+### Decisões que tomei por conta própria
+
+- O campo sobe o termo no **envio** (Enter), sem debounce: a task proíbe `router.push` por tecla.
+- Sem token `info` no design system: a faixa de relaxamento usa a superfície `field` com glifo `brand.text`, em vez do azul do artboard.
+- `search-metrics.ts` (local) compõe as métricas que o tema não tem (campo de 52, trilhas), só com tokens do tema; `src/theme/` não foi tocado.
+- Voltar é `IconButton` neutro de 44 com `Link` para `/`; limpar do campo tem alvo de 44 com margem negativa.
+- Rodapé de fim da busca: "Você viu todos os resultados" (copy minha; o desenho não tem).
+- Chip "Só promoções" selecionada usa `tone="brand"`; facetas e ordenação usam o padrão (`solid` quando selecionada).
+- O `relax-suggestion` ignora candidatos de ingrediente (a tela nunca os pede) e descarta candidato que não muda o endereço.
+- `categoryLabel` saiu de `selectSearchResultsPage` e de `useSearchResults`, e o hook não recebe mais `categoryId` (mudanças 2 e 3 pediam os dois): nada na mesa o consome sem a `ActiveFilterRail` do client.
+
+### Como testar
+
+1. `yarn dev` com `NEXT_PUBLIC_API` e `NEXT_PUBLIC_RESTAURANT_UUID`; abrir `/?session=<uuid>` e depois a aba Busca.
+2. Entrada: campo com foco e atalhos de categoria. Digitar "smash" + Enter: `/search?q=smash`, request `q=smash&sort=best_selling&page=1&limit=24&environment=board`.
+3. Ordenação pelo overlay, "Só promoções", facetas e "tirar filtro": URL e request mudam na hora.
+
+### O que NÃO foi verificado
+
+- Contra a api real: ela local não tem `/products/v2` nem `/categories/v2` com facetas (delivery-api#1626 e emendas); toda a verificação de navegador usou `page.route` com o contrato da task. **Ordem de deploy: delivery-api#1626 antes desta tela.**
+- Playwright (390 e 820, mesa `c10e064f…`): entrada com 2 atalhos; busca com contagem "3 resultados para “smash”" e "página 2 de 2"; `<mark>` no nome; `matched_option` "Adicional · cheddar cremoso"; faceta com zero escondida; ordenação (`sort=rating`), `only_offers=1`, `category_id=1`; faixa "Tirando o filtro Burgers, aparecem mais 4 produtos." e ação; vazio com faixa; erro 500 com "erro 500 · código"; `q` de 130 chars sai com 120; `only_offers=true` não liga. Console só com 404 de `/products/v2/most-ordered` (api local sem v2, da home).
+- Não exercitados: erro de página 2 (reusa a `CategoryProductList` da #42), `/search` sem mesa (checagem da `browsable-routes` só por leitura), `isCartDockRoute` da #49 (não existe ainda: **registrar `/search` nele quando entrar**).
+
+## Follow-ups identificados em review
+
+Corrigido no review (2026-11-24): a faixa de relaxamento não propõe mais tirar o termo quando ele é o único filtro (o servidor propõe, e a ação levava à tela de entrada em vez dos produtos prometidos); o atalho de categoria da entrada tem `minBlockSize` de 44 (media 42,9); o `q` vindo da URL é cortado por caractere, não por unidade UTF-16 (um emoji partido fazia o `encodeURIComponent` lançar); saíram as quatro métricas sem uso de `search-metrics.ts`, o comentário que dizia "só tokens do tema", a prop especulativa `trailing` da `SearchControlsRail` (a #67 altera a trilha por dentro) e o optional chaining sobre `facets`, que o tipo e o presenter garantem.
+
+- [ ] Registrar `/search` no `isCartDockRoute` quando a #49 entrar.
+- [ ] Design: token `info` no DS para a faixa de relaxamento (hoje superfície `field` com glifo `brand.text`).
+- [ ] Design: confirmar a copy "Você viu todos os resultados" e o `tone="brand"` de "Só promoções".
+- [ ] Levar as métricas de `search-metrics.ts` para o tema quando houver trabalho de DS.
+- [ ] Skeleton da seção de categorias da entrada enquanto `/categories/v2` carrega (hoje a seção aparece de repente).
+- [ ] Nits: `Rail` repetido em `SearchControlsRail` e `CategoryFacetRail`; `searchSortOptions[].icon` nunca desenhado; nome acessível do "tirar filtro" sem dizer qual filtro; no overlay de ordenação a seta do teclado escolhe e navega; `SearchProductItem` repete o mapeamento de preço e nota da `CategoryProductItem`.
+- [ ] Navegador, contra a api com a delivery-api#1626 e as emendas: facetas e preço de mesa (#1765), latência por toque em chip (rota dinâmica sem `loading.tsx`), erro da página 2, `/search` sem mesa, trilhas a 820px.
