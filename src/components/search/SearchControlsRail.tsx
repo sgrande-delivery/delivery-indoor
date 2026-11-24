@@ -7,6 +7,7 @@ import { tabletGutter } from '@/components/menu/tablet-gutter';
 import { resolveSearchSort, SearchFilters } from '@/helpers/search-params';
 import { ProductSort } from '@/types/product-page';
 import { searchLayoutMetrics } from './search-metrics';
+import IngredientFilterChips from './ingredients/IngredientFilterChips';
 import SearchSortChip from './SearchSortChip';
 import SearchSortOverlay from './SearchSortOverlay';
 
@@ -58,6 +59,7 @@ const SearchControlsRail: React.FC<SearchControlsRailProps> = ({ filters, onChan
           tone={filters.onlyOffers ? 'brand' : undefined}
           onClick={() => onChange({ ...filters, onlyOffers: !filters.onlyOffers })}
         />
+        <IngredientFilterChips filters={filters} onChange={onChange} />
       </Rail>
       <SearchSortOverlay
         open={isSortOpen}

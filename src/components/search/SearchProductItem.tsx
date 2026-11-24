@@ -13,6 +13,8 @@ const MATCHED_SEPARATOR = ' · ';
 export interface SearchProductItemProps {
   product: ProductSummary;
   term: string | null;
+  /** Os nomes de "com" aplicados: a descrição os marca, como o desenho mostra "com cheddar". */
+  includedIngredients: string[];
 }
 
 /**
@@ -20,7 +22,7 @@ export interface SearchProductItemProps {
  * opção, o `matched_option` no lugar da descrição, com o item em negrito `success`. A linha `lg` tem uma linha de
  * descrição e nenhum slot para a extra do card de grade (06); o primitivo não muda.
  */
-const SearchProductItem: React.FC<SearchProductItemProps> = ({ product, term }) => {
+const SearchProductItem: React.FC<SearchProductItemProps> = ({ product, term, includedIngredients }) => {
   const price = resolveShowcasePrice(product);
   const rating = resolveRatingDisplay(product.rating);
   const matched = product.matched_option;
@@ -39,7 +41,7 @@ const SearchProductItem: React.FC<SearchProductItemProps> = ({ product, term }) 
         name: term === null ? undefined : findHighlightRanges(product.name, [term]),
         description: matched
           ? [{ start: descriptionStart, end: descriptionStart + matched.item_name.length }]
-          : undefined,
+          : findHighlightRanges(description ?? '', includedIngredients),
       }}
       imageUrl={product.image_url ?? undefined}
       price={price?.current}

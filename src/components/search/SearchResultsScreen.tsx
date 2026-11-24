@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { styled } from '@mui/material/styles';
 import CategoryListSkeleton from '@/components/category/CategoryListSkeleton';
 import CategoryProductList from '@/components/category/CategoryProductList';
@@ -23,6 +23,7 @@ import { useIsOffline } from '@/providers/connectivity/ConnectivityProvider';
 import { spacingScale } from '@/theme';
 import { ProductSummary } from '@/types/product';
 import CategoryFacetRail from './CategoryFacetRail';
+import { useIngredients } from './ingredients/use-ingredients';
 import { createRelaxSuggestion } from './relax-suggestion';
 import RelaxSuggestionBand from './RelaxSuggestionBand';
 import { searchLayoutMetrics } from './search-metrics';
@@ -58,7 +59,9 @@ const NoticeSlot = styled('div')({
 });
 
 const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ filters }) => {
-  const { query, products, total, relaxed, categoryFacets, lastLoadedPage } = useSearchResults(filters);
+  const { query, products, total, relaxed, categoryFacets, lastLoadedPage, hidesStaleResults } =
+    useSearchResults(filters);
+  const catalog = useIngredients('').data;
   const screen = useQueryScreenState(query);
   const navigation = useSearchNavigation(filters);
   const isOffline = useIsOffline();
@@ -87,9 +90,16 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ filters }) =>
     scrollerRef.current?.scrollTo({ top: 0, behavior: resolveScrollBehavior() });
   }, [href, scrollerRef]);
 
+  const includedNames = useMemo(
+    () => (catalog ?? []).filter(({ id }) => filters.includeIngredients.includes(id)).map(({ name }) => name),
+    [catalog, filters.includeIngredients]
+  );
+
   const renderItem = useCallback(
-    (product: ProductSummary) => <SearchProductItem product={product} term={filters.term} />,
-    [filters.term]
+    (product: ProductSummary) => (
+      <SearchProductItem product={product} term={filters.term} includedIngredients={includedNames} />
+    ),
+    [filters.term, includedNames]
   );
 
   const renderGridItem = useCallback(
@@ -110,7 +120,9 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ filters }) =>
 
   const controls = <SearchControlsRail filters={filters} onChange={navigation.go} />;
 
-  if (screen.view === 'error') {
+  const isRetryingHidden = hidesStaleResults && query.isFetching;
+
+  if (screen.view === 'error' || (hidesStaleResults && !isRetryingHidden)) {
     return (
       <MenuScreenLayout header={header} regionRef={regionRef}>
         <RouteErrorState
@@ -124,7 +136,7 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ filters }) =>
     );
   }
 
-  if (screen.view === 'skeleton') {
+  if (screen.view === 'skeleton' || isRetryingHidden) {
     return (
       <MenuScreenLayout
         header={

@@ -1,0 +1,29 @@
+import { controlRadii, controlSizes, spacingScale } from '@/theme';
+
+// O que o tema não tem para o seletor: tokens do tema onde há, e os valores do canvas da mesa onde não há.
+export const ingredientMetrics = {
+  fieldBlockSize: controlSizes.lg.height,
+  fieldPaddingInline: spacingScale.md,
+  fieldPaddingBlock: spacingScale.xs,
+  rowGap: spacingScale.sm,
+  rowPaddingBlock: spacingScale.xs,
+  rowPaddingInline: spacingScale.md,
+  nameFontSize: 15,
+  segmentFontSize: 14,
+  statusFontSize: 14,
+  removeTargetSize: controlSizes.md.height,
+  countFontSize: 12,
+  segmentBlockSize: controlSizes.md.height,
+  segmentMinInlineSize: 62,
+  segmentPadding: 3,
+  segmentRadius: controlRadii.md,
+  summaryFontSize: 12.5,
+  summaryLineHeight: 1.4,
+  footerGap: spacingScale.sm,
+  statusPaddingBlock: spacingScale.lg,
+  skeletonRows: 6,
+  skeletonRowBlockSize: 52,
+  actionsGap: 10,
+  cancelFlex: 1,
+  confirmFlex: 1.6,
+} as const;
