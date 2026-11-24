@@ -352,6 +352,8 @@ Corrigido no review (2026-11-24):
 - Saíram os colchetes literais do comentário de `search.ts`, que faziam o grep 3 dar falso positivo.
 - Métricas com nome no lugar de `nameFontSize - 1`; milhar por `Intl`.
 
+Corrigido no navegador (2026-11-24, Helium contra mock do contrato): a linha tocada subia para o topo na hora, e o toque seguinte caía noutra linha. `pinChosenIngredients` agora só antecipa o escolhido que não está na resposta do termo atual; o resto fica no lugar.
+
 Provado por script no review: parse (par repetido fica em `include`, limite de 10, round trip), guarda do relaxamento nos ramos de ingrediente e saída do skeleton de `hidesStaleResults`. O "Nada encontrado" do primeiro teste era mock sem `activated` (RN-09), não bug.
 
 - [ ] Rebase com a 06 (#45): aplicar o destaque da decisão 9 no `ProductGridCard` e resolver o conflito em `SearchControlsRail`, `SearchProductItem` e `SearchResultsScreen`.

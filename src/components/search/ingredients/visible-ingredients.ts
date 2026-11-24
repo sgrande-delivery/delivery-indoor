@@ -1,13 +1,14 @@
 import { Ingredient } from '@/types/ingredient';
 
 /**
- * O escolhido que não volta para o termo atual sairia do alcance do cliente, que não conseguiria desmarcá-lo. As
- * linhas escolhidas vêm antes da resposta, sem repetir, e o nome vem do catálogo sem termo.
+ * O escolhido que não volta para o termo atual sairia do alcance do cliente, que não conseguiria desmarcá-lo: só esse
+ * vem antes da resposta, com o nome do catálogo sem termo. O que já está na resposta fica onde está — subir a linha
+ * tocada mexeria a lista debaixo do dedo, e o toque seguinte cairia noutra linha.
  */
 export function pinChosenIngredients(response: Ingredient[], chosen: string[], catalog: Ingredient[]): Ingredient[] {
-  const byId = new Map([...catalog, ...response].map(ingredient => [ingredient.id, ingredient]));
-  const pinned = chosen.flatMap(id => byId.get(id) ?? []);
-  const pinnedIds = new Set(pinned.map(ingredient => ingredient.id));
+  const responseIds = new Set(response.map(ingredient => ingredient.id));
+  const catalogById = new Map(catalog.map(ingredient => [ingredient.id, ingredient]));
+  const missing = chosen.filter(id => !responseIds.has(id)).flatMap(id => catalogById.get(id) ?? []);
 
-  return [...pinned, ...response.filter(ingredient => !pinnedIds.has(ingredient.id))];
+  return [...missing, ...response];
 }
