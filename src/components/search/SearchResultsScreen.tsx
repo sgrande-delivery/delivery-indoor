@@ -22,7 +22,6 @@ import { useQueryScreenState } from '@/hooks/use-query-screen-state';
 import { useIsOffline } from '@/providers/connectivity/ConnectivityProvider';
 import { spacingScale } from '@/theme';
 import { ProductSummary } from '@/types/product';
-import CategoryFacetRail from './CategoryFacetRail';
 import { useIngredients } from './ingredients/use-ingredients';
 import { createRelaxSuggestion } from './relax-suggestion';
 import RelaxSuggestionBand from './RelaxSuggestionBand';
@@ -118,7 +117,7 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ filters }) =>
     </SearchHeader>
   );
 
-  const controls = <SearchControlsRail filters={filters} onChange={navigation.go} />;
+  const controls = <SearchControlsRail filters={filters} facets={categoryFacets} onChange={navigation.go} />;
 
   const isRetryingHidden = hidesStaleResults && query.isFetching;
 
@@ -159,13 +158,6 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ filters }) =>
   const band = suggestion && (
     <RelaxSuggestionBand suggestion={suggestion} onRelax={next => navigation.goTo(next.href)} />
   );
-  const facets = (
-    <CategoryFacetRail
-      facets={categoryFacets}
-      categoryId={filters.categoryId}
-      onSelect={categoryId => navigation.go({ ...filters, categoryId })}
-    />
-  );
 
   if (products.length === 0 && !query.hasNextPage) {
     return (
@@ -174,7 +166,6 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ filters }) =>
           <>
             {header}
             {controls}
-            {facets}
           </>
         }
         regionRef={regionRef}
@@ -191,7 +182,6 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ filters }) =>
         <>
           {header}
           {controls}
-          {facets}
           {band}
         </>
       }

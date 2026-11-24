@@ -284,6 +284,8 @@ Os seis ícones já estão em `src/components/ui/icon-names.ts` — **nenhum nom
 
 ## Follow-ups identificados em review
 
+Mudado depois da revisão do Raphael (2026-11-24): ordenação, filtros e categorias da faceta ficam numa trilha só, que rola na horizontal, em vez de duas linhas. O artboard do tablet desenha as duas, mas o pedido é scroll horizontal. A `CategoryFacetRail` virou `CategoryFacetChipList`, um fragmento dentro da `SearchControlsRail`. A trilha guarda as últimas categorias conhecidas enquanto o recorte novo carrega (`useRetainedFacets`): sem isso ela encolhia por um instante, o navegador puxava o scroll para o novo limite, e a chip tocada no fim saía da tela (medido no celular: de 682 para 49px). No tablet deitado, os nove chips do exemplo cabem sem rolar.
+
 Corrigido no review (2026-11-24): a faixa de relaxamento não propõe mais tirar o termo quando ele é o único filtro (o servidor propõe, e a ação levava à tela de entrada em vez dos produtos prometidos); o atalho de categoria da entrada tem `minBlockSize` de 44 (media 42,9); o `q` vindo da URL é cortado por caractere, não por unidade UTF-16 (um emoji partido fazia o `encodeURIComponent` lançar); saíram as quatro métricas sem uso de `search-metrics.ts`, o comentário que dizia "só tokens do tema", a prop especulativa `trailing` da `SearchControlsRail` (a #67 altera a trilha por dentro) e o optional chaining sobre `facets`, que o tipo e o presenter garantem.
 
 - [ ] Registrar `/search` no `isCartDockRoute` quando a #49 entrar.
