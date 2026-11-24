@@ -344,6 +344,8 @@ Não há suíte automatizada.
 
 ## Follow-ups identificados em review
 
+Corrigido no navegador (2026-11-24): a ajuda do seletor ia no `subtitle` do `PanelHeader`, que é de uma linha com reticências, e o "Até 10 de cada." não aparecia. Ela passou ao corpo, acima do campo, e quebra como no artboard. O painel continua com 540px contra os 720px do canvas (follow-up de design acima: o `Overlay` do DS não expõe largura).
+
 Corrigido no review (2026-11-24):
 - O `close` da chip aplicada tem alvo de 44×44 (`::after`) e a chip tem 44 de altura; antes era um glifo de 15 sem padding.
 - As chips aplicadas saíram para `AppliedIngredientChipList`, uma lista só, em fragmento.

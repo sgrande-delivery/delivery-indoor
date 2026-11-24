@@ -1,11 +1,14 @@
 'use client';
 
 import React, { useId, useState } from 'react';
+import { styled } from '@mui/material/styles';
 import { Overlay } from '@/components/ui';
 import { hasActiveSearch, normalizeSearchTerm, SearchFilters } from '@/helpers/search-params';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
+import { fontFamilies, pxToRem } from '@/theme';
 import { Ingredient } from '@/types/ingredient';
 import { IngredientDirection, toggleIngredientDirection } from './ingredient-direction';
+import { ingredientMetrics } from './ingredient-metrics';
 import IngredientFilterFooter from './IngredientFilterFooter';
 import IngredientList from './IngredientList';
 import IngredientSearchField from './IngredientSearchField';
@@ -30,6 +33,21 @@ const HELP = (
     Escolha <strong>com</strong> para só ver quem tem, ou <strong>sem</strong> para esconder quem tem. Até 10 de cada.
   </>
 );
+
+// A ajuda mora no corpo, e não no `subtitle` do cabeçalho: o do DS é de uma linha com reticências, e cortava o
+// "Até 10 de cada". Aqui ela quebra, como no artboard.
+const Help = styled('p')(({ theme }) => ({
+  margin: 0,
+  marginInline: ingredientMetrics.fieldPaddingInline,
+  marginBlockStart: ingredientMetrics.fieldPaddingBlock,
+  fontFamily: fontFamilies.text,
+  fontSize: pxToRem(ingredientMetrics.helpFontSize),
+  lineHeight: ingredientMetrics.helpLineHeight,
+  color: theme.vars.palette.surface.muted,
+  '& strong': {
+    color: theme.vars.palette.surface.ink,
+  },
+}));
 
 const IngredientFilterOverlay: React.FC<IngredientFilterOverlayProps> = ({
   open,
@@ -74,7 +92,7 @@ const IngredientFilterOverlay: React.FC<IngredientFilterOverlayProps> = ({
     <Overlay
       open={open}
       onClose={onClose}
-      header={{ title: TITLE, subtitle: <span id={helpId}>{HELP}</span> }}
+      header={{ title: TITLE }}
       footer={
         <IngredientFilterFooter
           includeCount={pending.includeIngredients.length}
@@ -86,6 +104,7 @@ const IngredientFilterOverlay: React.FC<IngredientFilterOverlayProps> = ({
         />
       }
     >
+      <Help id={helpId}>{HELP}</Help>
       <IngredientSearchField value={term} onChange={setTerm} />
       <IngredientList
         ingredients={visible}

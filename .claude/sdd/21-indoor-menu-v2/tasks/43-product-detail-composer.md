@@ -332,6 +332,10 @@ Tocar com seleção válida: `buildProductSelection` → `action.add(selection)`
 Reprovado por um bloqueante mecânico (o `.map()` de 28 linhas em `OptionGroupSection`) e corrigido pela implementação: `OptionGroupItemList` + `OptionGroupItem`; total velho do CTA durante o debounce (`isSettling`) com `aria-busy` e envio travado até o total corresponder à seleção; erro do `/price` com código e `isRetrying`; `flavorPricesByPair` morto removido; `selectRemovableLines` movido para `composer/recipe.ts` (puro). Conferido por quem orquestra (sem segunda rodada completa, por cota): `.map()` de uma linha, guarda `isPriceStale` no `handleSubmit`, `tsc` e eslint limpos; o roteiro de navegador da implementação rodou de novo com 0 falhas.
 
 ## Follow-ups identificados em review
+
+Corrigido no navegador (2026-11-24, medido a 360, 390 e 1180):
+- No celular, o seletor `md` de 44 deixa uns 100px ao rótulo do CTA, e "Adicionar à sacola" pede 134, então saía "Adicionar à…". Lá o rótulo é "Adicionar", o texto curto do app do cliente, trocado por CSS; no tablet fica o do canvas.
+- O motivo do bloqueio ("Escolha ponto da carne para continuar") cortava o nome do grupo nos três tamanhos, até no tablet deitado (277px de texto para 269). Agora quebra em até duas linhas.
 - [ ] **`delivery-client`:** `productSheetMetrics.nameFontSize` 24 (deitado) / 26 (em pé), como nos artboards — lá também é 22; levar no próximo sync do DS.
 - [ ] **Spec de pizza:** aviso visível (não só `VisuallyHidden`) quando a troca de tamanho corta sabores já escolhidos.
 - [ ] Botão de fechar visível também durante o carregamento do detalhe (hoje só `Esc`, backdrop e voltar).

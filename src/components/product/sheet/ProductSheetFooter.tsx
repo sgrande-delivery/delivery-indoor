@@ -8,6 +8,7 @@ import InlineError from '@/components/error/InlineError';
 import { Icon, QuantityStepper, Skeleton, VisuallyHidden } from '@/components/ui';
 import { useBoardSession } from '@/providers/board-session';
 import { useIsOffline } from '@/providers/connectivity/ConnectivityProvider';
+import { tabletShellMediaQuery } from '@/components/shell/shell-metrics';
 import {
   focusRing,
   fontFamilies,
@@ -21,6 +22,9 @@ import {
 const MINIMUM_QUANTITY = 1;
 const TOTAL_PENDING_LABEL = 'Calculando o preço';
 const SUBMIT_LABEL = 'Adicionar à sacola';
+const SUBMIT_SHORT_LABEL = 'Adicionar';
+// Duas linhas de 14 a 1,2 dão 34 dos 54 do CTA.
+const LOCKED_LABEL_LINE_HEIGHT = 1.2;
 const PRICE_ERROR_LABEL = 'Não foi possível calcular o preço.';
 const BROWSING_NOTE = 'Sem mesa, o cardápio abre só para olhar: o pedido não vai para a cozinha.';
 
@@ -174,6 +178,33 @@ const Label = styled('span')({
   textOverflow: 'ellipsis',
 });
 
+// O motivo do bloqueio é frase ("Escolha ponto da carne para continuar") e não cabe numa linha nem no tablet deitado:
+// quebra em até duas, que a altura de 54 do CTA comporta, em vez de cortar o nome do grupo.
+const LockedLabel = styled('span')({
+  minWidth: 0,
+  display: '-webkit-box',
+  overflow: 'hidden',
+  WebkitBoxOrient: 'vertical',
+  WebkitLineClamp: 2,
+  lineHeight: LOCKED_LABEL_LINE_HEIGHT,
+  textAlign: 'center',
+});
+
+// No celular o seletor de 44 deixa uns 100px ao rótulo, e "Adicionar à sacola" pede 134: lá vai o texto curto do app do
+// cliente. A troca é por CSS porque o modal pode abrir direto pelo endereço, antes de o formato ser conhecido no JS.
+const ShortLabel = styled('span')({
+  [`@media ${tabletShellMediaQuery}`]: {
+    display: 'none',
+  },
+});
+
+const FullLabel = styled('span')({
+  display: 'none',
+  [`@media ${tabletShellMediaQuery}`]: {
+    display: 'inline',
+  },
+});
+
 const Total = styled('span', {
   shouldForwardProp: prop => prop !== 'isLoading',
 })<TotalProps>(({ theme, isLoading }) => ({
@@ -251,11 +282,14 @@ const ProductSheetFooter: React.FC<ProductSheetFooterProps> = ({
             {isLocked ? (
               <>
                 <Icon name="lock" size={productFooterMetrics.ctaIconSize} />
-                <Label>{lockedLabel}</Label>
+                <LockedLabel>{lockedLabel}</LockedLabel>
               </>
             ) : (
               <>
-                <Label>{SUBMIT_LABEL}</Label>
+                <Label>
+                  <ShortLabel>{SUBMIT_SHORT_LABEL}</ShortLabel>
+                  <FullLabel>{SUBMIT_LABEL}</FullLabel>
+                </Label>
                 {total ? (
                   <Total isLoading={isTotalLoading} aria-busy={isTotalLoading || undefined}>
                     {total}

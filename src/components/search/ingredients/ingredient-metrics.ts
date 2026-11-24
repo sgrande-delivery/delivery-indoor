@@ -8,6 +8,8 @@ export const ingredientMetrics = {
   rowGap: spacingScale.sm,
   rowPaddingBlock: spacingScale.xs,
   rowPaddingInline: spacingScale.md,
+  helpFontSize: 13,
+  helpLineHeight: 1.5,
   nameFontSize: 15,
   segmentFontSize: 14,
   statusFontSize: 14,
