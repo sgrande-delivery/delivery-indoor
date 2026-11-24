@@ -23,11 +23,32 @@ A **conta da mesa é a tela principal**: mostra produtos lançados, pagamentos e
 | Estado | Redux + `@reduxjs/toolkit`, middleware por módulo | React Query (servidor) + contexto (UI) |
 | Ícones | `@material-ui/icons` | subset do Material Symbols por `Icon` |
 
-Runtime: Node 18 local, `engines.node: >=16`. Deploy por `server.js` (express + `heroku-ssl-redirect`), estilo Heroku. **Não há GitHub Actions neste repo** — nenhum merge ou tag dispara build ou deploy.
+Runtime: Node 18 local, `engines.node: >=16`. O `server.js` (express + `heroku-ssl-redirect`) é herança do Heroku, e **não há GitHub Actions neste repo** — mas isso não quer dizer que nada deploya. Este repo é publicado na Vercel, **um projeto por restaurante**, todos da `master` pela integração git: medido em 2026-11-18, os deploys de produção chegam com `source=git`, `ref=master`. **Push na `master` é deploy em todos os restaurantes**, sem tag e sem release no meio — e quantos são muda a cada cliente novo, então a lista sai do dashboard, não daqui.
+
+Como acessar a Vercel (e a VM): `delivery-infra/docs/acessos.md`. Em resumo: o token de escrita já existe, é o `VERCEL_TOKEN` do `.env` da `delivery-api`, e a production branch de um projeto só muda pelo dashboard.
 
 **A `master` é o app que os clientes usam hoje.** O redesign está especificado nas features [#20](https://github.com/sgrande-delivery/delivery-indoor/issues/20) a [#24](https://github.com/sgrande-delivery/delivery-indoor/issues/24) e acumula na `feat/indoor-v2`, que vai para a `master` quando fechar. Correção do app em produção sai da `master`; trabalho do redesign sai da branch de integração. **Nenhum dos dois lados importa código do outro para preencher lacuna.**
 
 Código copiado do `delivery-client` vem da `feat/app-v2` de lá e **precisa ser traduzido** para a stack de destino. Nunca cole `sx`, `'use client'` ou import de `@mui/*` em código da `master`.
+
+## Ambientes: produção e dev
+
+| | Endereço | Branch | Fala com |
+|---|---|---|---|
+| **Produção** | `mesas.sgrande.delivery` e os demais projetos de mesa, um por restaurante | `master` | `api.sgrande.delivery` — a VM EC2 |
+| **Dev** | local (`yarn dev`) | — | `api-dev.sgrande.delivery` e os outros hosts `*-dev` |
+
+**Este app não tem ambiente de dev publicado** — conferido em 2026-11-19, nenhum dos 8 projetos de mesa tem ambiente ligado a uma branch `dev`. O único host `-dev` da zona é `admin-dev.sgrande.delivery`, que é o **painel**, não este app.
+
+Um endereço `*-dev.sgrande.delivery` **nunca é produção**: são registros A para o IP fixo da rede da máquina de desenvolvimento, e quem responde são os containers dela. Mesa, pedido e pagamento vistos ali não existem em produção — e o contrário também. O mapa completo está em `delivery-infra/docs/ambientes.md`.
+
+## A branch `dev` — ambiente de desenvolvimento
+
+**`dev` é o nome da branch de desenvolvimento em toda a organização** — nunca `develop`, nunca `staging`. É a branch ligada ao projeto de hospedagem com as variáveis apontando para o **ambiente de dev**, para olhar a tela no ar antes de ela chegar à mesa do cliente. Commit nela gera build; merge nela **não é entrega**, e o que sai dela não é evidência do que está em produção.
+
+Ela **não é branch de integração** e não substitui nenhuma das duas acima: correção de produção continua saindo da `master` e o redesign continua acumulando na `feat/indoor-v2`. Não abrir PR de spec contra a `dev`, não cortar branch de spec dela.
+
+**Ela não existe neste repo hoje** — conferido em 2026-11-17, não há `dev` no remoto. Confirmar com `git ls-remote --heads origin dev` antes de citá-la. No `delivery-admin` ela já existe e builda no projeto Vercel `sgrande-admin`; aqui o equivalente seria um dos projetos Vercel de mesa deste repo (`ohamburgues-indoor`, `topezeira-board` e os outros), que são por tenante.
 
 ## O fluxo da mesa
 
