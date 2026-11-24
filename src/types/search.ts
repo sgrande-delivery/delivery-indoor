@@ -2,8 +2,8 @@ import { ProductSummary } from './product';
 import { ProductPageMeta, SearchFacetCategory } from './product-page';
 
 /**
- * Os filtros que o servidor sabe propor relaxar. A união tem os quatro valores da api — o tipo diz o que o servidor
- * manda —, mas esta tela só pede `q` e `category_id`; os de ingrediente entram com a #67.
+ * Os filtros que o servidor sabe propor relaxar. A união tem os quatro valores da api: o tipo diz o que o servidor
+ * manda.
  */
 export const relaxableFilters = ['q', 'category_id', 'include_ingredients', 'exclude_ingredients'] as const;
 

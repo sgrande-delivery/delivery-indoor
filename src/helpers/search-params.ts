@@ -10,7 +10,14 @@ export const searchParamNames = {
   categoryId: 'category_id',
   sort: 'sort',
   onlyOffers: 'only_offers',
+  includeIngredients: 'include_ingredients',
+  excludeIngredients: 'exclude_ingredients',
 } as const;
+
+// `max:10` por lista no `SearchProductsRequest`.
+export const SEARCH_INGREDIENTS_MAX = 10;
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // `q` é `max:120` no `SearchProductsRequest`; passar disso é 422.
 export const SEARCH_TERM_MAX_LENGTH = 120;
@@ -25,6 +32,8 @@ export interface SearchFilters {
   categoryId: number | null;
   sort: ProductSort | null;
   onlyOffers: boolean;
+  includeIngredients: string[];
+  excludeIngredients: string[];
 }
 
 export const emptySearchFilters: SearchFilters = {
@@ -32,6 +41,8 @@ export const emptySearchFilters: SearchFilters = {
   categoryId: null,
   sort: null,
   onlyOffers: false,
+  includeIngredients: [],
+  excludeIngredients: [],
 };
 
 export type SearchParamSource = Record<string, string | string[] | undefined>;
@@ -41,6 +52,24 @@ function readValue(source: SearchParamSource, name: string): string | null {
   const first = Array.isArray(raw) ? raw[0] : raw;
 
   return first ?? null;
+}
+
+/** Lista no endereço é `nome[]=a&nome[]=b`; o nome sem colchete é aceito por tolerância, e o colchete vence. */
+function readValues(source: SearchParamSource, name: string): string[] {
+  const raw = source[`${name}[]`] ?? source[name];
+
+  if (raw === undefined) {
+    return [];
+  }
+
+  return Array.isArray(raw) ? raw : [raw];
+}
+
+/** Só uuid, sem repetição e até o teto da rota: o excedente é cortado aqui, e a edição o impede antes de chegar. */
+function parseIngredientIds(raw: string[]): string[] {
+  const ids = raw.map(id => id.toLowerCase()).filter(id => UUID_PATTERN.test(id));
+
+  return Array.from(new Set(ids)).slice(0, SEARCH_INGREDIENTS_MAX);
 }
 
 /** A forma canônica do termo: sem borda e sem espaço repetido, para `parse(build(x)) === x`. */
@@ -76,11 +105,19 @@ function parseSort(raw: string | null): ProductSort | null {
 
 /** O que a api recusaria não vira estado: sai como ausente, em vez de atravessar a tela e virar 422. */
 export function parseSearchFilters(source: SearchParamSource): SearchFilters {
+  const includeIngredients = parseIngredientIds(readValues(source, searchParamNames.includeIngredients));
+  // O mesmo id nas duas listas é 422 na api. O endereço vira request direto, então o conflito se resolve aqui, em favor de "com".
+  const excludeIngredients = parseIngredientIds(readValues(source, searchParamNames.excludeIngredients)).filter(
+    id => !includeIngredients.includes(id)
+  );
+
   return {
     term: parseTerm(readValue(source, searchParamNames.term)),
     categoryId: parseCategoryId(readValue(source, searchParamNames.categoryId)),
     sort: parseSort(readValue(source, searchParamNames.sort)),
     onlyOffers: readValue(source, searchParamNames.onlyOffers) === ONLY_OFFERS_ON,
+    includeIngredients,
+    excludeIngredients,
   };
 }
 
@@ -109,12 +146,26 @@ export function buildSearchHref(filters: SearchFilters): string {
     params.set(searchParamNames.onlyOffers, ONLY_OFFERS_ON);
   }
 
+  for (const id of filters.includeIngredients) {
+    params.append(`${searchParamNames.includeIngredients}[]`, id);
+  }
+
+  for (const id of filters.excludeIngredients) {
+    params.append(`${searchParamNames.excludeIngredients}[]`, id);
+  }
+
   const query = params.toString();
 
   return query === '' ? SEARCH_ROUTE : `${SEARCH_ROUTE}?${query}`;
 }
 
-/** Uma rota, duas telas: com termo, categoria ou promoções é resultado; sem nenhum é a entrada. */
+/** Uma rota, duas telas: com termo, categoria, promoções ou ingrediente é resultado; sem nenhum é a entrada. */
 export function hasActiveSearch(filters: SearchFilters): boolean {
-  return filters.term !== null || filters.categoryId !== null || filters.onlyOffers;
+  return (
+    filters.term !== null ||
+    filters.categoryId !== null ||
+    filters.onlyOffers ||
+    filters.includeIngredients.length > 0 ||
+    filters.excludeIngredients.length > 0
+  );
 }

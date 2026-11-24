@@ -52,8 +52,11 @@ function withoutCandidate(filters: SearchFilters, candidate: RelaxCandidate): Se
     return { ...filters, categoryId: null };
   }
 
-  // Esta tela não manda ingrediente, então não há o que tirar.
-  return filters;
+  if (candidate.filter === 'include_ingredients') {
+    return { ...filters, includeIngredients: filters.includeIngredients.filter(id => id !== candidate.value) };
+  }
+
+  return { ...filters, excludeIngredients: filters.excludeIngredients.filter(id => id !== candidate.value) };
 }
 
 /**

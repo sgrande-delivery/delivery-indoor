@@ -21,6 +21,12 @@ export interface UseSearchResults {
   categoryFacets: SearchFacetCategory[];
   /** A última página carregada: `página X de Y`. */
   lastLoadedPage: { current: number; last: number } | null;
+  /**
+   * Com "sem" aplicado, a falha da primeira leitura esconde a lista: o React Query manteria o resultado anterior, que
+   * pode conter justamente o ingrediente excluído, e numa mesa isso pode ser alergia. Falha da página seguinte não
+   * entra: a primeira página já foi confirmada com o filtro.
+   */
+  hidesStaleResults: boolean;
 }
 
 export function useSearchResults(filters: SearchFilters): UseSearchResults {
@@ -33,7 +39,8 @@ export function useSearchResults(filters: SearchFilters): UseSearchResults {
     staleTime: SEARCH_STALE_TIME,
   });
 
-  const pages = query.data?.pages;
+  const hidesStaleResults = query.isError && !query.isFetchNextPageError && filters.excludeIngredients.length > 0;
+  const pages = hidesStaleResults ? undefined : query.data?.pages;
   const products = useMemo(() => flattenUniqueProducts(pages ?? []), [pages]);
   const first = pages?.[0];
   const last = pages?.[pages.length - 1];
@@ -44,6 +51,7 @@ export function useSearchResults(filters: SearchFilters): UseSearchResults {
     total: first?.meta.total ?? null,
     relaxed: first?.relaxed ?? [],
     categoryFacets: first?.categoryFacets ?? [],
+    hidesStaleResults,
     lastLoadedPage: last ? { current: last.meta.current_page, last: last.meta.last_page } : null,
   };
 }
