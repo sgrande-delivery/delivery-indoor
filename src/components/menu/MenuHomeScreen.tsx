@@ -12,15 +12,12 @@ import HomeProductRail from './HomeProductRail';
 import MenuCategoryRail from './MenuCategoryRail';
 import MenuSectionList from './MenuSectionList';
 import MenuSkeleton from './MenuSkeleton';
+import { MENU_ERROR_DESCRIPTION, MENU_ERROR_TITLE, MENU_REFRESH_ERROR } from './menu-copy';
 import { useMenuHome } from './use-menu-home';
 
-const ERROR_TITLE = 'Não conseguimos carregar o cardápio';
-const ERROR_DESCRIPTION =
-  'A mesa continua aberta e nada foi perdido. Verifique a conexão e tente de novo — ou chame o garçom.';
 const EMPTY_TITLE = 'Nenhum produto para mostrar';
 const EMPTY_DESCRIPTION = 'O cardápio da mesa está sem itens no momento. Chame o garçom se quiser pedir algo.';
 const CATEGORIES_ERROR = 'Não foi possível carregar as categorias.';
-const REFRESH_ERROR = 'Não foi possível atualizar o cardápio.';
 
 // A navegação inferior é irmã da região de conteúdo no shell; este respiro é só o fim da última trilha.
 const Root = styled('div')({
@@ -47,8 +44,8 @@ const MenuHomeScreen: React.FC = () => {
         error={screen.error}
         failureStreak={screen.failureStreak}
         onRetry={screen.retry}
-        title={ERROR_TITLE}
-        description={ERROR_DESCRIPTION}
+        title={MENU_ERROR_TITLE}
+        description={MENU_ERROR_DESCRIPTION}
       />
     );
   }
@@ -57,7 +54,7 @@ const MenuHomeScreen: React.FC = () => {
     <Root>
       {screen.isRefreshFailed && (
         <NoticeSlot>
-          <InlineError message={REFRESH_ERROR} onRetry={screen.retry} isRetrying={home.products.isFetching} />
+          <InlineError message={MENU_REFRESH_ERROR} onRetry={screen.retry} isRetrying={home.products.isFetching} />
         </NoticeSlot>
       )}
       {categories.isError && categories.data === undefined ? (

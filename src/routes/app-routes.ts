@@ -17,3 +17,14 @@ export const CART_ROUTE = '/cart';
 
 /** A conta da mesa. */
 export const BOARD_ROUTE = '/board';
+
+/** Lê o `?category=`: inteiro positivo, ou `null` (ausente, repetido, `0`, `abc`, `1.5`). */
+export function parseCategoryId(raw: string | string[] | undefined): number | null {
+  if (typeof raw !== 'string' || !/^[1-9]\d*$/.test(raw)) {
+    return null;
+  }
+
+  const id = Number(raw);
+
+  return Number.isSafeInteger(id) ? id : null;
+}
