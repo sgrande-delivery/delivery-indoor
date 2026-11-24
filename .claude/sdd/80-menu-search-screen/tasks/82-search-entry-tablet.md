@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** 01 ([#81](https://github.com/sgrande-delivery/delivery-indoor/issues/81))
-**Status:** pendente
+**Status:** executada
 
 ## Objetivo
 
@@ -65,4 +65,35 @@ Meça com `getBoundingClientRect` e registre os números na seção "Implementa�
 
 ## Branch
 
-`task/82-search-entry-tablet`, base: `task/81-search-type-ahead`, porque a task 01 move o corpo da entrada.
+`task/82-search-entry-tablet`, cortada em 2026-11-24 de `task/81-search-type-ahead` (`7248bd1`), porque a task 01 move o corpo da entrada.
+
+## Implementação
+
+**Concluída em:** 2026-11-24
+
+### Camadas tocadas
+
+- `src/components/search/SearchCategoryGrid.tsx`: 4 colunas em `tabletShellMediaQuery` e 3 em `tabletPortraitShellMediaQuery`. O token de 2 colunas do DS continua valendo no celular.
+- `src/components/search/SearchEntry.tsx`: o `Body` ganha `tabletGutter('paddingInline')` como argumento à parte do `styled`.
+- `src/components/search/search-metrics.ts`: `entryGridColumnsLandscape: 4` e `entryGridColumnsPortrait: 3`.
+
+### Medido no navegador
+
+Mock das rotas v2 e Playwright, com `getBoundingClientRect`:
+
+| formato | colunas | rótulo / 1º card / borda direita | do campo ao rótulo | do rótulo aos cards | card | rolagem horizontal |
+|---|---|---|---|---|---|---|
+| 1180×820 | 4 | 24 / 24 / 24 | 14 | 12 | 44 | 0 |
+| 820×1180 | 3 | 22 / 22 / 22 | 14 | 12 | 44 | 0 |
+| 390×844 | 2 | 18 / 18 / 18 | 14 | 12 | 44 | 0 |
+
+A borda direita do campo fica na mesma margem da grade nos três formatos.
+
+### Decisões
+
+- 4 e 3 colunas (decisão pendente 5 da spec): a grade de produtos do tablet tem 3 e 2, e o atalho de categoria, que é só o nome, cabe numa coluna a mais.
+
+### O que NÃO foi verificado
+
+- Tablet real e mesa real: tudo foi contra o mock.
+- `tsc`, lint e `next build`, com as vars de restaurante, passam.

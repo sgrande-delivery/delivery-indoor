@@ -37,7 +37,7 @@
 | # | Task | Issue | Arquivo | Depende de | Status |
 |---|------|-------|---------|------------|--------|
 | 01 | Busca ao digitar: uma tela dona de `/search`, campo que não remonta, endereço por histórico do navegador, lista anterior durante a digitação | [#81](https://github.com/sgrande-delivery/delivery-indoor/issues/81) | [81-search-type-ahead.md](./tasks/81-search-type-ahead.md) | #79 | executada |
-| 02 | Entrada da busca no tablet: grade de categorias e margens do tablet | [#82](https://github.com/sgrande-delivery/delivery-indoor/issues/82) | [82-search-entry-tablet.md](./tasks/82-search-entry-tablet.md) | 01 | pendente |
+| 02 | Entrada da busca no tablet: grade de categorias e margens do tablet | [#82](https://github.com/sgrande-delivery/delivery-indoor/issues/82) | [82-search-entry-tablet.md](./tasks/82-search-entry-tablet.md) | 01 | executada |
 
 Status: `a especificar` → `pendente` → `executada` → `shipped`.
 

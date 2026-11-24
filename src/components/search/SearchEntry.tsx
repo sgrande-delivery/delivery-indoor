@@ -3,6 +3,7 @@
 import React from 'react';
 import { styled } from '@mui/material/styles';
 import InlineError from '@/components/error/InlineError';
+import { tabletGutter } from '@/components/menu/tablet-gutter';
 import { selectVisibleCategories, useMenuCategories } from '@/hooks/use-menu-categories';
 import { fontFamilies, pxToRem, searchSectionMetrics, spacingScale } from '@/theme';
 import SearchCategoryGrid from './SearchCategoryGrid';
@@ -14,10 +15,13 @@ const Root = styled('div')({
   paddingBlockEnd: spacingScale.lg,
 });
 
-const Body = styled('section')({
-  paddingInline: searchSectionMetrics.bodyPaddingInline,
-  paddingBlockStart: searchSectionMetrics.bodyPaddingBlockStart,
-});
+const Body = styled('section')(
+  {
+    paddingInline: searchSectionMetrics.bodyPaddingInline,
+    paddingBlockStart: searchSectionMetrics.bodyPaddingBlockStart,
+  },
+  tabletGutter('paddingInline')
+);
 
 const SectionLabel = styled('h2')(({ theme }) => ({
   margin: 0,
