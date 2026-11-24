@@ -5,7 +5,7 @@ import { styled } from '@mui/material/styles';
 import InlineError from '@/components/error/InlineError';
 import ProductGrid from '@/components/menu/ProductGrid';
 import ProductGridCard from '@/components/menu/ProductGridCard';
-import { tabletGutter } from '@/components/menu/tablet-gutter';
+import { phoneGutter, tabletGutter } from '@/components/menu/tablet-gutter';
 import { categoryListMetrics } from '@/theme';
 import { ProductSummary } from '@/types/product';
 import CategoryListEnd from './CategoryListEnd';
@@ -42,7 +42,7 @@ const Root = styled('div', {
   gap: categoryListMetrics.gap,
   paddingBlockStart: categoryListMetrics.paddingBlockStart,
   paddingBlockEnd: isGrid ? 0 : categoryListMetrics.paddingBlockEnd,
-  paddingInline: isGrid ? 0 : categoryListMetrics.paddingInline,
+  paddingInline: isGrid ? 0 : phoneGutter,
 }));
 
 // Carregando, erro e fim da grade ficam na mesma margem lateral dos cards.

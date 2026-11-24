@@ -212,6 +212,11 @@ O `EmptyState` da 03 fica centrado na região que rola (o artboard `Estado · va
 
 ## Follow-ups identificados em review
 
+Corrigido no navegador (2026-11-24, medido com `getBoundingClientRect` a 1055 e 455 de viewport):
+- No tablet, o `...tabletGutter()` espalhado no estilo da `MenuCategoryRail` tinha a mesma chave `@media` do bloco de tablet e o apagava: a trilha perdia os 16 de cima e de baixo, e o rótulo da categoria ficava a 4 dela. O gutter agora vai como argumento à parte do `styled`, e o JSDoc do helper avisa.
+- No celular, o rótulo "PASTÉIS · 18 ITENS" estava a 4 da trilha e a 12 da lista. Ganhou 16 + 4 acima, o ritmo do artboard do tablet, e ficou com 20 acima e 12 abaixo nos dois formatos.
+- No celular, a categoria e a busca misturavam 18 (trilha, rótulo, contagem) e 16 (cards, trilhas da busca, cabeçalho). Agora tudo fica em 18 (`phoneGutter`, a margem da trilha de categorias).
+
 Corrigido no review (2026-11-24):
 - Rodapé da grade (carregando, erro e fim) na margem lateral dos cards, e carga em forma de linha de status em vez da linha-esqueleto do celular.
 - Busca e categoria alinhadas em 24/22 no tablet, com `tablet-gutter.ts`, como no artboard `Busca-Tablet-Deitado`.
@@ -224,7 +229,7 @@ Corrigido no review (2026-11-24):
 - Aviso de falha da home de volta acima da trilha no celular.
 
 - [ ] Helper de apresentação compartilhado para a contagem da nota (`(N)`) e para o texto do `matched_option`: hoje em `ProductGridCard`, `CategoryProductItem` e `SearchProductItem`.
-- [ ] Margens laterais da home no tablet (trilha a 24, destaques e seções a 16/18): a home não tem artboard de tablet; confirmar com o dev.
+- [x] Margens laterais da home no tablet: alinhadas em 24/22 com a trilha e a grade (2026-11-24, pedido do dev ao ver a tela).
 - [ ] Tablet pequeno deitado (1024×600): o cabeçalho fixo da busca ocupa cerca de 260px e sobra uma fileira de cards.
 - [ ] Navegador, ainda não exercitado:
   - girar no meio da lista;

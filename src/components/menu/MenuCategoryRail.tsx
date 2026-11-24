@@ -27,25 +27,28 @@ interface RailProps {
 // Sem categoria, só a chip de busca do tablet sobrevive; no celular a trilha vazia não deixa nem a faixa de respiro.
 const Rail = styled('nav', {
   shouldForwardProp: prop => prop !== 'isEmpty',
-})<RailProps>(({ isEmpty }) => ({
-  display: isEmpty ? 'none' : 'flex',
-  alignItems: 'center',
-  gap: categoryRailMetrics.gap,
-  paddingBlockStart: categoryRailMetrics.paddingBlockStart,
-  paddingBlockEnd: categoryRailMetrics.paddingBlockEnd,
-  paddingInline: categoryRailMetrics.paddingInline,
-  overflowX: 'auto',
-  scrollbarWidth: 'none',
-  msOverflowStyle: 'none',
-  '&::-webkit-scrollbar': {
-    display: 'none',
-  },
-  [`@media ${tabletShellMediaQuery}`]: {
-    display: 'flex',
-    paddingBlock: spacingScale.md,
-  },
-  ...tabletGutter('paddingInline'),
-}));
+})<RailProps>(
+  ({ isEmpty }) => ({
+    display: isEmpty ? 'none' : 'flex',
+    alignItems: 'center',
+    gap: categoryRailMetrics.gap,
+    paddingBlockStart: categoryRailMetrics.paddingBlockStart,
+    paddingBlockEnd: categoryRailMetrics.paddingBlockEnd,
+    paddingInline: categoryRailMetrics.paddingInline,
+    overflowX: 'auto',
+    scrollbarWidth: 'none',
+    msOverflowStyle: 'none',
+    '&::-webkit-scrollbar': {
+      display: 'none',
+    },
+    [`@media ${tabletShellMediaQuery}`]: {
+      display: 'flex',
+      paddingBlock: spacingScale.md,
+    },
+  }),
+  // Argumento à parte, e não espalhado no objeto: a chave `@media` do gutter é a mesma do bloco acima e o apagaria.
+  tabletGutter('paddingInline')
+);
 
 /**
  * As chips **navegam** (não alternam): cada uma é um `Link` para a listagem da categoria, e só a aberta leva

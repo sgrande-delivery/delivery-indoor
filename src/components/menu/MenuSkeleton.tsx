@@ -5,17 +5,21 @@ import { styled } from '@mui/material/styles';
 import { Skeleton } from '@/components/ui';
 import { categoryRailMetrics, controlSizes } from '@/theme';
 import HomeRailSkeleton from './HomeRailSkeleton';
+import { tabletGutter } from './tablet-gutter';
 
 const LOADING_LABEL = 'Carregando o cardápio';
 const CHIP_WIDTHS = [96, 80, 112, 88];
 
-const ChipRow = styled('div')({
-  display: 'flex',
-  gap: categoryRailMetrics.gap,
-  paddingBlockStart: categoryRailMetrics.paddingBlockStart,
-  paddingInline: categoryRailMetrics.paddingInline,
-  overflow: 'hidden',
-});
+const ChipRow = styled('div')(
+  {
+    display: 'flex',
+    gap: categoryRailMetrics.gap,
+    paddingBlockStart: categoryRailMetrics.paddingBlockStart,
+    paddingInline: categoryRailMetrics.paddingInline,
+    overflow: 'hidden',
+  },
+  tabletGutter('paddingInline')
+);
 
 const MenuSkeleton: React.FC = () => {
   return (

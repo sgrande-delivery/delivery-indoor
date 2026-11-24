@@ -62,25 +62,36 @@ const EmptySlot = styled('div')({
   },
 });
 
-const SectionLabel = styled('h2')(({ theme }) => ({
-  margin: 0,
-  paddingInline: searchSectionMetrics.bodyPaddingInline,
-  marginBlockStart: searchSectionMetrics.labelMarginBlockStart,
-  fontFamily: fontFamilies.text,
-  fontSize: pxToRem(searchSectionMetrics.labelFontSize),
-  fontWeight: searchSectionMetrics.labelFontWeight,
-  lineHeight: searchSectionMetrics.labelLineHeight,
-  letterSpacing: searchSectionMetrics.labelLetterSpacing,
-  textTransform: 'uppercase',
-  color: theme.vars.palette.surface.muted,
-  ...tabletGutter('paddingInline'),
-}));
+// No tablet a trilha fixa já deixa 16 embaixo; no celular ela não deixa nada, e o rótulo leva o mesmo respiro (16 + 4,
+// como no artboard), para colar na lista que ele nomeia e não na trilha.
+const labelMarginBlockStart = {
+  marginBlockStart: spacingScale.md + searchSectionMetrics.labelMarginBlockStart,
+  [`@media ${tabletShellMediaQuery}`]: {
+    marginBlockStart: searchSectionMetrics.labelMarginBlockStart,
+  },
+} as const;
 
-const SkeletonLabelSlot = styled('div')({
-  paddingInline: searchSectionMetrics.bodyPaddingInline,
-  marginBlockStart: searchSectionMetrics.labelMarginBlockStart,
-  ...tabletGutter('paddingInline'),
-});
+const SectionLabel = styled('h2')(
+  ({ theme }) => ({
+    margin: 0,
+    paddingInline: searchSectionMetrics.bodyPaddingInline,
+    fontFamily: fontFamilies.text,
+    fontSize: pxToRem(searchSectionMetrics.labelFontSize),
+    fontWeight: searchSectionMetrics.labelFontWeight,
+    lineHeight: searchSectionMetrics.labelLineHeight,
+    letterSpacing: searchSectionMetrics.labelLetterSpacing,
+    textTransform: 'uppercase',
+    color: theme.vars.palette.surface.muted,
+  }),
+  labelMarginBlockStart,
+  tabletGutter('paddingInline')
+);
+
+const SkeletonLabelSlot = styled('div')(
+  { paddingInline: searchSectionMetrics.bodyPaddingInline },
+  labelMarginBlockStart,
+  tabletGutter('paddingInline')
+);
 
 const MenuCategoryScreen: React.FC<MenuCategoryScreenProps> = ({ categoryId }) => {
   const { query, products, total } = useCategoryProducts(categoryId);

@@ -1,3 +1,4 @@
+import { phoneGutter } from '@/components/menu/tablet-gutter';
 import { controlSizes, radii, searchFieldMetrics, spacingScale } from '@/theme';
 
 // As métricas da busca que o tema ainda não tem: tokens do tema onde há, e os valores do canvas da mesa onde não há.
@@ -8,10 +9,10 @@ export const searchLayoutMetrics = {
   fieldBlockSize: controlSizes.lg.height,
   fieldClearSize: controlSizes.md.height,
   fieldClearOffset: -searchFieldMetrics.paddingInline / 2,
-  railPaddingInline: spacingScale.md,
+  railPaddingInline: phoneGutter,
   railGap: spacingScale.xs,
   railPaddingBlockEnd: spacingScale.sm,
-  bandMarginInline: spacingScale.md,
+  bandMarginInline: phoneGutter,
   bandMarginBlockEnd: spacingScale.sm,
   bandPaddingBlock: 11,
   bandPaddingInline: 14,

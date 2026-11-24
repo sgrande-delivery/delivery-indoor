@@ -16,6 +16,7 @@ import MenuSectionList from './MenuSectionList';
 import MenuSkeleton from './MenuSkeleton';
 import { MENU_ERROR_DESCRIPTION, MENU_ERROR_TITLE, MENU_REFRESH_ERROR } from './menu-copy';
 import { useMenuHome } from './use-menu-home';
+import { tabletGutter } from './tablet-gutter';
 
 const EMPTY_TITLE = 'Nenhum produto para mostrar';
 const EMPTY_DESCRIPTION = 'O cardápio da mesa está sem itens no momento. Chame o garçom se quiser pedir algo.';
@@ -26,10 +27,13 @@ const Root = styled('div')({
   paddingBlockEnd: spacingScale.lg,
 });
 
-const NoticeSlot = styled('div')({
-  paddingBlockStart: categoryRailMetrics.paddingBlockStart,
-  paddingInline: categoryRailMetrics.paddingInline,
-});
+const NoticeSlot = styled('div')(
+  {
+    paddingBlockStart: categoryRailMetrics.paddingBlockStart,
+    paddingInline: categoryRailMetrics.paddingInline,
+  },
+  tabletGutter('paddingInline')
+);
 
 const MenuHomeScreen: React.FC = () => {
   const home = useMenuHome();

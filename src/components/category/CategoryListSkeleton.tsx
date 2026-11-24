@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { styled } from '@mui/material/styles';
+import { phoneGutter } from '@/components/menu/tablet-gutter';
 import { categoryListMetrics } from '@/theme';
 import CategorySkeletonItem from './CategorySkeletonItem';
 
@@ -14,7 +15,7 @@ const Root = styled('div')({
   gap: categoryListMetrics.gap,
   paddingBlockStart: categoryListMetrics.paddingBlockStart,
   paddingBlockEnd: categoryListMetrics.paddingBlockEnd,
-  paddingInline: categoryListMetrics.paddingInline,
+  paddingInline: phoneGutter,
 });
 
 const CategoryListSkeleton: React.FC = () => {
