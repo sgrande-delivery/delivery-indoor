@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** 01 (#40), 02 (#41)
-**Status:** executada
+**Status:** shipped ([PR #78](https://github.com/sgrande-delivery/delivery-indoor/pull/78))
 **Alinhado às emendas da delivery-api#1607 (2026-11-23):** o filtro por ingrediente deixou de estar parado e é a linha 07, [#67](https://github.com/sgrande-delivery/delivery-indoor/issues/67), na busca, e não nesta tela. O `special_price` dos itens passa a ser o da promoção de mesa com a #1765. Nada mais muda aqui.
 
 ## Objetivo

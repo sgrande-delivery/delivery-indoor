@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** 03 (#42)
-**Status:** executada
+**Status:** shipped ([PR #78](https://github.com/sgrande-delivery/delivery-indoor/pull/78))
 **Alinhado às emendas da delivery-api#1607 (2026-11-23):** a lista de categorias da faceta e o `label` do relaxamento de categoria passam a ser os da mesa (mudança 6 da #1626, que antes dizia "sem mudança"), e o `special_price` dos resultados passa a ser o da promoção de mesa (#1765). O filtro por ingrediente deixou de estar parado: a #1764 abriu `environment` em `GET /ingredients`, e ele é a linha 07, [#67](https://github.com/sgrande-delivery/delivery-indoor/issues/67), que depende desta. O escopo desta task não muda.
 
 ## Objetivo

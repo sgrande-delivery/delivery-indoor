@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** #20 (fundação v2 inteira, tasks 33 a 39)
-**Status:** executada
+**Status:** shipped ([PR #78](https://github.com/sgrande-delivery/delivery-indoor/pull/78))
 **Reconciliado com a #22 (2026-11-23):** esta task passa a criar `src/types/product-selection.ts` (`OptionSelection` e `ProductSelection`, o corpo de `POST /cart/{cartId}/items`), que o detalhe (04) monta e a [#46](../../22-indoor-cart-order-v2/tasks/46-board-cart-v2.md) manda sem tradução, e os dois cortes de orientação do tablet em `shell-metrics.ts`, que a grade (06) e a sacola do tablet ([#49](../../22-indoor-cart-order-v2/tasks/49-tablet-cart-panel.md)) leem. O `app/(menu)/layout.tsx` não recebe moldura de tablet: a coluna da sacola é do `AppShell` (#49). Ver mudanças 1, 7 e 8.
 **Alinhado às emendas da delivery-api#1607 (2026-11-23):** o detalhe passa a **usar** o `?environment=board` (#1627: 404 para produto que a mesa não vende), `special_price`, `discount_percent` e `size_prices[]` passam a ser os do ambiente pedido (#1765), a faceta de categoria da busca passa a ser a da mesa (#1626, mudança 6), e `GET /ingredients` passa a aceitar `environment` (#1764), o que destrava a linha 07 ([#67](https://github.com/sgrande-delivery/delivery-indoor/issues/67)). A tabela "Estado de cada rota", a decisão 1 e as armadilhas foram atualizadas; nenhuma mudança de código desta task muda.
 

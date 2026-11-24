@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** 01 (#40)
-**Status:** executada
+**Status:** shipped ([PR #78](https://github.com/sgrande-delivery/delivery-indoor/pull/78))
 **Reconciliado com a #22 (2026-11-23):** o encaixe com a sacola é um só, o desta task: o detalhe chama `useProductAddAction().add(selection)` com a `ProductSelection` (tipo da 01, `src/types/product-selection.ts`) e **não importa nada de `src/components/cart/`**; a [#46](../../22-indoor-cart-order-v2/tasks/46-board-cart-v2.md) provê a ação em `app/(menu)/layout.tsx` e manda a seleção como corpo, sem tradução camelCase. O `add` perdeu o segundo argumento, a mensagem de falha ao adicionar passou a ser de quem provê, e a tabela do rodapé (mudança 6) é a regra única do CTA — a #22 não tem `useCanWriteCart()`. O stepper de 40 tem um follow-up só, nesta task.
 **Alinhado às emendas da delivery-api#1607 (2026-11-23):** o detalhe **usa** o `?environment=board` que a 01 manda (#1627, antes "ignorado"): produto que a mesa vende responde 200, inclusive o só de mesa, e o que ela não vende responde 404, que cai no erro do detalhe com o código. `special_price`, `discount_percent` e `size_prices[]` são os da promoção de mesa (#1765), então o par de preços do cabeçalho e o `line_total` do CTA passam a falar do mesmo ambiente. Contrato, armadilha e "Fora de escopo" atualizados; nenhuma mudança de código desta task muda.
 

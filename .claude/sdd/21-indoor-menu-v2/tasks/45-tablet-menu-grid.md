@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** 02 (#41), 03 (#42), 04 (#43), 05 (#44)
-**Status:** executada
+**Status:** shipped ([PR #78](https://github.com/sgrande-delivery/delivery-indoor/pull/78))
 **Reconciliado com a #22 (2026-11-23):** a coluna e a barra da sacola do tablet têm um dono só, o `AppShell`, pela [#49](../../22-indoor-cart-order-v2/tasks/49-tablet-cart-panel.md). Saíram daqui o `MenuFrame` e o slot `aside`, e esta task não altera mais `app/(menu)/layout.tsx`. A tela do cardápio é dona só do conteúdo do `Scroller`, que, com a coluna montada, já é a área real (`100% − 380`); a grade mede contra ele, nunca contra a viewport. Os cortes de orientação são as constantes que a 01 cria em `shell-metrics.ts`, as mesmas da #49.
 **Alinhado às emendas da delivery-api#1607 (2026-11-23):** a linha 07, [#67](https://github.com/sgrande-delivery/delivery-indoor/issues/67), acrescenta o filtro por ingrediente à busca, e as chips dele ("com cheddar", "sem cebola", "+ ingrediente") moram na `SearchControlsRail` da 05, a "trilha de controles" que esta task fixa no tablet. Quem entrar depois rebaseia, e nenhuma das duas cria trilha nova para isso. Nada mais muda aqui.
 

@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** 05 (#44)
-**Status:** executada
+**Status:** shipped ([PR #78](https://github.com/sgrande-delivery/delivery-indoor/pull/78))
 **Alinhado à delivery-api#1764 (2026-11-23):** a task foi materializada no dia em que a #1764 resolveu a divergência D1 do plan. O contrato de `GET /ingredients` abaixo é o dela.
 
 ## Objetivo

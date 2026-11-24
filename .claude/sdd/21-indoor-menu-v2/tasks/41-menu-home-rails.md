@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** 01 (#40)
-**Status:** executada
+**Status:** shipped ([PR #78](https://github.com/sgrande-delivery/delivery-indoor/pull/78))
 **Reconciliado com a #22 (2026-11-23):** a coluna da sacola do tablet saiu do "Fora de escopo → 06": é da [#49](../../22-indoor-cart-order-v2/tasks/49-tablet-cart-panel.md), no `AppShell`. Nada mais muda aqui.
 **Alinhado às emendas da delivery-api#1607 (2026-11-23):** o `special_price` e o `discount_percent` dos cards passam a ser os da promoção de mesa (#1765), e o `products_count` das categorias, o da mesa (#1625). O contrato e o roteiro dizem o que o QA vê antes e depois; nenhuma mudança de código desta task muda.
 
