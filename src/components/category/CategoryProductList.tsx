@@ -15,6 +15,8 @@ export interface CategoryProductListProps {
   products: ProductSummary[];
   /** A busca (05) passa a linha com destaque. */
   renderItem?: (product: ProductSummary) => React.ReactNode;
+  /** O rodapé de fim de lista: a busca não fala de categoria. */
+  endLabel?: string;
   isFetchingNextPage: boolean;
   hasNextPage: boolean;
   nextPageError: boolean;
@@ -46,6 +48,7 @@ function renderDefaultItem(product: ProductSummary): React.ReactNode {
 const CategoryProductList: React.FC<CategoryProductListProps> = ({
   products,
   renderItem = renderDefaultItem,
+  endLabel,
   isFetchingNextPage,
   hasNextPage,
   nextPageError,
@@ -61,7 +64,7 @@ const CategoryProductList: React.FC<CategoryProductListProps> = ({
       {nextPageError && (
         <InlineError message={NEXT_PAGE_ERROR} onRetry={onRetryNextPage} isRetrying={isFetchingNextPage} />
       )}
-      {!hasNextPage && <CategoryListEnd />}
+      {!hasNextPage && <CategoryListEnd label={endLabel} />}
       <Sentinel ref={sentinelRef} aria-hidden />
     </Root>
   );

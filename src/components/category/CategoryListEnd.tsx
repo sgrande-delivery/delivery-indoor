@@ -6,6 +6,10 @@ import { categoryListMetrics, fontFamilies, pxToRem } from '@/theme';
 
 const END_LABEL = 'Você viu todos os itens desta categoria';
 
+export interface CategoryListEndProps {
+  label?: string;
+}
+
 const Root = styled('p')(({ theme }) => ({
   margin: 0,
   paddingBlock: categoryListMetrics.endPaddingBlock,
@@ -22,8 +26,8 @@ const Root = styled('p')(({ theme }) => ({
  * ele só desenhou o de carregamento —, então a anatomia é a mesma linha de estado, sem o esqueleto
  * e sem o spinner.
  */
-const CategoryListEnd: React.FC = () => {
-  return <Root>{END_LABEL}</Root>;
+const CategoryListEnd: React.FC<CategoryListEndProps> = ({ label = END_LABEL }) => {
+  return <Root>{label}</Root>;
 };
 
 export default CategoryListEnd;
