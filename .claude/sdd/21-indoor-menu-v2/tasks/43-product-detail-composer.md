@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** 01 (#40)
-**Status:** pendente
+**Status:** executada
 **Reconciliado com a #22 (2026-11-23):** o encaixe com a sacola é um só, o desta task: o detalhe chama `useProductAddAction().add(selection)` com a `ProductSelection` (tipo da 01, `src/types/product-selection.ts`) e **não importa nada de `src/components/cart/`**; a [#46](../../22-indoor-cart-order-v2/tasks/46-board-cart-v2.md) provê a ação em `app/(menu)/layout.tsx` e manda a seleção como corpo, sem tradução camelCase. O `add` perdeu o segundo argumento, a mensagem de falha ao adicionar passou a ser de quem provê, e a tabela do rodapé (mudança 6) é a regra única do CTA — a #22 não tem `useCanWriteCart()`. O stepper de 40 tem um follow-up só, nesta task.
 **Alinhado às emendas da delivery-api#1607 (2026-11-23):** o detalhe **usa** o `?environment=board` que a 01 manda (#1627, antes "ignorado"): produto que a mesa vende responde 200, inclusive o só de mesa, e o que ela não vende responde 404, que cai no erro do detalhe com o código. `special_price`, `discount_percent` e `size_prices[]` são os da promoção de mesa (#1765), então o par de preços do cabeçalho e o `line_total` do CTA passam a falar do mesmo ambiente. Contrato, armadilha e "Fora de escopo" atualizados; nenhuma mudança de código desta task muda.
 
@@ -228,18 +228,18 @@ Tocar com seleção válida: `buildProductSelection` → `action.add(selection)`
 
 ## Critérios de aceitação
 
-- [ ] `?product=<publicId>` abre o detalhe sobre `/`, `/menu` e `/search` pelo host único de `app/(menu)/layout.tsx`, e fechar remove o parâmetro sem entrada extra de histórico.
-- [ ] O `yarn build` passa com `/` estática, e o `useSearchParams` do host está dentro de um `Suspense` só dele.
-- [ ] Grupo com `is_required` e `min_quantity` não satisfeitos deixa o CTA bloqueado (`aria-disabled`) e nenhum `/price` é pedido; `max_quantity` impede a seleção extra.
-- [ ] O valor do CTA é o `line_total` da resposta do `/price`, pedido com `environment: "board"` e `option_selections`, com debounce; nenhum preço é somado na tela.
-- [ ] Remover um ingrediente da receita entra em `removed_ingredients` com o `ingredient_public_id`, e só linhas `is_optional` são removíveis.
-- [ ] `buildProductSelection` devolve o `ProductSelection` da 01 (ids numéricos, `quantity` de opção só acima de 1, `notes` nulo quando vazio) e `null` com grupo pendente.
-- [ ] O CTA chama `useProductAddAction().add(selection)` quando há provedor, fecha quando resolve e fica aberto, sem toast próprio, quando rejeita; sem provedor, anuncia que a sacola não está disponível.
-- [ ] Nenhum arquivo desta task importa de `src/components/cart/`.
-- [ ] Em `browsing`, o rodapé mostra só a nota "Sem mesa, o cardápio abre só para olhar: o pedido não vai para a cozinha."; offline e em `loading`, o CTA fica desabilitado.
-- [ ] Preço promocional e avaliação seguem a RF-12 e a RF-18 do detalhe; `average: null` não desenha nada.
-- [ ] Nada de favorito, avaliações, modo edição, pixel ou Redux no código novo; nenhum arquivo de `src/theme/` ou `src/components/ui/` muda.
-- [ ] `npx tsc --noEmit`, o lint e o `yarn build` passam.
+- [x] `?product=<publicId>` abre o detalhe sobre `/`, `/menu` e `/search` pelo host único de `app/(menu)/layout.tsx`, e fechar remove o parâmetro sem entrada extra de histórico.
+- [x] O `yarn build` passa com `/` estática, e o `useSearchParams` do host está dentro de um `Suspense` só dele.
+- [x] Grupo com `is_required` e `min_quantity` não satisfeitos deixa o CTA bloqueado (`aria-disabled`) e nenhum `/price` é pedido; `max_quantity` impede a seleção extra.
+- [x] O valor do CTA é o `line_total` da resposta do `/price`, pedido com `environment: "board"` e `option_selections`, com debounce; nenhum preço é somado na tela.
+- [x] Remover um ingrediente da receita entra em `removed_ingredients` com o `ingredient_public_id`, e só linhas `is_optional` são removíveis.
+- [x] `buildProductSelection` devolve o `ProductSelection` da 01 (ids numéricos, `quantity` de opção só acima de 1, `notes` nulo quando vazio) e `null` com grupo pendente.
+- [x] O CTA chama `useProductAddAction().add(selection)` quando há provedor, fecha quando resolve e fica aberto, sem toast próprio, quando rejeita; sem provedor, anuncia que a sacola não está disponível.
+- [x] Nenhum arquivo desta task importa de `src/components/cart/`.
+- [x] Em `browsing`, o rodapé mostra só a nota "Sem mesa, o cardápio abre só para olhar: o pedido não vai para a cozinha."; offline e em `loading`, o CTA fica desabilitado.
+- [x] Preço promocional e avaliação seguem a RF-12 e a RF-18 do detalhe; `average: null` não desenha nada.
+- [x] Nada de favorito, avaliações, modo edição, pixel ou Redux no código novo; nenhum arquivo de `src/theme/` ou `src/components/ui/` muda.
+- [x] `npx tsc --noEmit`, o lint e o `yarn build` passam.
 
 ## Fora de escopo
 
@@ -254,6 +254,85 @@ Tocar com seleção válida: `buildProductSelection` → `action.add(selection)`
 
 - [ ] **`QuantityStepper` `md` com botões de 40, abaixo dos 44 da rule `componentes-e-estilos` e da RF-13 da #22.** O artboard desenha 44; `stepperSizes.md` tem `buttonSize: 40` (`src/theme/component-tokens.ts:199-209`), e é o maior tamanho do primitivo. Levar ao `delivery-client` (`src/components/ui/QuantityStepper.tsx` e `stepperSizes` em `src/theme/component-tokens.ts`, `feat/app-v2`) um tamanho com botão de 44 e trazê-lo no próximo sync do DS, sem bifurcar aqui (RN-12 da #20). Até lá, `md` no detalhe (esta task), na linha da sacola ([#46](../../22-indoor-cart-order-v2/tasks/46-board-cart-v2.md), decisão 9) e na coluna e no painel do tablet ([#49](../../22-indoor-cart-order-v2/tasks/49-tablet-cart-panel.md)). **É o único registro deste follow-up nas duas features**: as outras tasks apontam para cá.
 
+## Implementação
+
+**Concluída em:** 2026-11-24
+
+### Camadas tocadas
+
+- Rota: `app/(menu)/layout.tsx` (novo; `{children}` + `<Suspense fallback={null}><ProductSheet /></Suspense>`)
+- Host: `src/components/product/sheet/{ProductSheet,ProductSheetDialog,ProductSheetHeader,ProductSheetMedia,ProductSheetFooter,ProductSheetSkeleton,ProductSheetAlert,use-next-group-scroll}`, `src/hooks/use-overlay-presence.ts`
+- Queries: `src/components/product/use-product-detail.ts`, `use-product-price.ts`
+- Compositor: `src/components/product/composer/` (`use-product-composer`, `option-groups`, `default-selections`, `buildable`, `OptionGroup{List,Section,ItemRow,ItemText,QuantityRow,RowFrame,Badge,AddButton}`, `RecipeList`, `RecipeListRow`)
+- Seleção e ligação com a sacola: `product-selection.ts` (`buildProductSelection`), `product-add-action.tsx` (contexto, provedor, hook), `display-price.ts`
+- Cabeçalho: `ProductSection`, `ProductSectionHeader`, `ProductNotes`, `ProductPriceRow`, `ProductDiscountBadge`, `ProductMetaChip(s)`, `rating/{ProductRatingLine,RatingStars,rating-stars}`
+- `src/theme/` e `src/components/ui/` intactos; nenhum import de `src/components/cart/`.
+
+### Contratos consumidos
+
+- `GET /products/v2/{publicId}?environment=board` e `POST /products/v2/{publicId}/price` (`{ quantity, environment: "board", option_selections }`), via `fetchProductDetail`/`fetchProductPrice` da 01, no shape inline da task. Não reconferi na `delivery-api` (a local não tem as rotas v2).
+- `ProductSelection`/`OptionSelection` de `src/types/product-selection.ts`, sem tipo paralelo.
+
+### Variáveis de ambiente novas
+
+- Nenhuma.
+
+### Decisões que tomei por conta própria
+
+- **Produto montável abre só com grupos genéricos, e o compositor devolve `groups` com o teto efetivo.** O grupo de sabor chega à tela com `max_quantity` = limite do tamanho (`flavor_slots`), para contador, desabilitar e escolha única falarem do mesmo limite do clique; antes de escolher o tamanho o limite é o `max_quantity` do grupo (o do client travava o clique em silêncio). Saíram `selectedFlavorItems`, `findFlavorPrice` e `describeFlavorSlots` (só serviam à interface de pizza). `selectedSizeItem`/`flavorLimit` ficam internos.
+- **`removed_ingredients` leva só linha removível** (`is_optional` e `ingredient_public_id` não nulo), mais estrito que "existe na receita" — fecha o follow-up da 40 (id nulo).
+- **O erro do detalhe usa `useQueryScreenState`** (a view `error` com o código de `resolveErrorCode`), e o `retry` do detalhe não repete 4xx: com o `retry: 2` padrão o 404 prenderia o cliente no esqueleto por vários segundos.
+- **Alvos de 44 sem tocar no DS:** fechar da foto (34 no token) e botão de adicionar do grupo de quantidade (30) ganharam constante local de 44; o stepper das linhas de quantidade usa `md` (40, o maior). Linhas de opção e de ingrediente têm `min-block-size: 56`.
+- **Cabeçalho do grupo:** o selo é a copy do artboard ("Escolha 1", "até 3", "Escolha de 1 a 3", "Opcional", "Escolha ao menos N"), em tom `required`/`counter`/`pending`; o contador `n/max` continua ao lado quando há teto e não é escolha única. A frase de apoio do client saiu.
+- **Selo `-N%`:** sobre a foto quando há imagem; sem imagem, ao lado do preço. Fundo opaco (`surface.card`) por contraste sobre foto de tenant.
+- **Erro do preço:** o `InlineError` carrega "Não foi possível calcular o preço." com "Tentar de novo", e o CTA bloqueado repete a mesma frase (a tabela pede as duas). Tocar nesse CTA não faz nada.
+- **Sem mesa o `/price` não é pedido** (o rodapé é só a nota, não há total a mostrar); o preço do cabeçalho continua o do payload.
+- Cabeçalho do erro/carregando: erro usa `header` "Produto indisponível" (para ter o fechar); carregando segue o `aria-label` do client.
+- Nome do produto no cabeçalho continua no token `productSheetMetrics.nameFontSize` (22), não nos 24/26 que a task cita.
+- O canvas do design não estava disponível durante a implementação (só reapareceu depois); copy e forma seguem a tabela da task, sem conferência pixel a pixel contra os artboards.
+
+### Como testar
+
+1. `yarn dev` (com `.env.development`), abrir `http://localhost:3000/?session=<uuid>&product=<publicId>`.
+2. Painel a 1180, folha a 820 e 390; fechar por botão, `Esc`, backdrop e voltar.
+3. Produto com grupo obrigatório: CTA com cadeado; escolher libera e sai um `POST …/price`.
+4. Sem provedor da sacola, tocar no CTA válido mostra o toast "A sacola ainda não está disponível.".
+
+### O que NÃO foi verificado
+
+- **Contra a API real:** a local (master antiga) não tem nenhuma rota v2 de catálogo. Todo o roteiro de navegador rodou com `page.route` simulando `GET /products/v2/{id}` e `POST …/price` (produto simples, com 3 grupos + receita + promoção + avaliação, 404 e 422 enquanto o grupo obrigatório não fecha). Ordem de deploy: tudo aqui exige delivery-api#1607 (com #1627 e #1765) publicadas.
+- Roteiro de navegador (Playwright headless, `next dev` em 3443, mesa `c10e064f-…`): 41 checagens, 0 falhas reais. Cobriu painel 940×700 a 1180; folha de 480 a 820 e de 390 a 390; `?product=` na entrada e `pushState` (voltar fecha, sem entrada extra de histórico); `environment=board` no detalhe; selo, par de preços, nota 4,8 · 12 avaliações, "+ R$"; CTA bloqueado e foco no grupo pendente sem nenhum `/price`; corpo exato do `/price`; debounce (3 cliques, 1 request); `max_quantity`; `quantity` 2 de adicional e 3 do item; `aria-busy` no total; remover ingrediente e observação sem `/price`; 404 com "Código erro 404 · product_not_found", sem repetição; offline desabilita e a volta reabilita; `browsing` com a nota e sem stepper/CTA/`/price`; alvos (linha 56, fechar 44, CTA 54). Com um provedor de teste montado só localmente (removido; árvore sem arquivo extra): resolve → `{ product_id: 901, quantity: 1, option_selections: [{ option_group_item_id: 11 }], removed_ingredients: [uuid], notes: "sem sal" }` e o detalhe fecha; rejeita → detalhe aberto, sem toast.
+- O único erro de console visto foi o 403 do otimizador de imagem do `next/image` para a URL de S3 fictícia da fixture; não é do código.
+- Não verifiquei o rodapé com `status: 'loading'` no navegador, nem `Sheet` a 820 com teclado de tela, nem o remonte do primeiro paint largo (dívida da 39).
+- A captura do painel largo saiu sem o diálogo (screenshot tirado depois do toque no CTA); a forma foi medida por DOM (940×700), não vista.
+- Teste puro de `buildProductSelection` coberto pelo roteiro acima (via provedor de teste), sem script jiti separado.
+
+### Verificações
+
+- `npx next typegen && npx tsc --noEmit`: limpo. `npx eslint src app scripts`: limpo. `yarn build` com as vars: passa, `/` continua `○` estática, sem aviso de `useSearchParams`.
+- Greps 2, 3, 4 e 5 da task: 2 vazio; 3 só acha comentários e o fallback `?? item.price_override` do incremento da borda por tamanho (sem soma); 4 e 5 vazios.
+
+### Correções do review (2026-11-24)
+
+- `OptionGroupSection` perdeu o `map` multi-linha: `OptionGroupItemList` (o `role` radiogroup/group e um `map` de uma linha) e `OptionGroupItem` (escolhe linha de quantidade ou marcável).
+- `use-product-price` devolve `isSettling` e `error`. O rodapé trata `isSettling || isFetching` como total carregando (`aria-busy` no total velho, esqueleto se não há total), e o toque não adiciona enquanto o total não corresponde à seleção.
+- O `InlineError` do preço traz o código de `resolveErrorCode` e `isRetrying`.
+- Comentário do composer sobre o sabor corrigido; `flavorPricesByPair` removido de `buildable.ts`.
+- `selectRemovableLines` e `RemovableRecipeLine` movidos para `composer/recipe.ts` (puro).
+- Alvos de 44 passam a usar `controlSizes.md.height` (44).
+- Reverificado: tsc, eslint, build (`/` estática) e o roteiro de navegador completo (0 falhas), com checagens novas do total velho em debounce e do erro do preço com código.
+
 ## Branch
 
-`task/43-product-detail-composer`, base sugerida: `feat/indoor-v2` depois que a 01 (#40) entrar; antes disso, `task/40-catalog-v2-services-types`. Roda em paralelo com a 02 (#41): as duas só tocam `app/(menu)/` em arquivos diferentes (`page.tsx` lá, `layout.tsx` aqui).
+`task/43-product-detail-composer`, cortada de `task/40-catalog-v2-services-types` (`792b461`) em 2026-11-24.
+
+
+### Review (2026-11-24)
+
+Reprovado por um bloqueante mecânico (o `.map()` de 28 linhas em `OptionGroupSection`) e corrigido pela implementação: `OptionGroupItemList` + `OptionGroupItem`; total velho do CTA durante o debounce (`isSettling`) com `aria-busy` e envio travado até o total corresponder à seleção; erro do `/price` com código e `isRetrying`; `flavorPricesByPair` morto removido; `selectRemovableLines` movido para `composer/recipe.ts` (puro). Conferido por quem orquestra (sem segunda rodada completa, por cota): `.map()` de uma linha, guarda `isPriceStale` no `handleSubmit`, `tsc` e eslint limpos; o roteiro de navegador da implementação rodou de novo com 0 falhas.
+
+## Follow-ups identificados em review
+- [ ] **`delivery-client`:** `productSheetMetrics.nameFontSize` 24 (deitado) / 26 (em pé), como nos artboards — lá também é 22; levar no próximo sync do DS.
+- [ ] **Spec de pizza:** aviso visível (não só `VisuallyHidden`) quando a troca de tamanho corta sabores já escolhidos.
+- [ ] Botão de fechar visível também durante o carregamento do detalhe (hoje só `Esc`, backdrop e voltar).
+
