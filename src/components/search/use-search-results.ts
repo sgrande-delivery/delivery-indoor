@@ -30,6 +30,8 @@ export interface UseSearchResults {
   hidesStaleResults: boolean;
   /** A lista na tela é a do termo anterior: só o termo mudou, e a resposta nova ainda não chegou. */
   isPlaceholderData: boolean;
+  /** O termo de quem gerou a lista na tela: durante a atualização, o anterior — é ele que o destaque marca. */
+  displayedTerm: string | null;
 }
 
 /**
@@ -45,6 +47,20 @@ function useRetainedFacets(current: SearchFacetCategory[] | undefined): SearchFa
   }
 
   return current ?? known;
+}
+
+/**
+ * Enquanto o termo novo carrega, a lista na tela é a do termo anterior. Marcar nela o termo novo deixaria sem destaque
+ * os itens que só casavam com o anterior, como se não batessem com a busca.
+ */
+function useDisplayedTerm(term: string | null, isPlaceholderData: boolean, hasData: boolean): string | null {
+  const [settled, setSettled] = useState(term);
+
+  if (!isPlaceholderData && hasData && settled !== term) {
+    setSettled(term);
+  }
+
+  return isPlaceholderData ? settled : term;
 }
 
 export function useSearchResults(filters: SearchFilters, enabled: boolean): UseSearchResults {
@@ -76,6 +92,7 @@ export function useSearchResults(filters: SearchFilters, enabled: boolean): UseS
   const first = pages?.[0];
   const last = pages?.[pages.length - 1];
   const categoryFacets = useRetainedFacets(first?.categoryFacets);
+  const displayedTerm = useDisplayedTerm(filters.term, query.isPlaceholderData, first !== undefined);
 
   return {
     query,
@@ -85,6 +102,7 @@ export function useSearchResults(filters: SearchFilters, enabled: boolean): UseS
     categoryFacets,
     hidesStaleResults,
     isPlaceholderData: query.isPlaceholderData,
+    displayedTerm,
     lastLoadedPage: last ? { current: last.meta.current_page, last: last.meta.last_page } : null,
   };
 }

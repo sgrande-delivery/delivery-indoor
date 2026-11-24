@@ -75,8 +75,17 @@ export function useSearchResultsView({
   scrollerRef,
   isTablet,
 }: UseSearchResultsViewParams): SearchResultsView {
-  const { query, products, total, relaxed, categoryFacets, lastLoadedPage, hidesStaleResults, isPlaceholderData } =
-    useSearchResults(filters, enabled);
+  const {
+    query,
+    products,
+    total,
+    relaxed,
+    categoryFacets,
+    lastLoadedPage,
+    hidesStaleResults,
+    isPlaceholderData,
+    displayedTerm,
+  } = useSearchResults(filters, enabled);
   const catalog = useIngredients('').data;
   const screen = useQueryScreenState(query);
   const isOffline = useIsOffline();
@@ -116,14 +125,14 @@ export function useSearchResultsView({
 
   const renderItem = useCallback(
     (product: ProductSummary) => (
-      <SearchProductItem product={product} term={filters.term} includedIngredients={includedNames} />
+      <SearchProductItem product={product} term={displayedTerm} includedIngredients={includedNames} />
     ),
-    [filters.term, includedNames]
+    [displayedTerm, includedNames]
   );
 
   const renderGridItem = useCallback(
-    (product: ProductSummary) => <ProductGridCard product={product} term={filters.term} />,
-    [filters.term]
+    (product: ProductSummary) => <ProductGridCard product={product} term={displayedTerm} />,
+    [displayedTerm]
   );
 
   const controls = <SearchControlsRail filters={filters} facets={categoryFacets} onChange={navigation.go} />;

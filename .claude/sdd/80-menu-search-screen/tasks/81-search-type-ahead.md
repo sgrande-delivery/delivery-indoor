@@ -179,6 +179,8 @@ Este repo não tem suíte automatizada. A verificação é manual e reprodutíve
 
 ## Follow-ups identificados em review
 
+Corrigido nos prints (2026-11-24): durante a atualização, o destaque marcava o termo novo na lista do termo anterior, e os itens que só casavam com o anterior ficavam sem marcação, como se não batessem. O destaque agora usa o termo de quem gerou a lista na tela (`displayedTerm`).
+
 Corrigido no review (2026-11-24):
 - **B1:** uma lista anterior vazia não vira mais placeholder. Corrigir "pastek" para "pastel" mostra o skeleton, e não "Nada encontrado" sem indicador. Conferido no navegador com atraso de 2,5 s.
 - **M1:** durante a atualização, a contagem não afirma "N resultados para “termo novo”" com o total do termo anterior.
