@@ -23,7 +23,7 @@ A **conta da mesa é a tela principal**: mostra produtos lançados, pagamentos e
 | Estado | Redux + `@reduxjs/toolkit`, middleware por módulo | React Query (servidor) + contexto (UI) |
 | Ícones | `@material-ui/icons` | subset do Material Symbols por `Icon` |
 
-Runtime: Node 18 local, `engines.node: >=16`. O `server.js` (express + `heroku-ssl-redirect`) é herança do Heroku, e **não há GitHub Actions neste repo** — mas isso não quer dizer que nada deploya. Este repo é publicado na Vercel, **um projeto por restaurante**, todos da `master` pela integração git: medido em 2026-11-18, os deploys de produção chegam com `source=git`, `ref=master`. **Push na `master` é deploy em todos os restaurantes**, sem tag e sem release no meio — e quantos são muda a cada cliente novo, então a lista sai do dashboard, não daqui.
+Runtime: `engines.node: >=18.18.0` (a máquina de desenvolvimento roda v24). O `server.js` (express + `heroku-ssl-redirect`) é herança do Heroku, e **não há GitHub Actions neste repo** — mas isso não quer dizer que nada deploya. Este repo é publicado na Vercel, **um projeto por restaurante**, todos da `master` pela integração git: medido em 2026-11-18, os deploys de produção chegam com `source=git`, `ref=master`. **Push na `master` é deploy em todos os restaurantes**, sem tag e sem release no meio — e quantos são muda a cada cliente novo, então a lista sai do dashboard, não daqui.
 
 Como acessar a Vercel (e a VM): `delivery-infra/docs/acessos.md`. Em resumo: o token de escrita já existe, é o `VERCEL_TOKEN` do `.env` da `delivery-api`, e a production branch de um projeto só muda pelo dashboard.
 
@@ -94,8 +94,9 @@ A `delivery-api` publica as rotas v2 **no mesmo deploy** da v1, com chave por re
 yarn dev                       # next dev
 yarn build                     # precisa das vars de restaurante no ambiente
 yarn start                     # server.js em produção
+npx next typegen               # numa árvore limpa, antes do tsc (escreve .next/types/routes.d.ts)
 npx tsc --noEmit               # type-check
-npx eslint src pages --ext .ts,.tsx
+npx eslint src app scripts     # na feat/indoor-v2 (ESLint 9, flat config); na master: npx eslint src pages --ext .ts,.tsx
 ```
 
 **O build precisa das vars de restaurante.** `.env.production` não traz `NEXT_PUBLIC_RESTAURANT_ID` nem `NEXT_PUBLIC_RESTAURANT_UUID` — em produção o provisionamento injeta:
@@ -104,7 +105,7 @@ npx eslint src pages --ext .ts,.tsx
 NEXT_PUBLIC_RESTAURANT_ID=1 NEXT_PUBLIC_RESTAURANT_UUID=38691b7e-6dbe-46e6-97a0-971147ac02ad npx next build
 ```
 
-Sem isso, `getStaticProps` e `_document` recebem 404 da API e o export falha nas 6 rotas — é falha de ambiente, não de código. **O repo só tem `.env.production`, e o `next dev` não carrega esse arquivo**: sem criar `.env.development` (gitignored), `NEXT_PUBLIC_API` e `NEXT_PUBLIC_SOCKET` ficam `undefined` e a falha aparece como tela em branco.
+Na `master`, sem isso `getStaticProps` e `_document` recebem 404 da API e o export falha nas 6 rotas — é falha de ambiente, não de código. Na `feat/indoor-v2` o build não chama a API (sem `getStaticProps` nem `_document`), mas `NEXT_PUBLIC_RESTAURANT_UUID` é inlinada no bundle **no build**: sem ela o app sai recebendo 404 `restaurant not found` em toda chamada. **O repo só tem `.env.production`, e o `next dev` não carrega esse arquivo**: sem criar `.env.development` (gitignored), `NEXT_PUBLIC_API` e `NEXT_PUBLIC_SOCKET` ficam `undefined` e a falha aparece como tela em branco.
 
 **`next build` e `next start` carregam `.env.production`** — testar em modo de produção sem injetar as vars sobe o app apontando para a produção de verdade. Confirme com `grep -r "api.sgrande.delivery" .next/static` antes de abrir o navegador.
 
@@ -139,14 +140,14 @@ Fora do ciclo: `/review-task` confere a entrega contra o que a task prometeu, `/
 
 - **Não** trate `state.user` como identidade — este app não tem login
 - **Não** copie código do `delivery-client` sem traduzir para a stack de destino
-- **Não** chame `api` (de `src/services/api.tsx`) dentro de `getStaticProps`/`getServerSideProps` — ele toca `localStorage`
+- **Não** chame `api` (de `src/services/api.tsx`) dentro de `getStaticProps`/`getServerSideProps` — ele toca `localStorage`. (Regra da `master`; na `feat/indoor-v2` o `src/services/api.ts` não toca `window` nem `localStorage`.)
 - **Não** instancie `SocketStore` dentro de componente
 - **Não** registre `socket.on` sem o `socket.off` correspondente no cleanup
 - **Não** assuma que `products` de `/categories/{url}` é array — é envelope paginado
 - **Não** assuma `per_page` no envelope da v1 — lá o campo é `current_page`
 - **Não** coloque segredo em var `NEXT_PUBLIC_*`
 - **Não** calcule total do carrinho em componente — é o middleware do módulo `cart` (na `master`) ou o servidor (na v2)
-- **Não** construa em cima de `AuthProvider`, `GoogleProvider`, `FacebookProvider` ou `src/components/login/` — é herança morta do fork, cuja remoção está na [#20](https://github.com/sgrande-delivery/delivery-indoor/issues/20)
+- **Não** reintroduza login, push ou identidade de usuário — a herança do fork saiu na [#20](https://github.com/sgrande-delivery/delivery-indoor/issues/20), e a identidade é a movimentação da mesa
 - **Não** migre rota para v2 nem ramifique por versão da plataforma sem spec que peça
 - Se o contrato real da API divergir do que a task diz, **pare e reporte** em vez de adaptar em silêncio
 

@@ -1,6 +1,6 @@
 # Spec — Fundação da stack v2 e identidade visual do redesign
 
-**Status:** rascunho
+**Status:** entregue
 **Criada em:** 2026-11-16
 **Escopo:** front-end
 **Issue:** [#20](https://github.com/sgrande-delivery/delivery-indoor/issues/20)
@@ -15,7 +15,7 @@ Esta frente é a fundação: ela não entrega tela de produto nenhuma, e sem ela
 
 O desenho de referência é o projeto Claude Design "Brasa Punch", `Brasa Punch - Design System` (fundações, tipografia, raio, sombra, espaço, botões, campos, chips, cards, navegação, skeleton, toast, empty state, telas de erro e o mapa para o `createTheme`) e `Brasa Punch - Estados do App`. **O resumo não substitui a fonte:** o `delivery-client` já errou dois componentes por construí-los a partir de um índice de uma linha em vez da página do design.
 
-**O design system mora neste repo.** O padrão da plataforma, decidido pelo dev depois dos problemas que a fonte externa causou no `delivery-admin`, é versionar o design system junto do código que o consome: a cópia dos tokens vive em `.claude/design-system/tokens.json`, e a skill `modelo-de-design` ordena as fontes — tema, design system, protótipo da feature. Entra pelo [PR #26](https://github.com/sgrande-delivery/delivery-indoor/pull/26).
+**O design system mora neste repo.** O padrão da plataforma, decidido pelo dev depois dos problemas que a fonte externa causou no `delivery-admin`, é versionar o design system junto do código que o consome: a cópia dos tokens vive em `design-system/tokens.json`, e a skill `modelo-de-design` ordena as fontes — tema, design system, protótipo da feature. Entra pelo [PR #26](https://github.com/sgrande-delivery/delivery-indoor/pull/26).
 
 **Aqui a direção é inversa à do admin, e isso é desta feature:** lá os tokens saem do tema em código, que é o que roda; aqui o tema v2 ainda não existe, e é a task 02 desta spec que o cria **a partir do arquivo versionado**. Quando ele existir, o tema passa a ser a fonte e o `tokens.json` vira espelho dele.
 
@@ -54,8 +54,8 @@ O repo roda em Next 15 com App Router e MUI 9, com o tema do restaurante aplicad
 - **RN-08 — O tablet não é um celular grande nem um desktop pequeno.** No tablet da mesa não há barra de navegador, o aparelho é compartilhado, fica deitado na mesa e é manuseado por mais de uma pessoa: a barra superior é fixa, o conteúdo não rola a página inteira em paisagem, e nenhum alvo de toque fica abaixo de 44px. Essa é uma decisão de layout do shell, não um ajuste por `max-width`.
 - **RN-09 — Um `off` por `on`.** A regra do repo continua valendo na stack nova: listener de socket registrado em efeito precisa do `off` correspondente na limpeza, com o mesmo nome de evento. Aqui ela entra porque o shell e o provider da mesa são onde o socket global vai morar.
 - **RN-10 — Listagem de produto é paginada, e os dois envelopes da API não são o mesmo.** A v1 devolve `{ items, total, current_page, last_page }`, **sem** `per_page`; a v2 devolve `{ data, meta: { total, per_page, current_page, last_page, has_more, facets } }` (`SearchProductsPresenter::buildMeta`, medido em 2026-11-16). O tipo que esta frente escrever precisa dizer de qual rota ele fala — um tipo só para os dois é o modo de falha que já quebrou o cardápio aqui.
-- **RN-11 — Token vem do arquivo versionado; layout, copy e estado vêm do protótipo.** `.claude/design-system/tokens.json` é a fonte de cor, fonte, raio, espaçamento, sombra e dos três formatos de layout; o protótipo diz como a tela se organiza. Não vale reconstruir um componente a partir de um índice de uma linha — foi assim que o `delivery-client` entregou um `CouponTicket` como cartão com borda em vez do bilhete de duas partes que o design define, e um `MenuListItem` com uma caixa de ícone que o design não tem.
-- **RN-12 — O tema e os primitivos são vendorados do `delivery-client`, não escritos aqui.** Vieram no port `e18a1cd` (`feat/app-v2@c2e52d59`) sem reescrita, e `.claude/design-system/tokens.json` é o espelho deles. Divergência entre código e espelho é bug do espelho. Corrigir primitivo aqui sem levar a correção ao client cria fork silencioso, e **reformatar** arquivo do DS transforma sync futuro em conflito — é por isso que o repo foi para o prettier 3.7.4 do client.
+- **RN-11 — Token vem do arquivo versionado; layout, copy e estado vêm do protótipo.** `design-system/tokens.json` é a fonte de cor, fonte, raio, espaçamento, sombra e dos três formatos de layout; o protótipo diz como a tela se organiza. Não vale reconstruir um componente a partir de um índice de uma linha — foi assim que o `delivery-client` entregou um `CouponTicket` como cartão com borda em vez do bilhete de duas partes que o design define, e um `MenuListItem` com uma caixa de ícone que o design não tem.
+- **RN-12 — O tema e os primitivos são vendorados do `delivery-client`, não escritos aqui.** Vieram no port `e18a1cd` (`feat/app-v2@c2e52d59`) sem reescrita, e `design-system/tokens.json` é o espelho deles. Divergência entre código e espelho é bug do espelho. Corrigir primitivo aqui sem levar a correção ao client cria fork silencioso, e **reformatar** arquivo do DS transforma sync futuro em conflito — é por isso que o repo foi para o prettier 3.7.4 do client.
 - **RN-13 — Variável `NEXT_PUBLIC_*` é pública por construção.** `.env.production` é versionado e o repo é público. A frente que remove `NEXT_PUBLIC_SECRET` não a substitui por outra variável com segredo, e nada que precise de segredo roda no browser.
 
 ## Referência de design

@@ -4,24 +4,19 @@ export type RestaurantConfigTaxMode = 'district' | 'distance' | 'no_tax' | 'orde
 export type RestaurantConfigPizzaCalculate = 'higher_value' | 'average_value';
 
 export interface RestaurantConfig {
-  id: number;
-  restaurant_id: number;
   pizza_calculate: RestaurantConfigPizzaCalculate;
   require_login: boolean;
   customer_collect: boolean;
   tax_mode: RestaurantConfigTaxMode;
   tax_value: number;
-  formattedTax: string;
   delivery_time: number;
   board_time: number;
   order_minimum_value: number;
-  formattedOrderMinimumValue: string;
   order_auto_approve: boolean;
   use_postalcode: boolean;
   shipment_schedule: boolean;
   shipment_date_schedule: boolean;
   use_deliverer: boolean;
-  preserve_cart: boolean;
   google_analytics_id: string;
   facebook_pixel_id: string;
   google_login: boolean;
@@ -59,8 +54,8 @@ export interface Restaurant {
   is_kitchen_open: boolean;
   name: string;
   description: string;
-  logo?: string;
-  favicon?: string;
+  logo: string | null;
+  favicon: string | null;
   keywords?: string;
   title?: string;
   url: string;
@@ -69,15 +64,14 @@ export interface Restaurant {
   email: string;
   primary_color: string;
   secondary_color: string;
-  facebook_link?: string;
-  instagram_link?: string;
-  twitter_link?: string;
-  image_id: number;
-  cover_id: number;
+  facebook_link: string | null;
+  instagram_link: string | null;
+  twitter_link: string | null;
+  image_id: number | null;
+  cover_id: number | null;
   working_hours: string;
-  minimum_order: number;
-  image: Image;
-  cover: Image;
+  image: Image | null;
+  cover: Image | null;
   mobile_cover: Image | null;
   configs: RestaurantConfig;
   delivery_max_distance: number;
