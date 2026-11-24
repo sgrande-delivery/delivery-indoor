@@ -30,7 +30,7 @@ O cardápio é a área onde o `delivery-client` dá mais código pronto, porque 
 
 | # | Task | Issue | Arquivo | Depende de | Status |
 |---|------|-------|---------|------------|--------|
-| 01 | Serviços e tipos do catálogo v2, com centavos e envelope da v2 | [#40](https://github.com/sgrande-delivery/delivery-indoor/issues/40) | [40-catalog-v2-services-types.md](./tasks/40-catalog-v2-services-types.md) | #20 | pendente |
+| 01 | Serviços e tipos do catálogo v2, com centavos e envelope da v2 | [#40](https://github.com/sgrande-delivery/delivery-indoor/issues/40) | [40-catalog-v2-services-types.md](./tasks/40-catalog-v2-services-types.md) | #20 | executada |
 | 02 | Home do cardápio: categorias, trilhas e ofertas do ambiente mesa | [#41](https://github.com/sgrande-delivery/delivery-indoor/issues/41) | [41-menu-home-rails.md](./tasks/41-menu-home-rails.md) | 01 | pendente |
 | 03 | Listagem da categoria com paginação e scroll infinito | [#42](https://github.com/sgrande-delivery/delivery-indoor/issues/42) | [42-category-listing-infinite-scroll.md](./tasks/42-category-listing-infinite-scroll.md) | 01, 02 | pendente |
 | 04 | Detalhe do produto: grupos de opção, receita e preço do servidor | [#43](https://github.com/sgrande-delivery/delivery-indoor/issues/43) | [43-product-detail-composer.md](./tasks/43-product-detail-composer.md) | 01 | pendente |

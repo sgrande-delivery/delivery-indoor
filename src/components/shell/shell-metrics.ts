@@ -5,6 +5,10 @@ export const tabletShellMediaQuery = '(min-width: 744px) and (min-height: 600px)
 // Em retrato a barra do tablet colapsa o garçom para um quadrado de ícone (RF-09).
 export const tabletPortraitMediaQuery = '(orientation: portrait)';
 
+// O shell do tablet partido pela orientação: a grade 3/2 do cardápio e a coluna/barra da sacola leem os mesmos dois cortes.
+export const tabletLandscapeMediaQuery = `${tabletShellMediaQuery} and (orientation: landscape)`;
+export const tabletPortraitShellMediaQuery = `${tabletShellMediaQuery} and (orientation: portrait)`;
+
 // A altura da aba (44), o raio (12) e o texto da aba (`subtitle1`) e do nome (`h5`) vêm do tema.
 export const tableTopBarMetrics = {
   height: 72,
