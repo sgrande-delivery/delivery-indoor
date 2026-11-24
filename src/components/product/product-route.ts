@@ -16,3 +16,7 @@ export function pushProductSheet(publicId: string): void {
 export function dismissProductSheet(): void {
   productRoute.dismiss();
 }
+
+export function productSheetHistoryState(): Record<string, true> | null {
+  return productRoute.ownHistoryState();
+}

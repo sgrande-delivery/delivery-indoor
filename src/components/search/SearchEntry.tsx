@@ -3,13 +3,9 @@
 import React from 'react';
 import { styled } from '@mui/material/styles';
 import InlineError from '@/components/error/InlineError';
-import { emptySearchFilters } from '@/helpers/search-params';
 import { selectVisibleCategories, useMenuCategories } from '@/hooks/use-menu-categories';
 import { fontFamilies, pxToRem, searchSectionMetrics, spacingScale } from '@/theme';
 import SearchCategoryGrid from './SearchCategoryGrid';
-import SearchHeader from './SearchHeader';
-import SearchTermField from './SearchTermField';
-import { useSearchNavigation } from './use-search-navigation';
 
 const SECTION_LABEL = 'Categorias';
 const CATEGORIES_ERROR = 'Não foi possível carregar as categorias.';
@@ -35,17 +31,13 @@ const SectionLabel = styled('h2')(({ theme }) => ({
   color: theme.vars.palette.surface.muted,
 }));
 
-/** A entrada: sem termo e sem filtro. Nenhum histórico de busca — o tablet da mesa é compartilhado. */
-const SearchScreen: React.FC = () => {
+/** O corpo da entrada: sem termo e sem filtro. Nenhum histórico de busca — o tablet da mesa é compartilhado. */
+const SearchEntry: React.FC = () => {
   const categories = useMenuCategories();
-  const navigation = useSearchNavigation(emptySearchFilters);
   const visible = selectVisibleCategories(categories.data ?? []);
 
   return (
     <Root>
-      <SearchHeader>
-        <SearchTermField initialTerm="" autoFocus onSubmit={navigation.submit} onClear={navigation.clear} />
-      </SearchHeader>
       {categories.isError && categories.data === undefined && (
         <Body>
           <InlineError
@@ -65,4 +57,4 @@ const SearchScreen: React.FC = () => {
   );
 };
 
-export default SearchScreen;
+export default SearchEntry;

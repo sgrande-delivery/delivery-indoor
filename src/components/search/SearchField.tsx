@@ -11,7 +11,7 @@ import { searchLayoutMetrics } from './search-metrics';
 
 const FIELD_LABEL = 'Buscar no cardápio';
 const CLEAR_LABEL = 'Limpar busca';
-const PLACEHOLDER = 'Buscar produto ou ingrediente';
+const PLACEHOLDER = 'O que você quer comer?';
 
 export interface SearchFieldProps {
   value: string;
@@ -86,7 +86,7 @@ const Clear = styled(ButtonBase)(({ theme }) => ({
 
 /**
  * O campo é um `form`: `Enter` envia, o teclado do celular mostra a tecla de busca e o envio é um lugar só.
- * Nenhuma tecla vira `router.push` — o termo sobe no envio, senão cada letra seria uma entrada de histórico.
+ * O campo só devolve o texto: quando ele vai para o endereço é de quem o usa.
  */
 const SearchField: React.FC<SearchFieldProps> = ({ value, onChange, onSubmit, onClear, autoFocus = false }) => {
   const inputId = React.useId();

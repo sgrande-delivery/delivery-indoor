@@ -1,41 +1,49 @@
 'use client';
 
 import { useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { buildSearchHref, normalizeSearchTerm, SearchFilters } from '@/helpers/search-params';
+import { productSheetHistoryState } from '@/components/product/product-route';
+import { hasActiveSearch, preserveSearchParams, SearchFilters, withSearchHref } from '@/helpers/search-params';
 
 export interface SearchNavigation {
-  /** Aplica o recorte novo: cada toque é um endereço novo, e o estado da busca mora nele. */
+  /** Aplica o recorte novo: cada toque é uma entrada de histórico, e o estado da busca mora no endereço. */
   go: (next: SearchFilters) => void;
   /** Para um endereço já montado (a ação da faixa de relaxamento). */
   goTo: (href: string) => void;
-  submit: (term: string) => void;
-  clear: () => void;
+  /** Troca só o termo: empilha ao sair da entrada, substitui com a busca ativa. */
+  setTerm: (term: string | null) => void;
+}
+
+function pushHref(href: string): void {
+  window.history.pushState(null, '', href);
+}
+
+/** O estado da entrada atual só com a marca da folha: o Next mescla o dele, e o voltar da folha segue valendo. */
+function replaceHref(href: string): void {
+  window.history.replaceState(productSheetHistoryState(), '', href);
 }
 
 /**
- * O envio troca o termo e **preserva** o resto do recorte; o `close` do campo limpa só o termo. Termo vazio no envio
- * não navega: a entrada continua onde está.
+ * Escreve pela API de histórico, sem passar pelo servidor: o Next 15 reflete `pushState` e `replaceState` no
+ * `useSearchParams`. Os parâmetros que não são do recorte (`product`) seguem no endereço.
  */
 export function useSearchNavigation(filters: SearchFilters): SearchNavigation {
-  const router = useRouter();
+  const goTo = useCallback((href: string) => pushHref(preserveSearchParams(window.location.search, href)), []);
 
-  const goTo = useCallback((href: string) => router.push(href), [router]);
+  const go = useCallback((next: SearchFilters) => pushHref(withSearchHref(window.location.search, next)), []);
 
-  const go = useCallback((next: SearchFilters) => goTo(buildSearchHref(next)), [goTo]);
+  const setTerm = useCallback(
+    (term: string | null) => {
+      const href = withSearchHref(window.location.search, { ...filters, term });
 
-  const submit = useCallback(
-    (term: string) => {
-      const normalized = normalizeSearchTerm(term);
-
-      if (normalized !== '') {
-        go({ ...filters, term: normalized });
+      if (hasActiveSearch(filters)) {
+        replaceHref(href);
+        return;
       }
+
+      pushHref(href);
     },
-    [filters, go]
+    [filters]
   );
 
-  const clear = useCallback(() => go({ ...filters, term: null }), [filters, go]);
-
-  return { go, goTo, submit, clear };
+  return { go, goTo, setTerm };
 }

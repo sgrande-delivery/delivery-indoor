@@ -16,7 +16,11 @@ export interface SearchResultsCountProps {
   total: number;
   term: string | null;
   page: { current: number; last: number } | null;
+  /** A lista é a do termo anterior: o total fica sem o termo (era de outro) e o texto toma o lugar da página. */
+  isUpdating?: boolean;
 }
+
+const UPDATING_LABEL = 'atualizando…';
 
 const Root = styled('div')({
   display: 'flex',
@@ -49,11 +53,16 @@ const Page = styled('span')(({ theme }) => ({
   color: theme.vars.palette.surface.muted,
 }));
 
-const SearchResultsCount: React.FC<SearchResultsCountProps> = ({ total, term, page }) => {
+const SearchResultsCount: React.FC<SearchResultsCountProps> = ({ total, term, page, isUpdating = false }) => {
   return (
     <Root>
-      <Summary>{term === null ? formatResultCount(total) : `${formatResultCount(total)} para “${term}”`}</Summary>
-      {page !== null && <Page>{`página ${page.current} de ${page.last}`}</Page>}
+      <Summary>
+        {term === null || isUpdating ? formatResultCount(total) : `${formatResultCount(total)} para “${term}”`}
+      </Summary>
+      <Page role="status">
+        {isUpdating && UPDATING_LABEL}
+        {!isUpdating && page !== null && `página ${page.current} de ${page.last}`}
+      </Page>
     </Root>
   );
 };

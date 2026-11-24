@@ -169,3 +169,50 @@ export function hasActiveSearch(filters: SearchFilters): boolean {
     filters.excludeIngredients.length > 0
   );
 }
+
+/** O que `useSearchParams` devolve, na forma que `parseSearchFilters` lê: valor repetido vira lista. */
+export function searchParamsToSource(params: Pick<URLSearchParams, 'forEach'>): SearchParamSource {
+  const source: Record<string, string[]> = {};
+
+  params.forEach((value, name) => {
+    source[name] = [...(source[name] ?? []), value];
+  });
+
+  return source;
+}
+
+export function parseSearchHref(href: string): SearchFilters {
+  const query = href.split('?')[1] ?? '';
+
+  return parseSearchFilters(searchParamsToSource(new URLSearchParams(query)));
+}
+
+const recutParamNames = new Set<string>(Object.values(searchParamNames).flatMap(name => [name, `${name}[]`]));
+
+/**
+ * O endereço do recorte, com os parâmetros que **não** são dele (o `product` da folha) levados do endereço atual:
+ * trocar o termo ou um filtro não pode fechar uma folha aberta.
+ */
+export function preserveSearchParams(currentSearch: string, href: string): string {
+  const [pathname, query = ''] = href.split('?');
+  const next = new URLSearchParams(query);
+
+  new URLSearchParams(currentSearch).forEach((value, name) => {
+    if (!recutParamNames.has(name)) {
+      next.append(name, value);
+    }
+  });
+
+  const merged = next.toString();
+
+  return merged === '' ? pathname : `${pathname}?${merged}`;
+}
+
+export function withSearchHref(currentSearch: string, filters: SearchFilters): string {
+  return preserveSearchParams(currentSearch, buildSearchHref(filters));
+}
+
+/** Os recortes iguais fora o termo: é quando a lista anterior ainda diz algo útil enquanto a nova chega. */
+export function differsOnlyByTerm(a: SearchFilters, b: SearchFilters): boolean {
+  return buildSearchHref({ ...a, term: null }) === buildSearchHref({ ...b, term: null });
+}
