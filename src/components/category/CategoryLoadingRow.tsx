@@ -6,6 +6,11 @@ import { styled } from '@mui/material/styles';
 import { categoryListMetrics, fontFamilies, pxToRem } from '@/theme';
 import CategorySkeletonItem from './CategorySkeletonItem';
 
+/** A grade do tablet não tem item de linha para repetir: lá só a linha de estado. */
+export interface CategoryLoadingRowProps {
+  withSkeleton?: boolean;
+}
+
 const LOADING_LABEL = 'Carregando mais itens…';
 
 const spin = keyframes({
@@ -49,10 +54,10 @@ const Spinner = styled('span')(({ theme }) => ({
 
 // O rodapé de carregamento é o esqueleto de **um** item mais a linha de estado — nunca um spinner
 // cobrindo a tela, que é o que a lista já rolada perderia de vista.
-const CategoryLoadingRow: React.FC = () => {
+const CategoryLoadingRow: React.FC<CategoryLoadingRowProps> = ({ withSkeleton = true }) => {
   return (
     <Root>
-      <CategorySkeletonItem />
+      {withSkeleton && <CategorySkeletonItem />}
       <Status role="status">
         <Spinner aria-hidden />
         {LOADING_LABEL}

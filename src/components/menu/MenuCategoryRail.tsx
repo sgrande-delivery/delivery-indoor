@@ -4,7 +4,9 @@ import React from 'react';
 import Link from 'next/link';
 import { styled } from '@mui/material/styles';
 import { categoryRouteHref } from '@/routes/app-routes';
-import { categoryRailMetrics } from '@/theme';
+import { tabletShellMediaQuery } from '@/components/shell/shell-metrics';
+import { categoryRailMetrics, spacingScale } from '@/theme';
+import { tabletGutter } from './tablet-gutter';
 import { MenuCategory } from '@/types/menu-category';
 import MenuCategoryChip from './MenuCategoryChip';
 
@@ -14,12 +16,19 @@ export interface MenuCategoryRailProps {
   /** Já visíveis (`selectVisibleCategories`). */
   categories: MenuCategory[];
   currentCategoryId: number | null;
-  /** A chip de busca do tablet entra aqui na 06. */
+  /** A chip de busca do tablet. */
   trailing?: React.ReactNode;
 }
 
-const Rail = styled('nav')({
-  display: 'flex',
+interface RailProps {
+  isEmpty: boolean;
+}
+
+// Sem categoria, só a chip de busca do tablet sobrevive; no celular a trilha vazia não deixa nem a faixa de respiro.
+const Rail = styled('nav', {
+  shouldForwardProp: prop => prop !== 'isEmpty',
+})<RailProps>(({ isEmpty }) => ({
+  display: isEmpty ? 'none' : 'flex',
   alignItems: 'center',
   gap: categoryRailMetrics.gap,
   paddingBlockStart: categoryRailMetrics.paddingBlockStart,
@@ -31,7 +40,12 @@ const Rail = styled('nav')({
   '&::-webkit-scrollbar': {
     display: 'none',
   },
-});
+  [`@media ${tabletShellMediaQuery}`]: {
+    display: 'flex',
+    paddingBlock: spacingScale.md,
+  },
+  ...tabletGutter('paddingInline'),
+}));
 
 /**
  * As chips **navegam** (não alternam): cada uma é um `Link` para a listagem da categoria, e só a aberta leva
@@ -45,7 +59,7 @@ const MenuCategoryRail: React.FC<MenuCategoryRailProps> = ({ categories, current
   }
 
   return (
-    <Rail aria-label={RAIL_LABEL}>
+    <Rail aria-label={RAIL_LABEL} isEmpty={categories.length === 0}>
       {categories.map(category => (
         <MenuCategoryChip
           key={category.id}

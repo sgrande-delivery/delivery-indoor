@@ -6,7 +6,14 @@ import { styled } from '@mui/material/styles';
 import InlineError from '@/components/error/InlineError';
 import RouteErrorState from '@/components/error/RouteErrorState';
 import MenuCategoryRail from '@/components/menu/MenuCategoryRail';
-import { useAppScroller } from '@/components/shell/AppShell';
+import MenuScreenLayout from '@/components/menu/MenuScreenLayout';
+import MenuSearchChip from '@/components/menu/MenuSearchChip';
+import PhoneOnly from '@/components/menu/PhoneOnly';
+import ProductGridSkeleton from '@/components/menu/ProductGridSkeleton';
+import { useMenuScreenScroller } from '@/components/menu/menu-scroller';
+import { tabletShellMediaQuery } from '@/components/shell/shell-metrics';
+import { productGridMetrics } from '@/components/menu/product-grid-metrics';
+import { tabletGutter } from '@/components/menu/tablet-gutter';
 import { MENU_ERROR_DESCRIPTION, MENU_ERROR_TITLE, MENU_REFRESH_ERROR } from '@/components/menu/menu-copy';
 import { Button, EmptyState, Skeleton } from '@/components/ui';
 import { resolveScrollBehavior } from '@/helpers/scroll-behavior';
@@ -29,13 +36,30 @@ export interface MenuCategoryScreenProps {
   categoryId: number;
 }
 
-const Root = styled('div')({
+// O fim da lista de linhas do celular; o tablet leva o respiro na própria grade.
+const Body = styled('div')({
   paddingBlockEnd: spacingScale.lg,
+  [`@media ${tabletShellMediaQuery}`]: {
+    paddingBlockEnd: 0,
+  },
 });
 
 const NoticeSlot = styled('div')({
   paddingBlockStart: categoryRailMetrics.paddingBlockStart,
   paddingInline: categoryRailMetrics.paddingInline,
+  ...tabletGutter('paddingInline'),
+});
+
+// No tablet o vazio ocupa a região e se centra nela (artboard `Estados · tablet vazio`).
+const EmptySlot = styled('div')({
+  [`@media ${tabletShellMediaQuery}`]: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    minBlockSize: '100%',
+    boxSizing: 'border-box',
+    padding: productGridMetrics.emptyPadding,
+  },
 });
 
 const SectionLabel = styled('h2')(({ theme }) => ({
@@ -49,11 +73,13 @@ const SectionLabel = styled('h2')(({ theme }) => ({
   letterSpacing: searchSectionMetrics.labelLetterSpacing,
   textTransform: 'uppercase',
   color: theme.vars.palette.surface.muted,
+  ...tabletGutter('paddingInline'),
 }));
 
 const SkeletonLabelSlot = styled('div')({
   paddingInline: searchSectionMetrics.bodyPaddingInline,
   marginBlockStart: searchSectionMetrics.labelMarginBlockStart,
+  ...tabletGutter('paddingInline'),
 });
 
 const MenuCategoryScreen: React.FC<MenuCategoryScreenProps> = ({ categoryId }) => {
@@ -61,7 +87,7 @@ const MenuCategoryScreen: React.FC<MenuCategoryScreenProps> = ({ categoryId }) =
   const screen = useQueryScreenState(query);
   const categories = useMenuCategories();
   const isOffline = useIsOffline();
-  const scrollerRef = useAppScroller();
+  const { regionRef, scrollerRef, isTablet } = useMenuScreenScroller();
   const lastCategoryId = useRef(categoryId);
 
   const visibleCategories = selectVisibleCategories(categories.data ?? []);
@@ -75,10 +101,11 @@ const MenuCategoryScreen: React.FC<MenuCategoryScreenProps> = ({ categoryId }) =
 
   const sentinelRef = useLoadMore(
     query.hasNextPage && !query.isFetchingNextPage && !query.isFetchNextPageError && !isOffline,
-    loadMore
+    loadMore,
+    scrollerRef
   );
 
-  // Trocar de categoria não remonta a tela e o scroller do shell continua onde estava.
+  // Trocar de categoria não remonta a tela e quem rola (a região no tablet, o shell no celular) continua onde estava.
   useEffect(() => {
     if (lastCategoryId.current === categoryId) {
       return;
@@ -100,13 +127,12 @@ const MenuCategoryScreen: React.FC<MenuCategoryScreenProps> = ({ categoryId }) =
         />
       </NoticeSlot>
     ) : (
-      <MenuCategoryRail categories={visibleCategories} currentCategoryId={categoryId} />
+      <MenuCategoryRail categories={visibleCategories} currentCategoryId={categoryId} trailing={<MenuSearchChip />} />
     );
 
   if (screen.view === 'error') {
     return (
-      <Root>
-        {rail}
+      <MenuScreenLayout header={rail} regionRef={regionRef}>
         <RouteErrorState
           error={screen.error}
           failureStreak={screen.failureStreak}
@@ -114,63 +140,68 @@ const MenuCategoryScreen: React.FC<MenuCategoryScreenProps> = ({ categoryId }) =
           title={MENU_ERROR_TITLE}
           description={MENU_ERROR_DESCRIPTION}
         />
-      </Root>
+      </MenuScreenLayout>
     );
   }
 
   if (screen.view === 'skeleton') {
     return (
-      <Root>
-        {rail}
+      <MenuScreenLayout header={rail} regionRef={regionRef}>
         <SkeletonLabelSlot>
           <Skeleton variant="text" width={LABEL_SKELETON_WIDTH} height={searchSectionMetrics.labelFontSize} />
         </SkeletonLabelSlot>
-        <CategoryListSkeleton />
-      </Root>
+        <PhoneOnly>
+          <CategoryListSkeleton />
+        </PhoneOnly>
+        <ProductGridSkeleton />
+      </MenuScreenLayout>
     );
   }
 
   // Sem produto visível mas com página seguinte (a primeira pode vir só com desativados), a lista segue com a sentinela.
   if (products.length === 0 && !query.hasNextPage) {
     return (
-      <Root>
-        {rail}
-        <EmptyState
-          icon="restaurant_menu"
-          title={EMPTY_TITLE}
-          description={`${categoryName} está sem itens no momento. Escolha outra categoria aqui em cima — ou chame o garçom se quiser pedir algo que não está no cardápio.`}
-          action={
-            otherCategory ? (
-              <Button variant="primary" component={Link} href={categoryRouteHref(otherCategory.id)}>
-                {`Ver ${otherCategory.name}`}
-              </Button>
-            ) : undefined
-          }
-        />
-      </Root>
+      <MenuScreenLayout header={rail} regionRef={regionRef}>
+        <EmptySlot>
+          <EmptyState
+            icon="restaurant_menu"
+            title={EMPTY_TITLE}
+            description={`${categoryName} está sem itens no momento. Escolha outra categoria aqui em cima — ou chame o garçom se quiser pedir algo que não está no cardápio.`}
+            action={
+              otherCategory ? (
+                <Button variant="primary" component={Link} href={categoryRouteHref(otherCategory.id)}>
+                  {`Ver ${otherCategory.name}`}
+                </Button>
+              ) : undefined
+            }
+          />
+        </EmptySlot>
+      </MenuScreenLayout>
     );
   }
 
   const count = total ?? products.length;
 
   return (
-    <Root>
-      {rail}
-      <SectionLabel>{`${categoryName} · ${count} ${count === 1 ? 'item' : 'itens'}`}</SectionLabel>
-      {query.isRefetchError && (
-        <NoticeSlot>
-          <InlineError message={MENU_REFRESH_ERROR} onRetry={screen.retry} isRetrying={query.isFetching} />
-        </NoticeSlot>
-      )}
-      <CategoryProductList
-        products={products}
-        isFetchingNextPage={query.isFetchingNextPage}
-        hasNextPage={query.hasNextPage}
-        nextPageError={query.isFetchNextPageError}
-        onRetryNextPage={loadMore}
-        sentinelRef={sentinelRef}
-      />
-    </Root>
+    <MenuScreenLayout header={rail} regionRef={regionRef}>
+      <Body>
+        <SectionLabel>{`${categoryName} · ${count} ${count === 1 ? 'item' : 'itens'}`}</SectionLabel>
+        {query.isRefetchError && (
+          <NoticeSlot>
+            <InlineError message={MENU_REFRESH_ERROR} onRetry={screen.retry} isRetrying={query.isFetching} />
+          </NoticeSlot>
+        )}
+        <CategoryProductList
+          products={products}
+          isFetchingNextPage={query.isFetchingNextPage}
+          hasNextPage={query.hasNextPage}
+          nextPageError={query.isFetchNextPageError}
+          onRetryNextPage={loadMore}
+          sentinelRef={sentinelRef}
+          variant={isTablet ? 'grid' : 'list'}
+        />
+      </Body>
+    </MenuScreenLayout>
   );
 };
 

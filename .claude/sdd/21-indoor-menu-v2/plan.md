@@ -35,7 +35,7 @@ O cardápio é a área onde o `delivery-client` dá mais código pronto, porque 
 | 03 | Listagem da categoria com paginação e scroll infinito | [#42](https://github.com/sgrande-delivery/delivery-indoor/issues/42) | [42-category-listing-infinite-scroll.md](./tasks/42-category-listing-infinite-scroll.md) | 01, 02 | executada |
 | 04 | Detalhe do produto: grupos de opção, receita e preço do servidor | [#43](https://github.com/sgrande-delivery/delivery-indoor/issues/43) | [43-product-detail-composer.md](./tasks/43-product-detail-composer.md) | 01 | executada |
 | 05 | Busca no cardápio pela rota v2 | [#44](https://github.com/sgrande-delivery/delivery-indoor/issues/44) | [44-menu-search-v2.md](./tasks/44-menu-search-v2.md) | 03 | executada |
-| 06 | Tablet: grade 3/2 colunas e trilha de categorias fixa | [#45](https://github.com/sgrande-delivery/delivery-indoor/issues/45) | [45-tablet-menu-grid.md](./tasks/45-tablet-menu-grid.md) | 02, 03, 04, 05 | pendente |
+| 06 | Tablet: grade 3/2 colunas e trilha de categorias fixa | [#45](https://github.com/sgrande-delivery/delivery-indoor/issues/45) | [45-tablet-menu-grid.md](./tasks/45-tablet-menu-grid.md) | 02, 03, 04, 05 | executada |
 | 07 | Filtro por ingrediente na busca: seletor de `GET /ingredients`, "com" e "sem" (RF-15) | [#67](https://github.com/sgrande-delivery/delivery-indoor/issues/67) | [67-search-ingredient-filter.md](./tasks/67-search-ingredient-filter.md) | 05 | pendente |
 
 Status: `a especificar` → `pendente` → `executada` → `shipped`.

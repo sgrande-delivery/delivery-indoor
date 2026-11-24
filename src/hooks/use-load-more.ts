@@ -14,7 +14,7 @@ const LOAD_MORE_ROOT_MARGIN = '0px 0px 240px 0px';
  * `IntersectionObserver` recorta o alvo pelos ancestrais roláveis **antes** de aplicar a margem, e a
  * antecipação de 240px viraria um spinner em toda rolagem.
  *
- * `rootRef` é para quem rola noutro container — a coluna da grade do tablet (#45).
+ * `rootRef` é para quem rola noutro container, como a região da grade no tablet.
  */
 export function useLoadMore(
   enabled: boolean,

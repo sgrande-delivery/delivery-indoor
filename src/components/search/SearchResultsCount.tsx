@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { styled } from '@mui/material/styles';
+import { tabletGutter } from '@/components/menu/tablet-gutter';
 import { fontFamilies, pxToRem, searchSectionMetrics } from '@/theme';
 
 const numberFormatter = new Intl.NumberFormat('pt-BR');
@@ -25,6 +26,7 @@ const Root = styled('div')({
   paddingBlockStart: searchSectionMetrics.labelMarginBlockStart,
   paddingBlockEnd: 0,
   paddingInline: searchSectionMetrics.bodyPaddingInline,
+  ...tabletGutter('paddingInline'),
 });
 
 const Summary = styled('h2')(({ theme }) => ({

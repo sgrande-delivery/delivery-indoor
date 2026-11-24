@@ -4,6 +4,7 @@ import React from 'react';
 import { styled } from '@mui/material/styles';
 import { SearchFacetCategory } from '@/types/product-page';
 import CategoryFacetChip from './CategoryFacetChip';
+import { tabletGutter } from '@/components/menu/tablet-gutter';
 import { searchLayoutMetrics } from './search-metrics';
 
 const RAIL_LABEL = 'Categorias da busca';
@@ -27,6 +28,7 @@ const Rail = styled('div')({
   '&::-webkit-scrollbar': {
     display: 'none',
   },
+  ...tabletGutter('paddingInline'),
 });
 
 /** Só `count > 0` aparece, mais a categoria selecionada mesmo zerada: o cliente precisa poder desmarcá-la. */

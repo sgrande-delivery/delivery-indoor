@@ -10,6 +10,8 @@ import { categoryRailMetrics, spacingScale } from '@/theme';
 import HomeOfferRail from './HomeOfferRail';
 import HomeProductRail from './HomeProductRail';
 import MenuCategoryRail from './MenuCategoryRail';
+import MenuScreenLayout from './MenuScreenLayout';
+import MenuSearchChip from './MenuSearchChip';
 import MenuSectionList from './MenuSectionList';
 import MenuSkeleton from './MenuSkeleton';
 import { MENU_ERROR_DESCRIPTION, MENU_ERROR_TITLE, MENU_REFRESH_ERROR } from './menu-copy';
@@ -50,31 +52,41 @@ const MenuHomeScreen: React.FC = () => {
     );
   }
 
+  const rail =
+    categories.isError && categories.data === undefined ? (
+      <NoticeSlot>
+        <InlineError
+          message={CATEGORIES_ERROR}
+          onRetry={() => void categories.refetch()}
+          isRetrying={categories.isFetching}
+        />
+      </NoticeSlot>
+    ) : (
+      <MenuCategoryRail categories={home.visibleCategories} currentCategoryId={null} trailing={<MenuSearchChip />} />
+    );
+
   return (
-    <Root>
-      {screen.isRefreshFailed && (
-        <NoticeSlot>
-          <InlineError message={MENU_REFRESH_ERROR} onRetry={screen.retry} isRetrying={home.products.isFetching} />
-        </NoticeSlot>
-      )}
-      {categories.isError && categories.data === undefined ? (
-        <NoticeSlot>
-          <InlineError
-            message={CATEGORIES_ERROR}
-            onRetry={() => void categories.refetch()}
-            isRetrying={categories.isFetching}
-          />
-        </NoticeSlot>
-      ) : (
-        <MenuCategoryRail categories={home.visibleCategories} currentCategoryId={null} />
-      )}
-      <HomeOfferRail {...home.offers} />
-      <HomeProductRail id="menu-most-ordered" title="Mais pedidos" {...home.mostOrdered} />
-      <MenuSectionList sections={home.sections} />
-      {home.sections.length === 0 && (
-        <EmptyState icon="restaurant_menu" title={EMPTY_TITLE} description={EMPTY_DESCRIPTION} />
-      )}
-    </Root>
+    <MenuScreenLayout
+      header={
+        <>
+          {screen.isRefreshFailed && (
+            <NoticeSlot>
+              <InlineError message={MENU_REFRESH_ERROR} onRetry={screen.retry} isRetrying={home.products.isFetching} />
+            </NoticeSlot>
+          )}
+          {rail}
+        </>
+      }
+    >
+      <Root>
+        <HomeOfferRail {...home.offers} />
+        <HomeProductRail id="menu-most-ordered" title="Mais pedidos" {...home.mostOrdered} />
+        <MenuSectionList sections={home.sections} />
+        {home.sections.length === 0 && (
+          <EmptyState icon="restaurant_menu" title={EMPTY_TITLE} description={EMPTY_DESCRIPTION} />
+        )}
+      </Root>
+    </MenuScreenLayout>
   );
 };
 

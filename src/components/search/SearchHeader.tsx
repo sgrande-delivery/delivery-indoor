@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { styled } from '@mui/material/styles';
 import { IconButton } from '@/components/ui';
 import { HOME_ROUTE } from '@/routes/app-routes';
+import { tabletGutter } from '@/components/menu/tablet-gutter';
 import { searchLayoutMetrics } from './search-metrics';
 
 const BACK_LABEL = 'Voltar ao cardápio';
@@ -20,6 +21,7 @@ const Root = styled('header')({
   paddingBlockStart: searchLayoutMetrics.headerPaddingBlockStart,
   paddingBlockEnd: searchLayoutMetrics.headerPaddingBlockEnd,
   paddingInline: searchLayoutMetrics.railPaddingInline,
+  ...tabletGutter('paddingInline'),
 });
 
 /** O voltar é um `Link` para o cardápio: a busca é aba do shell, e voltar não depende do histórico. */

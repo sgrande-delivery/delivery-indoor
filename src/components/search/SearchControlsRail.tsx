@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { styled } from '@mui/material/styles';
 import MenuCategoryChip from '@/components/menu/MenuCategoryChip';
+import { tabletGutter } from '@/components/menu/tablet-gutter';
 import { resolveSearchSort, SearchFilters } from '@/helpers/search-params';
 import { ProductSort } from '@/types/product-page';
 import { searchLayoutMetrics } from './search-metrics';
@@ -29,6 +30,7 @@ const Rail = styled('div')({
   '&::-webkit-scrollbar': {
     display: 'none',
   },
+  ...tabletGutter('paddingInline'),
 });
 
 /** Cada toque aplica na hora: ordenação e promoções são `router.push`, sem folha de confirmação. */

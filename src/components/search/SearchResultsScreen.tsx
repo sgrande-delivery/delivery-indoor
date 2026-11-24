@@ -7,7 +7,13 @@ import CategoryProductList from '@/components/category/CategoryProductList';
 import InlineError from '@/components/error/InlineError';
 import RouteErrorState from '@/components/error/RouteErrorState';
 import { MENU_ERROR_DESCRIPTION, MENU_REFRESH_ERROR } from '@/components/menu/menu-copy';
-import { useAppScroller } from '@/components/shell/AppShell';
+import MenuScreenLayout from '@/components/menu/MenuScreenLayout';
+import PhoneOnly from '@/components/menu/PhoneOnly';
+import ProductGridCard from '@/components/menu/ProductGridCard';
+import ProductGridSkeleton from '@/components/menu/ProductGridSkeleton';
+import { useMenuScreenScroller } from '@/components/menu/menu-scroller';
+import { tabletGutter } from '@/components/menu/tablet-gutter';
+import { tabletShellMediaQuery } from '@/components/shell/shell-metrics';
 import { EmptyState } from '@/components/ui';
 import { buildSearchHref, SearchFilters } from '@/helpers/search-params';
 import { resolveScrollBehavior } from '@/helpers/scroll-behavior';
@@ -37,13 +43,18 @@ export interface SearchResultsScreenProps {
   filters: SearchFilters;
 }
 
-const Root = styled('div')({
+// O fim da lista de linhas do celular; o tablet leva o respiro na própria grade.
+const Body = styled('div')({
   paddingBlockEnd: spacingScale.lg,
+  [`@media ${tabletShellMediaQuery}`]: {
+    paddingBlockEnd: 0,
+  },
 });
 
 const NoticeSlot = styled('div')({
   paddingInline: searchLayoutMetrics.railPaddingInline,
   paddingBlockEnd: searchLayoutMetrics.railPaddingBlockEnd,
+  ...tabletGutter('paddingInline'),
 });
 
 const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ filters }) => {
@@ -51,7 +62,7 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ filters }) =>
   const screen = useQueryScreenState(query);
   const navigation = useSearchNavigation(filters);
   const isOffline = useIsOffline();
-  const scrollerRef = useAppScroller();
+  const { regionRef, scrollerRef, isTablet } = useMenuScreenScroller();
   const href = buildSearchHref(filters);
   const lastHref = useRef(href);
 
@@ -62,10 +73,11 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ filters }) =>
 
   const sentinelRef = useLoadMore(
     query.hasNextPage && !query.isFetchingNextPage && !query.isFetchNextPageError && !isOffline,
-    loadMore
+    loadMore,
+    scrollerRef
   );
 
-  // Trocar o recorte não remonta a tela, e o scroller do shell continua onde estava.
+  // Trocar o recorte não remonta a tela, e quem rola (a região no tablet, o shell no celular) continua onde estava.
   useEffect(() => {
     if (lastHref.current === href) {
       return;
@@ -77,6 +89,11 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ filters }) =>
 
   const renderItem = useCallback(
     (product: ProductSummary) => <SearchProductItem product={product} term={filters.term} />,
+    [filters.term]
+  );
+
+  const renderGridItem = useCallback(
+    (product: ProductSummary) => <ProductGridCard product={product} term={filters.term} />,
     [filters.term]
   );
 
@@ -95,8 +112,7 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ filters }) =>
 
   if (screen.view === 'error') {
     return (
-      <Root>
-        {header}
+      <MenuScreenLayout header={header} regionRef={regionRef}>
         <RouteErrorState
           error={screen.error}
           failureStreak={screen.failureStreak}
@@ -104,17 +120,26 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ filters }) =>
           title={ERROR_TITLE}
           description={MENU_ERROR_DESCRIPTION}
         />
-      </Root>
+      </MenuScreenLayout>
     );
   }
 
   if (screen.view === 'skeleton') {
     return (
-      <Root>
-        {header}
-        {controls}
-        <CategoryListSkeleton />
-      </Root>
+      <MenuScreenLayout
+        header={
+          <>
+            {header}
+            {controls}
+          </>
+        }
+        regionRef={regionRef}
+      >
+        <PhoneOnly>
+          <CategoryListSkeleton />
+        </PhoneOnly>
+        <ProductGridSkeleton />
+      </MenuScreenLayout>
     );
   }
 
@@ -132,39 +157,55 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ filters }) =>
 
   if (products.length === 0 && !query.hasNextPage) {
     return (
-      <Root>
-        {header}
-        {controls}
-        {facets}
+      <MenuScreenLayout
+        header={
+          <>
+            {header}
+            {controls}
+            {facets}
+          </>
+        }
+        regionRef={regionRef}
+      >
         <EmptyState icon="search_off" title={EMPTY_TITLE} description={EMPTY_DESCRIPTION} />
         {band}
-      </Root>
+      </MenuScreenLayout>
     );
   }
 
   return (
-    <Root>
-      {header}
-      {controls}
-      {facets}
-      {band}
-      {query.isRefetchError && (
-        <NoticeSlot>
-          <InlineError message={MENU_REFRESH_ERROR} onRetry={screen.retry} isRetrying={query.isFetching} />
-        </NoticeSlot>
-      )}
-      <SearchResultsCount total={total ?? products.length} term={filters.term} page={lastLoadedPage} />
-      <CategoryProductList
-        products={products}
-        renderItem={renderItem}
-        endLabel={END_LABEL}
-        isFetchingNextPage={query.isFetchingNextPage}
-        hasNextPage={query.hasNextPage}
-        nextPageError={query.isFetchNextPageError}
-        onRetryNextPage={loadMore}
-        sentinelRef={sentinelRef}
-      />
-    </Root>
+    <MenuScreenLayout
+      header={
+        <>
+          {header}
+          {controls}
+          {facets}
+          {band}
+        </>
+      }
+      regionRef={regionRef}
+    >
+      <Body>
+        {query.isRefetchError && (
+          <NoticeSlot>
+            <InlineError message={MENU_REFRESH_ERROR} onRetry={screen.retry} isRetrying={query.isFetching} />
+          </NoticeSlot>
+        )}
+        <SearchResultsCount total={total ?? products.length} term={filters.term} page={lastLoadedPage} />
+        <CategoryProductList
+          products={products}
+          renderItem={renderItem}
+          variant={isTablet ? 'grid' : 'list'}
+          renderGridItem={renderGridItem}
+          endLabel={END_LABEL}
+          isFetchingNextPage={query.isFetchingNextPage}
+          hasNextPage={query.hasNextPage}
+          nextPageError={query.isFetchNextPageError}
+          onRetryNextPage={loadMore}
+          sentinelRef={sentinelRef}
+        />
+      </Body>
+    </MenuScreenLayout>
   );
 };
 

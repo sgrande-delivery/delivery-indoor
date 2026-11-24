@@ -5,6 +5,7 @@ import { styled } from '@mui/material/styles';
 import { Button, Icon } from '@/components/ui';
 import { fontFamilies, pxToRem } from '@/theme';
 import { RelaxSuggestion } from './relax-suggestion';
+import { tabletGutter } from '@/components/menu/tablet-gutter';
 import { searchLayoutMetrics } from './search-metrics';
 
 const ACTION_LABEL = 'tirar filtro';
@@ -24,6 +25,7 @@ const Root = styled('div')(({ theme }) => ({
   paddingInline: searchLayoutMetrics.bandPaddingInline,
   borderRadius: searchLayoutMetrics.bandRadius,
   backgroundColor: theme.vars.palette.surface.field,
+  ...tabletGutter('marginInline'),
 }));
 
 const Glyph = styled(Icon)(({ theme }) => ({
