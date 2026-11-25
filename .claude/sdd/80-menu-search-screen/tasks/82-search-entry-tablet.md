@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** 01 ([#81](https://github.com/sgrande-delivery/delivery-indoor/issues/81))
-**Status:** executada
+**Status:** shipped
 
 ## Objetivo
 
