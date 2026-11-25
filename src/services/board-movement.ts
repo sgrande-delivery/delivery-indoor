@@ -1,5 +1,5 @@
 import { isAxiosError } from 'axios';
-import { BoardMovementDetail } from '@/types/board-movement';
+import { BoardMovementDetail, BoardWaiterCall } from '@/types/board-movement';
 import { api } from './api';
 import { readErrorCode } from './api-error-interceptor';
 
@@ -25,6 +25,16 @@ function isBoardMovementPayload(data: unknown): data is BoardMovementDetail {
   return typeof data === 'object' && data !== null && typeof (data as { is_open?: unknown }).is_open === 'boolean';
 }
 
+export function isBoardWaiterCall(value: unknown): value is BoardWaiterCall {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const { id, created_at: createdAt, window_seconds: windowSeconds } = value as Record<string, unknown>;
+
+  return typeof id === 'string' && typeof createdAt === 'string' && typeof windowSeconds === 'number';
+}
+
 export async function fetchBoardMovement(id: string): Promise<BoardMovementDetail> {
   const { data } = await api.get<unknown>(`/boardMovements/${encodeURIComponent(id)}`);
 
@@ -33,7 +43,15 @@ export async function fetchBoardMovement(id: string): Promise<BoardMovementDetai
   }
 
   // a rota devolve o cliente inteiro (e-mail, telefone, CPF): só o nome fica no cache e no contexto
-  return { ...data, customer: data.customer ? { id: data.customer.id, name: data.customer.name } : null };
+  const { waiter_call: waiterCall } = data as { waiter_call?: unknown };
+
+  return {
+    ...data,
+    waiter_call: isBoardWaiterCall(waiterCall)
+      ? { id: waiterCall.id, created_at: waiterCall.created_at, window_seconds: waiterCall.window_seconds }
+      : null,
+    customer: data.customer ? { id: data.customer.id, name: data.customer.name } : null,
+  };
 }
 
 /** "Inexistente" é 404 com `internal_code: not_found`; o 404 de restaurante errado não traz o código. */

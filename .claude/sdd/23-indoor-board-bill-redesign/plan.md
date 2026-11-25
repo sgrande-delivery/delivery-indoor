@@ -35,7 +35,7 @@ Esta é a tela que **não** vem do `delivery-client` — ele não tem conta de m
 
 | # | Task | Issue | Arquivo | Depende de | Status |
 |---|------|-------|---------|------------|--------|
-| 01 | Leituras e tipos da conta: movimentação, itens e pagamentos por React Query, e a moldura de `/board` | [#53](https://github.com/sgrande-delivery/delivery-indoor/issues/53) | [53-board-bill-reads-and-screen-frame.md](./tasks/53-board-bill-reads-and-screen-frame.md) | #20 | pendente |
+| 01 | Leituras e tipos da conta: movimentação, itens e pagamentos por React Query, e a moldura de `/board` | [#53](https://github.com/sgrande-delivery/delivery-indoor/issues/53) | [53-board-bill-reads-and-screen-frame.md](./tasks/53-board-bill-reads-and-screen-frame.md) | #20 | shipped |
 | 02 | Card de destaque: falta pagar, total, pago, percentual e contador ao vivo | [#54](https://github.com/sgrande-delivery/delivery-indoor/issues/54) | [54-board-bill-highlight-card.md](./tasks/54-board-bill-highlight-card.md) | 01 | pendente |
 | 03 | Itens agrupados por rodada, com quem pediu e a composição do item | [#55](https://github.com/sgrande-delivery/delivery-indoor/issues/55) | [55-board-round-grouped-items.md](./tasks/55-board-round-grouped-items.md) | 01 | pendente |
 | 04 | Resumo de valores: subtotal, taxa de serviço, desconto, pago e falta pagar | [#56](https://github.com/sgrande-delivery/delivery-indoor/issues/56) | [56-board-bill-totals.md](./tasks/56-board-bill-totals.md) | 01 | pendente |

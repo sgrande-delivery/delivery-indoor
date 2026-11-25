@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor (branch `feat/indoor-v2`: Next 15 App Router, MUI 9, React Query)
 **Depende de:** #20 (a fundação inteira: #33 a #39)
-**Status:** pendente
+**Status:** shipped
 **Alinhado a #24 (#61) e à spec da #23 (2026-11-23):** o `BoardScreen` é tela sem dependência de rota, montada também em `/board/payment` pela #61 (mudança 7, "Quem mais monta"); e a RN-01, a tabela de contrato da spec e a skill `contratos-externos` foram corrigidas quanto ao `discount`, ao `amount` e ao `person` (sobra o `BoardTotals/README.md`).
 
 ## Objetivo
@@ -272,7 +272,7 @@ Todos sem import de React nem de MUI, para rodar no `jiti`/`node` sem DOM, como 
 
 ### 9. Mapa de encaixe do `BoardScreen`
 
-O `content` desta task tem só o `BoardHeader`, o `InlineError` e o `Body` vazio. As outras tasks acrescentam, **nesta ordem e neste lugar**, e o conflito na junção se resolve mantendo os dois lados como abaixo:
+O `content` desta task, que vive em `ReadyBoardScreen.tsx` (o `BoardScreen.tsx` é só o portão de `ready`), tem só o `BoardHeader`, o `InlineError` e o `Body` vazio. As tasks 02 a 06 acrescentam seus blocos no `ReadyBoardScreen.tsx`, **nesta ordem e neste lugar**, e o conflito na junção se resolve mantendo os dois lados como abaixo:
 
 ```tsx
 <Root>
@@ -320,7 +320,7 @@ Não há suíte automatizada. A verificação é manual e reprodutível.
 
 **No navegador** (harness `.indoor-qa`, API master em `:8093` atualizada para `origin/master`, `next dev` com `NEXT_PUBLIC_API=http://localhost:8093/api/client/`; restaurante 1, mesa aberta `c10e064f-…`, fechada `0eb6af6a-…`). DevTools: Network filtrada por `boardMovements`.
 
-1. `http://localhost:3000/board?session=<aberta>` a 390 × 844. **Observar:** skeleton e depois a moldura com "Conta da mesa" e "{loja} · Mesa {n}"; **uma** requisição para cada rota (a movimentação é a do provider, sem segunda leitura); a aba Conta acesa na navegação inferior.
+1. `http://localhost:3000/board?session=<aberta>` a 390 × 844. **Observar:** skeleton e depois a moldura com "Conta da mesa" e "{loja} · Mesa {n}"; uma requisição para `/products` e `/payments`, e a movimentação lida pelo provider e relida ao montar a conta (2 GETs ao abrir, +1 a cada volta à aba); a aba Conta acesa na navegação inferior.
 2. Na resposta de `/products`, conferir que o cache (React Query, ou `console` com `queryClient.getQueryData(['board-products', id])`) não tem `admin_user_name` nem `status`, e que `round_status` é `null` na API que ainda não tem a #1754.
 3. Request blocking em `*/boardMovements/*/products*` e recarregar. **Observar:** "Não conseguimos carregar a conta" com `Código erro de rede` (tela cheia a 390, `Sheet` a 820, painel a 1180), "Tentar novamente" volta ao skeleton. Tirar o bloqueio e tentar: a moldura volta.
 4. Request blocking só em `*/payments*`. **Observar:** a tela **não** vai para erro.
@@ -331,16 +331,16 @@ Não há suíte automatizada. A verificação é manual e reprodutível.
 
 ## Critérios de aceitação
 
-- [ ] `src/types/board-bill.ts` declara `BoardProductItem` com `amount` (não `quantity`), `round_status: BoardRoundStatus | null`, `order_created_at: string | null`, e `BoardPayment` com `value` e `payment_method`; o `unit_price` da composição diz que é centavo.
-- [ ] `BoardMovementDetail` não tem `board_id`, `board.id` nem `admin_user`, e tem `waiter_call: BoardWaiterCall | null`; sem o campo na resposta, o cache guarda `null`.
-- [ ] `boardProductsQueryKey` e `boardPaymentsQueryKey` são exportadas de `src/services/board-bill.ts` com os valores `['board-products', id]` e `['board-payments', id]`.
-- [ ] `/board?session=<aberta>` faz uma requisição a `/products` e uma a `/payments`, e nenhuma segunda à movimentação.
-- [ ] Falha dos itens sem dado mostra o erro de rota da fundação com a copy literal do artboard e o código; falha só dos pagamentos não derruba a tela.
-- [ ] "Atualizar" relê as três chaves sem skeleton, com o botão desabilitado durante; falha com conteúdo mostra o `InlineError`.
-- [ ] `resolveAmountDue` e `resolvePaidPercent` dão os valores do roteiro, e nenhum outro arquivo de `src/components/board/` subtrai dinheiro.
-- [ ] A aba Conta está disponível no celular e no tablet.
-- [ ] Nenhum arquivo de `src/theme/` ou `src/components/ui/` é alterado; sem hex, sem `<main>`, sem `100dvh` nos arquivos novos.
-- [ ] `npx tsc --noEmit`, o lint e o `yarn build` com as vars de restaurante passam.
+- [x] `src/types/board-bill.ts` declara `BoardProductItem` com `amount` (não `quantity`), `round_status: BoardRoundStatus | null`, `order_created_at: string | null`, e `BoardPayment` com `value` e `payment_method`; o `unit_price` da composição diz que é centavo.
+- [x] `BoardMovementDetail` não tem `board_id`, `board.id` nem `admin_user`, e tem `waiter_call: BoardWaiterCall | null`; sem o campo na resposta, o cache guarda `null`.
+- [x] `boardProductsQueryKey` e `boardPaymentsQueryKey` são exportadas de `src/services/board-bill.ts` com os valores `['board-products', id]` e `['board-payments', id]`.
+- [x] a movimentação é relida ao montar a conta, junto com itens e pagamentos: `/board?session=<aberta>` faz uma requisição a `/products`, uma a `/payments` e uma releitura da movimentação (a do provider mais a do `ReadyBoardScreen`).
+- [x] Falha dos itens sem dado mostra o erro de rota da fundação com a copy literal do artboard e o código; falha só dos pagamentos não derruba a tela.
+- [x] "Atualizar" relê as três chaves sem skeleton, com o botão desabilitado durante; falha com conteúdo mostra o `InlineError`.
+- [x] `resolveAmountDue` e `resolvePaidPercent` dão os valores do roteiro, e nenhum outro arquivo de `src/components/board/` subtrai dinheiro.
+- [x] A aba Conta está disponível no celular e no tablet.
+- [x] Nenhum arquivo de `src/theme/` ou `src/components/ui/` é alterado; sem hex, sem `<main>`, sem `100dvh` nos arquivos novos.
+- [x] `npx tsc --noEmit`, o lint e o `yarn build` com as vars de restaurante passam.
 
 ## Fora de escopo
 
@@ -354,4 +354,83 @@ Não há suíte automatizada. A verificação é manual e reprodutível.
 
 ## Branch
 
-`task/53-board-bill-reads-and-screen-frame`, base sugerida: `feat/indoor-v2` depois que a fila da #20 mergear nela (hoje a ponta é `task/39-remove-fork-inheritance`; se ainda não tiver mergeado, cortar dela). É a base da 02, da 03, da 04 e da 06.
+`task/53-board-bill-reads-and-screen-frame`, cortada de `feat/indoor-v2` (`b453dc9`) em 2026-11-25.
+
+## Implementação
+
+**Concluída em:** 2026-11-25
+
+### Camadas tocadas
+
+- Tipos: `src/types/board-bill.ts` (novo); `src/types/board-movement.ts` (sai `board_id`, `board.id`, `admin_user`; entra `BoardWaiterCall` e `waiter_call`).
+- Serviços: `src/services/board-bill.ts` (novo: chaves, `fetchBoardProducts`, `fetchBoardPayments`, `isBoardRoundStatus`, `InvalidBoardBillResponseError`); `src/services/board-movement.ts` (`isBoardWaiterCall` e normalização do `waiter_call`).
+- Hooks: `use-board-products.ts`, `use-board-payments.ts`, `use-refresh-board-bill.ts`.
+- Derivados puros em `src/components/board/`: `bill-amounts.ts`, `board-summary.ts`, `board-time.ts`.
+- Tela: `app/board/page.tsx`, `BoardScreen.tsx`, `BoardHeader.tsx`, `BoardScreenSkeleton.tsx`, `board-copy.ts`, `board-metrics.ts`.
+- Shell: `shell-tabs.ts` com a aba Conta disponível.
+
+### Contratos consumidos
+
+- `GET /boardMovements/{id}/products` (`{ products }`, item recortado ao tipo) e `/payments` (array), como na tabela da task. Não conferi contra a `delivery-api` local, só contra o contrato inline.
+- `GET /boardMovements/{id}`: `waiter_call` ausente ou malformado vira `null`.
+
+### Variáveis de ambiente novas
+
+- Nenhuma.
+
+### Decisões que tomei por conta própria
+
+- `BoardScreen.tsx` é o portão (fora de `ready`: skeleton) e `ReadyBoardScreen.tsx` tem a moldura, para os hooks de leitura só rodarem com mesa. Sem mesa nenhum request sai e o caminho não passa pelo `useQueryScreenState`.
+- O skeleton leva um placeholder do cabeçalho (escondido no tablet), para o celular não pular quando o `BoardHeader` chega.
+- `useBoardPayments` é chamado na moldura para aquecer o cache; a falha dele é exibida pelo bloco de pagamentos.
+- `useRefreshBoardBill` usa `invalidateQueries` (resolve mesmo com falha de rede); a falha aparece pelo `isRefetchError`/`isRefreshFailed`.
+- Identidade e dinheiro (item: `id`, `amount`, `price`, `final_price`, `order_public_id`; pagamento: `id`, `value`) com tipo errado lançam `InvalidBoardBillResponseError`. Só o opcional ou ainda não publicado (`round_status`, `order_created_at`, imagem, listas) recebe padrão. Imagem sem URL vira `null`.
+- A copy do `InlineError` ("Não foi possível atualizar a conta.") é derivada, como a task já avisa: confirmar com o dev.
+
+### Divergência do texto original da task
+
+- O critério 4 e o passo 1 diziam "sem segunda leitura da movimentação". O `ReadyBoardScreen` observa `['board-movement', id]` com `staleTime` 0 e **relê ao montar**. Mantido de propósito: itens e pagamentos também são relidos ao montar, e uma movimentação velha ao lado de itens novos daria um "falta pagar" que não confere com a lista (RN-06). Critério e roteiro foram reescritos.
+- Sem `tabletGutter` e com `cardRadius` = `componentRadii.paper` (18): a margem de tablet é da task 08.
+- `Body` com barra de rolagem escondida, como o `Scroller` e o `MenuScreenLayout`.
+- `summarizeBoardProducts` arredonda a soma a 2 casas (item dividido 0,333 x 3 dá "3 itens").
+
+### Como testar
+
+1. `yarn dev`, `http://localhost:3000/board?session=<aberta>` a 390 x 844: skeleton, depois "Conta da mesa" e "{loja} · Mesa {n}"; uma requisição por rota; aba Conta acesa.
+2. Seguir os passos 2 a 8 da seção `## Testes`.
+
+### O que NÃO foi verificado
+
+- Nada no navegador (a validação é do dev): bloqueio de request, "atualizar", tablet a 1180, requisições duplicadas.
+- Derivados: `jiti` deu `95.43`, `0`, `0.2`; `39`, `100`, `0`; "2 pedidos · 7 itens". `formatBoardClock` não foi exercitado.
+- `round_status`/`order_created_at`/`waiter_call` dependem das specs da api, ainda não publicadas: chegam `null`.
+
+### Validado no navegador (2026-11-25)
+
+Playwright com o Chromium do sistema, contra a delivery-api local (restaurante 1, mesa 004 com 11 itens e sem pagamentos). **20 de 20 verificações passaram** (`/tmp/indoor-qa-22/qa53.mjs`).
+
+**Celular, 390×844**
+- O skeleton aparece antes da moldura.
+- A movimentação é lida 2 vezes, uma pelo provider e outra ao montar (decisão B1). `/products` e `/payments` são lidos 1 vez cada.
+- O cabeçalho mostra "Conta da mesa" e "SGrande Delivery · Mesa 004". Voltar e atualizar têm 44, com margem lateral de 18.
+- "Atualizar" faz uma leitura de cada rota, com o botão inerte e sem skeleton. Com a movimentação fora, aparece o `InlineError` "Não foi possível atualizar a conta.".
+
+**Falhas e mesa**
+- Com `/products` fora, aparece o erro de rota com o código ("erro de rede"). Com `/payments` fora, a tela não cai.
+- Sem `?session`, nenhuma leitura da conta sai e aparece a tela "Mesa não identificada".
+
+**Tablet, 1180×820 e 820×1180:** a aba Conta fica acesa, o cabeçalho do celular fica escondido e não há rolagem horizontal.
+
+**Não verificado:**
+- O corpo da conta, que vem das tasks 02 a 05. Até lá a aba abre só o cabeçalho.
+- Tablet real e leitor de tela.
+- Pagamentos de verdade, porque nenhuma mesa local tem pagamento.
+
+## Follow-ups identificados em review
+
+- **F1:** `resolveErrorCode` reconhecer `InvalidBoardBillResponseError` e `InvalidBoardMovementResponseError` e mostrar "resposta inválida" (hoje cai em "erro 500").
+- **F2:** na 06, `useRefreshBoardBill` passar por `resolveBoardBillQueryKeys`, senão o `payment-options` da #61 fica de fora.
+- **F3:** na 02, o percentual de 100% com saldo em aberto (`resolvePaidPercent` arredonda 99,6% para 100).
+- **F4:** na 08, a margem de tablet da Conta (24 nas laterais em pé, gap 16) e o "atualizar" do tablet.
+- **F5:** `fetchBoardMovement` recortado ao tipo: hoje o cache guarda `admin_user` e o `board.qr_code` em data URL.
+- **F6:** na 03, conferir `Date.parse` com microssegundos no Safari do iPadOS.

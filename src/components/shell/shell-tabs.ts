@@ -18,7 +18,7 @@ export const shellTabs: readonly ShellTab[] = [
   { key: 'menu', label: 'Cardápio', icon: 'restaurant_menu', href: HOME_ROUTE, isAvailable: true },
   { key: 'search', label: 'Busca', icon: 'search', href: SEARCH_ROUTE, isAvailable: true },
   { key: 'cart', label: 'Sacola', icon: 'shopping_bag', href: CART_ROUTE, isAvailable: true },
-  { key: 'board', label: 'Conta', icon: 'receipt_long', href: BOARD_ROUTE, isAvailable: false },
+  { key: 'board', label: 'Conta', icon: 'receipt_long', href: BOARD_ROUTE, isAvailable: true },
 ];
 
 const TABLET_TAB_KEYS: readonly ShellTabKey[] = ['menu', 'board'];

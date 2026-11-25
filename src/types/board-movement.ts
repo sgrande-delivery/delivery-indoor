@@ -7,7 +7,6 @@ export interface BoardMovementSection {
 }
 
 export interface BoardMovementBoard {
-  id: string;
   number: string;
   section_id: string | null;
   default_pax: number | null;
@@ -15,10 +14,11 @@ export interface BoardMovementBoard {
   section: BoardMovementSection | null;
 }
 
-export interface BoardMovementAdminUser {
-  id: number;
-  name: string;
-  color_hue: number | null;
+/** `waiter_call` de `GET /boardMovements/{id}` (delivery-api#1647): a chamada em aberto na janela, pela hora do servidor. */
+export interface BoardWaiterCall {
+  id: string;
+  created_at: string;
+  window_seconds: number;
 }
 
 /** O model devolve o cliente inteiro (e-mail, telefone, CPF); o app declara e exibe só o nome. */
@@ -30,7 +30,6 @@ export interface BoardMovementCustomer {
 /** `GET /boardMovements/{id}` — `BoardMovementDetailPresenter`. Valores em real (float). */
 export interface BoardMovementDetail {
   id: string;
-  board_id: string;
   restaurant_uuid: string;
   is_open: boolean;
   pax: number | null;
@@ -47,7 +46,7 @@ export interface BoardMovementDetail {
   bill_requested_at: string | null;
   paid_at: string | null;
   freed_at: string | null;
-  admin_user: BoardMovementAdminUser | null;
+  waiter_call: BoardWaiterCall | null;
   customer: BoardMovementCustomer | null;
   board: BoardMovementBoard | null;
 }
