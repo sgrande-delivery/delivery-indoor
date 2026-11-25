@@ -7,6 +7,10 @@ export interface BoardSummary {
 
 const quantityFormatter = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 3 });
 
+export function formatBoardQuantity(quantity: number): string {
+  return quantityFormatter.format(quantity);
+}
+
 /** `itemCount` soma o `amount` (2× Classic Smash são dois itens) e `orderCount` conta os pedidos distintos. */
 export function summarizeBoardProducts(
   products: readonly Pick<BoardProductItem, 'amount' | 'order_public_id'>[]
@@ -24,11 +28,11 @@ export function summarizeBoardProducts(
 }
 
 export function describeOrderCount(count: number): string {
-  return `${quantityFormatter.format(count)} ${count === 1 ? 'pedido' : 'pedidos'}`;
+  return `${formatBoardQuantity(count)} ${count === 1 ? 'pedido' : 'pedidos'}`;
 }
 
 export function describeItemCount(count: number): string {
-  return `${quantityFormatter.format(count)} ${count === 1 ? 'item' : 'itens'}`;
+  return `${formatBoardQuantity(count)} ${count === 1 ? 'item' : 'itens'}`;
 }
 
 export function describeBoardCount({ orderCount, itemCount }: BoardSummary): string {

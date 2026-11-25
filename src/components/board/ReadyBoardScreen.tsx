@@ -14,6 +14,7 @@ import { boardCopy } from './board-copy';
 import { boardMetrics } from './board-metrics';
 import BoardHeader from './BoardHeader';
 import BoardScreenSkeleton from './BoardScreenSkeleton';
+import BoardItemsCard from './rounds/BoardItemsCard';
 
 const Root = styled('div')({
   display: 'flex',
@@ -70,6 +71,11 @@ const ReadyBoardScreen: React.FC<ReadyBoardScreenProps> = ({ sessionId, boardNum
     );
   }
 
+  // `content` garante o dado, mas o tipo do hook não estreita
+  if (products.data === undefined) {
+    return <BoardScreenSkeleton />;
+  }
+
   const refreshFailed = screen.isRefreshFailed || (movement.isRefetchError && !isOffline);
 
   return (
@@ -91,6 +97,7 @@ const ReadyBoardScreen: React.FC<ReadyBoardScreenProps> = ({ sessionId, boardNum
             isRetrying={isRefreshing}
           />
         )}
+        <BoardItemsCard products={products.data.products} />
       </Body>
     </Root>
   );
