@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor (branch `feat/indoor-v2`)
 **Depende de:** 01 (#53)
-**Status:** pendente
+**Status:** shipped
 
 ## Objetivo
 
@@ -154,14 +154,14 @@ Em `src/components/board/rounds/` (novos), um por arquivo:
 
 ## Critérios de aceitação
 
-- [ ] Os itens aparecem agrupados por pedido, com a rodada mais recente em cima, "Pedido {round} · {HH:mm}" pela hora do pedido, e o selo do `round_status` uma vez por grupo; sem `round_status`, o cabeçalho sai sem selo.
-- [ ] `src/components/board/round-status.ts` exporta os dois `Record<BoardRoundStatus, …>` e `src/components/board/RoundStatusPill.tsx` o selo, prontos para a #48 importar.
-- [ ] Cada linha mostra quantidade, nome, a pessoa quando houver, "{qtd} x {price}" só com quantidade maior que 1, a composição e o `final_price`; nada é multiplicado no cliente.
-- [ ] Item com adicional e ingrediente removido mostra os dois na linha; item sem pessoa não some.
-- [ ] Item sem foto (ou com foto quebrada) mostra o ícone da categoria pelo mapa explícito; nenhum nome de ícone novo.
-- [ ] Mesa sem pedido mostra o vazio compacto.
-- [ ] Sem hex, nenhum arquivo de `src/theme/` ou `src/components/ui/` alterado.
-- [ ] `npx tsc --noEmit`, o lint e o `yarn build` passam.
+- [x] Os itens aparecem agrupados por pedido, com a rodada mais recente em cima, "Pedido {round} · {HH:mm}" pela hora do pedido, e o selo do `round_status` uma vez por grupo; sem `round_status`, o cabeçalho sai sem selo.
+- [x] `src/components/board/round-status.ts` exporta os dois `Record<BoardRoundStatus, …>` e `src/components/board/RoundStatusPill.tsx` o selo, prontos para a #48 importar.
+- [x] Cada linha mostra quantidade, nome, a pessoa quando houver, "{qtd} x {price}" só com quantidade maior que 1, a composição e o `final_price`; nada é multiplicado no cliente.
+- [x] Item com adicional e ingrediente removido mostra os dois na linha; item sem pessoa não some.
+- [x] Item sem foto (ou com foto quebrada) mostra o ícone da categoria pelo mapa explícito; nenhum nome de ícone novo.
+- [x] Mesa sem pedido mostra o vazio compacto.
+- [x] Sem hex, nenhum arquivo de `src/theme/` ou `src/components/ui/` alterado.
+- [x] `npx tsc --noEmit`, o lint e o `yarn build` passam.
 
 ## Fora de escopo
 
@@ -174,4 +174,77 @@ Em `src/components/board/rounds/` (novos), um por arquivo:
 
 ## Branch
 
-`task/55-board-round-grouped-items`, base sugerida: `task/53-board-bill-reads-and-screen-frame` (ou `feat/indoor-v2`, se a 01 já tiver mergeado). Roda em paralelo com a 02, a 04 e a 06. Conflito esperado na junção: só em `BoardScreen.tsx`, resolvido pelo mapa de encaixe da 01.
+`task/55-board-round-grouped-items`, cortada de `task/53-board-bill-reads-and-screen-frame` (`3616cbe`, PR #86 ainda aberto) em 2026-11-25. O PR vai contra `task/53-board-bill-reads-and-screen-frame` enquanto o #86 não entrar; depois, contra `feat/indoor-v2`.
+
+## Implementação
+
+**Concluída em:** 2026-11-25
+
+### Camadas tocadas
+
+- Mapa compartilhado: `src/components/board/round-status.ts` (`BOARD_ROUND_STATUS_LABEL`, `BOARD_ROUND_STATUS_TONE`, `RoundStatusTone`) e `RoundStatusPill.tsx`, prontos para a #48.
+- Puros em `src/components/board/rounds/`: `group-board-rounds.ts`, `board-item-composition.ts`, `category-kind-icon.ts`, `board-item-text.ts` (títulos, meta, adicional, removido).
+- Componentes em `rounds/`: `BoardItemsCard`, `BoardRoundList`, `BoardRoundGroup`, `BoardRoundHeader`, `BoardItemList`, `BoardItemRow`, `BoardItemThumb`, `BoardItemMeta`, `BoardItemComposition`, `rounds-metrics.ts`.
+- Alterados: `ReadyBoardScreen.tsx` (o card como segundo filho do `Body`), `board-copy.ts` (copy do card e do vazio), `board-metrics.ts` (`cardShadow`), `board-time.ts` (F6).
+
+### Contratos consumidos
+
+- Item de `GET /boardMovements/{id}/products` como tipado na 01 (`round`, `order_public_id`, `round_status`, `order_created_at`, `option_selections`, `removed_ingredients`). Não conferido contra a `delivery-api` local, só contra o contrato inline.
+
+### Variáveis de ambiente novas
+
+- Nenhuma.
+
+### Decisões que tomei por conta própria
+
+- **F6 resolvido em `parseBoardTimestamp`:** corta a fração além de 3 casas (`.000000Z` vira `.000Z`) e troca o espaço por `T` antes do `Date.parse`. Vale também para `formatBoardMoment`.
+- `describeBoardCount` some quando não há item (o vazio já diz tudo); com itens fica à direita do título.
+- `ReadyBoardScreen` cai no skeleton se `products.data` for `undefined`, **depois** do ramo de erro. **Aprendizado (B1 do review):** o `useQueryScreenState` só devolve `error` com o dado `undefined`, então quem pendura bloco no `ReadyBoardScreen` estreita o dado depois do ramo de erro; antes dele, a tela de erro da #53 fica inalcançável.
+- **Divergências da task, aprovadas no review:** a chave do removido é `${name}-${index}` (a task dizia `${public_id}-${index}`, mas guarda-se só o nome); a miniatura usa `imageThumbUrl || imageUrl`.
+- As medidas do selo ficam em `round-status.ts` (`roundStatusPillMetrics`), para a #48 importar o selo sem depender da pasta do card.
+- Textos puros (título da linha, meta, "+ nome", "S/ nome", "Pedido n · hora") ficaram em `board-item-text.ts`, testáveis sem DOM.
+- Dinheiro por `moneyFormat` de `src/helpers/numberFormat.js` (reais, contrato v1).
+- Sombra do card = `elevations.sm` (o artboard usa o mesmo valor); raio = `componentRadii.paper` (18, não os 20 do canvas).
+- Respiro do artboard: 14 entre o título e o primeiro cabeçalho, 12 entre linhas, 12 acima e abaixo da lista de cada grupo, 4 entre grupos.
+- Divergência de tom com o canvas (decisão 2 da task): selo pelo tema, e não pelo amarelo e verde do artboard. Rótulos `enviado`, `pronto`, `cancelado`, composição de opções/observação e a copy do vazio são **derivados**: confirmar com o dev.
+
+### Como testar
+
+1. `yarn dev`, `http://localhost:3000/board?session=<aberta>` a 390 x 844, com os dois pedidos do roteiro desta task.
+2. Seguir os passos 1 a 8 de `## Testes`. Sem a #1754 na api o cabeçalho sai "Pedido n" sem hora e sem selo.
+
+### O que NÃO foi verificado
+
+- Registro de antes da validação no navegador (seção seguinte). Continua sem verificação só o que depende da delivery-api#1754: o selo e a hora da rodada.
+- Os derivados puros rodaram em `jiti`: dois pedidos viram dois grupos (rodada 2 primeiro, itens na ordem); `status: null` com estado ausente; composição do roteiro (uma opção, um adicional, um removido, sem observação); ícones (`bebida` -> `local_drink`, o resto -> `restaurant_menu`); item de 0,333 sem unitário; parse de `2026-11-23T22:48:09.000000Z` e de data com espaço. O `Date.parse` do Safari em si não foi exercitado.
+
+### Validado no navegador (2026-11-25)
+
+O roteiro rodou com Playwright, no Chromium do sistema, contra a delivery-api local. A mesa usada foi a 001 do restaurante 1, com 16 itens em 9 rodadas, pessoa, observação e um item de quantidade 3. **12 de 12 verificações passaram** (`/tmp/indoor-qa-22/qa55.mjs`).
+
+- **Agrupamento.** Há um grupo por rodada, da mais recente para a mais antiga: Pedido 9 → 1, igual ao `DENSE_RANK` da API. Os cabeçalhos aparecem sem hora e sem selo, porque `round_status` e `order_created_at` ainda chegam `null`.
+- **Linha do item.**
+  - A pessoa aparece ("Maria").
+  - O unitário aparece só quando a quantidade é maior que 1 ("3 x R$ …").
+  - A observação "Limão espremido" entra na composição.
+  - O valor de cada uma das 16 linhas é o `final_price` da API.
+- **Contador:** "9 pedidos · 20 itens".
+- **Espaçamento e console.** Nenhum aviso de `key` duplicada. Os respiros medidos foram 14 do título do card ao primeiro cabeçalho e 12 do cabeçalho ao primeiro item, os mesmos do artboard.
+- **Foto quebrada.** Com as imagens do S3 bloqueadas, todas viram o ícone da categoria: nenhuma `<img>` quebrada e nenhuma `src` vazia.
+- **Erro de rota.** Com `/products` fora, aparece o erro de rota com "Tentar novamente", o que confirma a correção do B1.
+- **Tablet.** Em 820×1180 e 1180×820, os grupos aparecem sem rolagem horizontal.
+- **Ajuste feito no navegador.** As linhas de opção e de adicional passaram de `ink` para `muted`, como a pessoa e a composição da sacola. Em `ink` o card ficava mais pesado que o artboard. O removido continua em `danger` 600.
+
+**Não verificado:**
+- o selo e a hora da rodada, que dependem da delivery-api#1754;
+- item dividido de verdade, porque não há split na base local;
+- Safari do iPadOS;
+- leitor de tela.
+
+## Follow-ups identificados em review
+
+1. **04:** os 2px de `cardPaddingBlockEnd` erram quando o footer chegar; o canvas tem 14 acima do filete.
+2. `useQueryScreenState` devolver união discriminada com `data: TData` no ramo `content`, para nenhuma tela precisar da guarda do B1.
+3. Helper tipado para real (`formatReais(value: number)` em `src/helpers/money.ts` ou um `.d.ts` do `numberFormat.js`) antes que a 04, a 05 e a 07 multipliquem o uso; hoje o parâmetro fica `any`.
+4. Confirmar com o dev: as medidas do selo; `ready` com o mesmo tom de `preparing`; os rótulos `enviado`, `pronto` e `cancelado`; as linhas de opção e de observação; a copy do vazio.
+5. **#48:** o contraste do `RoundStatusPill` na superfície em que a confirmação o desenha; o tom é derivado contra o cartão.
