@@ -5,6 +5,7 @@ import { styled } from '@mui/material/styles';
 import InlineError from '@/components/error/InlineError';
 import { useQueryScreenState } from '@/hooks/use-query-screen-state';
 import { cartScreenMetrics } from '@/theme';
+import { CartVariant, cartPanelForms } from './cart-metrics';
 import CartEmpty from './CartEmpty';
 import CartItemList from './CartItemList';
 import CartLoadError from './CartLoadError';
@@ -20,17 +21,22 @@ export interface CartPanelProps {
   tableRow?: React.ReactNode;
   /** A linha no limite inferior do corpo, de onde os avisos sobem. */
   toastAnchorRef?: RefObject<HTMLElement>;
-  errorForm?: 'route' | 'inline';
+  /**
+   * A moldura: `screen` é a tela do celular, com o total no fim do corpo; `column` e `sheet` são as do tablet, onde o
+   * total mora no rodapé de quem monta o painel e o vazio não leva ao cardápio.
+   */
+  variant?: CartVariant;
   className?: string;
 }
 
 interface RootProps {
   isCentered: boolean;
+  form: CartVariant;
 }
 
 const Root = styled('div', {
-  shouldForwardProp: prop => prop !== 'isCentered',
-})<RootProps>(({ isCentered }) => ({
+  shouldForwardProp: prop => prop !== 'isCentered' && prop !== 'form',
+})<RootProps>(({ isCentered, form }) => ({
   flex: 1,
   minBlockSize: 0,
   overflowY: 'auto',
@@ -39,20 +45,24 @@ const Root = styled('div', {
   '&::-webkit-scrollbar': {
     display: 'none',
   },
-  paddingInline: cartScreenMetrics.paddingInline,
+  paddingInline: cartPanelForms[form].paddingInline,
+  paddingBlockStart: cartPanelForms[form].paddingBlockStart,
   paddingBlockEnd: cartScreenMetrics.paddingBlockEnd,
   outline: 'none',
   ...(isCentered && {
     display: 'flex',
     flexDirection: 'column',
-    '&::before': { content: '""', flex: `${cartScreenMetrics.emptyTopShare} 0 0px` },
-    '&::after': { content: '""', flex: `${cartScreenMetrics.emptyBottomShare} 0 0px` },
+    // a coluna centraliza o vazio, como o artboard; o 2/7 e 5/7 é o respiro da tela inteira do celular
+    '&::before': { content: '""', flex: `${form === 'screen' ? cartScreenMetrics.emptyTopShare : 1} 0 0px` },
+    '&::after': { content: '""', flex: `${form === 'screen' ? cartScreenMetrics.emptyBottomShare : 1} 0 0px` },
   }),
 }));
 
-const TableSlot = styled('div')({
-  marginBlockEnd: cartScreenMetrics.restaurantMarginBlockEnd,
-});
+const TableSlot = styled('div', {
+  shouldForwardProp: prop => prop !== 'form',
+})<{ form: CartVariant }>(({ form }) => ({
+  marginBlockEnd: cartPanelForms[form].tableMarginBlockEnd,
+}));
 
 const RefreshSlot = styled('div')({
   marginBlockStart: cartScreenMetrics.summaryMarginBlockStart,
@@ -63,7 +73,7 @@ const RefreshSlot = styled('div')({
  * guardado a sacola é o vazio e não há request; com id, a primeira leitura é o esqueleto, e a releitura que falha
  * com a lista na tela vira aviso acima do total, sem derrubar a lista.
  */
-const CartPanel: React.FC<CartPanelProps> = ({ tableRow, toastAnchorRef, errorForm = 'route', className }) => {
+const CartPanel: React.FC<CartPanelProps> = ({ tableRow, toastAnchorRef, variant = 'screen', className }) => {
   const { cart, query, isFetching, retry } = useCart();
   const screen = useQueryScreenState(query);
   const actions = useCartActions({ anchorRef: toastAnchorRef });
@@ -82,39 +92,39 @@ const CartPanel: React.FC<CartPanelProps> = ({ tableRow, toastAnchorRef, errorFo
 
   function renderContent(): React.ReactNode {
     if (isEmpty) {
-      return <CartEmpty />;
+      return <CartEmpty hasMenuAction={variant === 'screen'} />;
     }
 
     if (cart === undefined) {
       return screen.view === 'error' ? (
         <CartLoadError
-          form={errorForm}
+          form={variant === 'screen' ? 'route' : 'inline'}
           error={screen.error}
           failureStreak={screen.failureStreak}
           isRetrying={isFetching}
           onRetry={retry}
         />
       ) : (
-        <CartScreenSkeleton />
+        <CartScreenSkeleton hasTableRow={Boolean(tableRow)} />
       );
     }
 
     return (
       <>
-        {tableRow && <TableSlot>{tableRow}</TableSlot>}
-        <CartItemList cart={cart} actions={actions} onRemove={handleRemove} />
+        {tableRow && <TableSlot form={variant}>{tableRow}</TableSlot>}
+        <CartItemList cart={cart} actions={actions} onRemove={handleRemove} variant={variant} />
         {screen.isRefreshFailed && (
           <RefreshSlot>
             <InlineError message={REFRESH_ERROR} onRetry={retry} isRetrying={isFetching} />
           </RefreshSlot>
         )}
-        <CartTotals cart={cart} isFetching={isFetching} />
+        {variant === 'screen' && <CartTotals cart={cart} isFetching={isFetching} />}
       </>
     );
   }
 
   return (
-    <Root ref={rootRef} tabIndex={-1} isCentered={isEmpty} className={className}>
+    <Root ref={rootRef} tabIndex={-1} isCentered={isEmpty} form={variant} className={className}>
       {renderContent()}
     </Root>
   );

@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { styled } from '@mui/material/styles';
-import { cartScreenMetrics } from '@/theme';
 import { Cart } from '@/types/cart';
+import { CartVariant, cartPanelForms } from './cart-metrics';
 import CartItemRow from './CartItemRow';
 import { UseCartActions } from './use-cart-actions';
 
@@ -13,19 +13,22 @@ export interface CartItemListProps {
   cart: Cart;
   actions: UseCartActions;
   onRemove: (itemId: number) => void;
+  variant?: CartVariant;
 }
 
-const List = styled('ul')({
+const List = styled('ul', {
+  shouldForwardProp: prop => prop !== 'listGap',
+})<{ listGap: number }>(({ listGap }) => ({
   display: 'flex',
   flexDirection: 'column',
-  gap: cartScreenMetrics.listGap,
+  gap: listGap,
   margin: 0,
   padding: 0,
-});
+}));
 
-const CartItemList: React.FC<CartItemListProps> = ({ cart, actions, onRemove }) => {
+const CartItemList: React.FC<CartItemListProps> = ({ cart, actions, onRemove, variant = 'screen' }) => {
   return (
-    <List aria-label={LIST_LABEL}>
+    <List aria-label={LIST_LABEL} listGap={cartPanelForms[variant].listGap}>
       {cart.items.map(item => (
         <CartItemRow
           key={item.id}
@@ -34,6 +37,7 @@ const CartItemList: React.FC<CartItemListProps> = ({ cart, actions, onRemove }) 
           isSubject={actions.subjectItemId === item.id}
           onQuantityChange={actions.changeQuantity}
           onRemove={onRemove}
+          variant={variant}
         />
       ))}
     </List>

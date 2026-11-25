@@ -5,7 +5,7 @@ import { styled } from '@mui/material/styles';
 import { formatCents } from '@/helpers/money';
 import { cartScreenMetrics, cartSummaryMetrics, fontFamilies, interactionOpacities, pxToRem } from '@/theme';
 import { Cart } from '@/types/cart';
-import { cartMetrics } from './cart-metrics';
+import { CartVariant, cartFlatTotalsMetrics, cartMetrics } from './cart-metrics';
 
 const SUBTOTAL_LABEL = 'Subtotal';
 const PROMOTIONS_LABEL = 'Promoções';
@@ -17,21 +17,31 @@ const NO_DISCOUNT = 0;
 export interface CartTotalsProps {
   cart: Cart;
   isFetching: boolean;
+  /** `screen` é o cartão do celular; `column` e `sheet` são o total solto no rodapé do tablet. */
+  variant?: CartVariant;
+}
+
+interface RootProps {
+  isFlat: boolean;
 }
 
 interface TotalRowProps {
   hasBreakdown: boolean;
 }
 
-const Root = styled('div')(({ theme }) => ({
+const Root = styled('div', {
+  shouldForwardProp: prop => prop !== 'isFlat',
+})<RootProps>(({ theme, isFlat }) => ({
   display: 'flex',
   flexDirection: 'column',
   gap: cartSummaryMetrics.gap,
-  marginBlockStart: cartScreenMetrics.summaryMarginBlockStart,
-  padding: cartSummaryMetrics.padding,
-  borderRadius: cartSummaryMetrics.radius,
-  backgroundColor: theme.vars.palette.surface.card,
-  boxShadow: cartSummaryMetrics.shadow,
+  ...(!isFlat && {
+    marginBlockStart: cartScreenMetrics.summaryMarginBlockStart,
+    padding: cartSummaryMetrics.padding,
+    borderRadius: cartSummaryMetrics.radius,
+    backgroundColor: theme.vars.palette.surface.card,
+    boxShadow: cartSummaryMetrics.shadow,
+  }),
 }));
 
 const Row = styled('div')(({ theme }) => ({
@@ -71,21 +81,23 @@ const TotalRow = styled('div', {
   }),
 }));
 
-const TotalLabel = styled('span')(({ theme }) => ({
+const TotalLabel = styled('span', {
+  shouldForwardProp: prop => prop !== 'fontSize',
+})<{ fontSize: number }>(({ theme, fontSize }) => ({
   fontFamily: fontFamilies.text,
-  fontSize: pxToRem(cartSummaryMetrics.totalLabelFontSize),
+  fontSize: pxToRem(fontSize),
   fontWeight: cartSummaryMetrics.totalLabelWeight,
   lineHeight: cartSummaryMetrics.totalLabelLineHeight,
   color: theme.vars.palette.surface.ink,
 }));
 
 const TotalValue = styled('span', {
-  shouldForwardProp: prop => prop !== 'isFetching',
-})<{ isFetching: boolean }>(({ theme, isFetching }) => ({
+  shouldForwardProp: prop => prop !== 'isFetching' && prop !== 'fontSize',
+})<{ isFetching: boolean; fontSize: number }>(({ theme, isFetching, fontSize }) => ({
   flexShrink: 0,
   whiteSpace: 'nowrap',
   fontFamily: fontFamilies.display,
-  fontSize: pxToRem(cartSummaryMetrics.totalValueFontSize),
+  fontSize: pxToRem(fontSize),
   fontWeight: cartSummaryMetrics.totalValueWeight,
   lineHeight: cartSummaryMetrics.totalValueLineHeight,
   color: theme.vars.palette.surface.ink,
@@ -105,11 +117,12 @@ const Note = styled('p')(({ theme }) => ({
  * Tudo vem do servidor, em centavos: nada aqui soma. Subtotal e promoções só entram com desconto, porque sem elas a
  * soma das linhas não bateria com o total na frente de quem pede.
  */
-const CartTotals: React.FC<CartTotalsProps> = ({ cart, isFetching }) => {
+const CartTotals: React.FC<CartTotalsProps> = ({ cart, isFetching, variant = 'screen' }) => {
   const hasDiscount = cart.discount > NO_DISCOUNT;
+  const flat = variant === 'screen' ? null : cartFlatTotalsMetrics[variant];
 
   return (
-    <Root>
+    <Root isFlat={flat !== null}>
       {hasDiscount && (
         <>
           <Row>
@@ -123,8 +136,12 @@ const CartTotals: React.FC<CartTotalsProps> = ({ cart, isFetching }) => {
         </>
       )}
       <TotalRow hasBreakdown={hasDiscount}>
-        <TotalLabel>{TOTAL_LABEL}</TotalLabel>
-        <TotalValue isFetching={isFetching} aria-busy={isFetching || undefined}>
+        <TotalLabel fontSize={flat?.labelFontSize ?? cartSummaryMetrics.totalLabelFontSize}>{TOTAL_LABEL}</TotalLabel>
+        <TotalValue
+          isFetching={isFetching}
+          fontSize={flat?.valueFontSize ?? cartSummaryMetrics.totalValueFontSize}
+          aria-busy={isFetching || undefined}
+        >
           {formatCents(cart.total)}
         </TotalValue>
       </TotalRow>

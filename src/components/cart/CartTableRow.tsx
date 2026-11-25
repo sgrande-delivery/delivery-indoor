@@ -29,7 +29,7 @@ const Root = styled('div', {
   paddingBlock: cartRowMetrics.restaurant.paddingBlock,
   paddingInline: cartRowMetrics.restaurant.paddingInline,
   borderRadius: cartRowMetrics.radius,
-  backgroundColor: theme.vars.palette.surface.card,
+  backgroundColor: isCompact ? theme.vars.palette.surface.field : theme.vars.palette.surface.card,
   boxShadow: isCompact ? 'none' : cartRowMetrics.shadow,
 }));
 

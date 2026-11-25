@@ -25,7 +25,7 @@ const CartScreen: React.FC = () => {
   return (
     <Root>
       <CartHeader />
-      <CartPanel tableRow={<CartTableRow />} toastAnchorRef={toastAnchorRef} errorForm="route" />
+      <CartPanel tableRow={<CartTableRow />} toastAnchorRef={toastAnchorRef} />
       <ToastAnchor ref={toastAnchorRef} aria-hidden />
     </Root>
   );

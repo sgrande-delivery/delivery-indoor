@@ -3,13 +3,16 @@
 import React, { createContext, PropsWithChildren, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { styled } from '@mui/material/styles';
+import CartColumn from '@/components/cart/dock/CartColumn';
+import { isCartDockRoute } from '@/components/cart/dock/cart-dock-routes';
+import TabletCartDock from '@/components/cart/dock/TabletCartDock';
 import OfflineBanner from '@/components/offline/OfflineBanner';
 import WaiterCallButton from '@/components/waiter/WaiterCallButton';
 import { useRestaurant } from '@/hooks/use-restaurant';
 import { useBoardSession } from '@/providers/board-session';
 import { appShellMetrics, CHROME_BOTTOM_INSET_VAR } from '@/theme';
 import ShellNav from './ShellNav';
-import { tabletShellMediaQuery } from './shell-metrics';
+import { tabletLandscapeMediaQuery, tabletPortraitShellMediaQuery, tabletShellMediaQuery } from './shell-metrics';
 import { resolveActiveTab, shellTabsFor } from './shell-tabs';
 import TableTopBar, { TableTopBarTable } from './TableTopBar';
 
@@ -53,8 +56,32 @@ const Frame = styled('div')({
   },
 });
 
+// A região de conteúdo e, em paisagem, a coluna da sacola lado a lado: as duas rolam por dentro e nenhuma mede a outra.
+const Workspace = styled('div')({
+  display: 'flex',
+  flex: 1,
+  minBlockSize: 0,
+});
+
+const CartColumnSlot = styled('div')({
+  display: 'none',
+  flexShrink: 0,
+  [`@media ${tabletLandscapeMediaQuery}`]: {
+    display: 'flex',
+  },
+});
+
+const TabletCartBarSlot = styled('div')({
+  display: 'none',
+  flexShrink: 0,
+  [`@media ${tabletPortraitShellMediaQuery}`]: {
+    display: 'block',
+  },
+});
+
 const Scroller = styled('main')({
   flex: 1,
+  minInlineSize: 0,
   minBlockSize: 0,
   overflowY: 'auto',
   scrollbarWidth: 'none',
@@ -101,6 +128,7 @@ const AppShell: React.FC<PropsWithChildren> = ({ children }) => {
   const scrollerValue = useMemo(() => scrollerRef, []);
 
   const showChrome = session.hasTable || session.isLoading;
+  const showsCartDock = showChrome && isCartDockRoute(pathname);
 
   let table: TableTopBarTable = { kind: 'none' };
 
@@ -158,7 +186,19 @@ const AppShell: React.FC<PropsWithChildren> = ({ children }) => {
         </TopBarSlot>
         <OfflineBanner />
         <Frame>
-          <Scroller ref={scrollerRef}>{children}</Scroller>
+          <Workspace>
+            <Scroller ref={scrollerRef}>{children}</Scroller>
+            {showsCartDock && (
+              <CartColumnSlot>
+                <CartColumn />
+              </CartColumnSlot>
+            )}
+          </Workspace>
+          {showsCartDock && (
+            <TabletCartBarSlot>
+              <TabletCartDock />
+            </TabletCartBarSlot>
+          )}
           <ChromeBlock ref={setChromeBlock} isHidden={!showChrome}>
             {showChrome && <ShellNav activeTab={resolveActiveTab(pathname, 'phone')} />}
           </ChromeBlock>
