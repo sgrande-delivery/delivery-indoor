@@ -3,8 +3,8 @@
 import { useMemo, useState } from 'react';
 import { InfiniteData, useInfiniteQuery, UseInfiniteQueryResult } from '@tanstack/react-query';
 import { flattenUniqueProducts } from '@/components/category/use-category-products';
-import { SearchFilters } from '@/helpers/search-params';
-import { fetchSearchResultsPage, searchResultsQueryKey } from '@/services/search';
+import { differsOnlyByTerm, SearchFilters } from '@/helpers/search-params';
+import { fetchSearchResultsPage, searchResultsKeyFilters, searchResultsQueryKey } from '@/services/search';
 import { ProductSummary } from '@/types/product';
 import { SearchFacetCategory } from '@/types/product-page';
 import { RelaxCandidate, SearchResultsPage } from '@/types/search';
@@ -28,6 +28,10 @@ export interface UseSearchResults {
    * entra: a primeira página já foi confirmada com o filtro.
    */
   hidesStaleResults: boolean;
+  /** A lista na tela é a do termo anterior: só o termo mudou, e a resposta nova ainda não chegou. */
+  isPlaceholderData: boolean;
+  /** O termo de quem gerou a lista na tela: durante a atualização, o anterior — é ele que o destaque marca. */
+  displayedTerm: string | null;
 }
 
 /**
@@ -45,7 +49,21 @@ function useRetainedFacets(current: SearchFacetCategory[] | undefined): SearchFa
   return current ?? known;
 }
 
-export function useSearchResults(filters: SearchFilters): UseSearchResults {
+/**
+ * Enquanto o termo novo carrega, a lista na tela é a do termo anterior. Marcar nela o termo novo deixaria sem destaque
+ * os itens que só casavam com o anterior, como se não batessem com a busca.
+ */
+function useDisplayedTerm(term: string | null, isPlaceholderData: boolean, hasData: boolean): string | null {
+  const [settled, setSettled] = useState(term);
+
+  if (!isPlaceholderData && hasData && settled !== term) {
+    setSettled(term);
+  }
+
+  return isPlaceholderData ? settled : term;
+}
+
+export function useSearchResults(filters: SearchFilters, enabled: boolean): UseSearchResults {
   const query = useInfiniteQuery({
     queryKey: searchResultsQueryKey(filters),
     queryFn: ({ pageParam }) => fetchSearchResultsPage(filters, pageParam),
@@ -53,6 +71,19 @@ export function useSearchResults(filters: SearchFilters): UseSearchResults {
     // O cursor é do servidor: nenhuma conta sobre `total`/`per_page`.
     getNextPageParam: lastPage => (lastPage.meta.has_more ? lastPage.meta.current_page + 1 : undefined),
     staleTime: SEARCH_STALE_TIME,
+    enabled,
+    // A lista anterior só segura a tela quando o que mudou é o termo, ela tinha resultado e não falhou: vazio e erro
+    // anteriores viram skeleton, e filtro novo também.
+    placeholderData: (previousData, previousQuery) => {
+      const previous = searchResultsKeyFilters(previousQuery?.queryKey);
+      const isUsable =
+        previous !== null &&
+        differsOnlyByTerm(previous, filters) &&
+        previousQuery?.state.status !== 'error' &&
+        previousData?.pages[0]?.data.length !== 0;
+
+      return isUsable ? previousData : undefined;
+    },
   });
 
   const hidesStaleResults = query.isError && !query.isFetchNextPageError && filters.excludeIngredients.length > 0;
@@ -61,6 +92,7 @@ export function useSearchResults(filters: SearchFilters): UseSearchResults {
   const first = pages?.[0];
   const last = pages?.[pages.length - 1];
   const categoryFacets = useRetainedFacets(first?.categoryFacets);
+  const displayedTerm = useDisplayedTerm(filters.term, query.isPlaceholderData, first !== undefined);
 
   return {
     query,
@@ -69,6 +101,8 @@ export function useSearchResults(filters: SearchFilters): UseSearchResults {
     relaxed: first?.relaxed ?? [],
     categoryFacets,
     hidesStaleResults,
+    isPlaceholderData: query.isPlaceholderData,
+    displayedTerm,
     lastLoadedPage: last ? { current: last.meta.current_page, last: last.meta.last_page } : null,
   };
 }

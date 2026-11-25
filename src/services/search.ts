@@ -1,4 +1,4 @@
-import { buildSearchHref, resolveSearchSort, SearchFilters } from '@/helpers/search-params';
+import { buildSearchHref, parseSearchHref, resolveSearchSort, SearchFilters } from '@/helpers/search-params';
 import { ProductPageResponse } from '@/types/product-page';
 import { RelaxCandidate, relaxableFilters, SearchResultsPage } from '@/types/search';
 import { api } from './api';
@@ -39,6 +39,13 @@ export async function fetchSearchPendingTotal(filters: SearchFilters): Promise<n
 /** O endereço canônico do recorte: o mesmo filtro por caminhos diferentes reusa o cache, e `sort` novo é query nova. */
 export function searchResultsQueryKey(filters: SearchFilters) {
   return ['search-results', buildSearchHref(filters)] as const;
+}
+
+/** O recorte de uma chave de `searchResultsQueryKey`; `null` para chave de outra forma. */
+export function searchResultsKeyFilters(queryKey: readonly unknown[] | undefined): SearchFilters | null {
+  const href = queryKey?.[1];
+
+  return queryKey?.[0] === 'search-results' && typeof href === 'string' ? parseSearchHref(href) : null;
 }
 
 function isRelaxCandidate(

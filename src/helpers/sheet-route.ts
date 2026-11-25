@@ -1,6 +1,8 @@
 export interface SheetRoute {
   param: string;
   href: (pathname: string, value: string, search: string) => string;
+  /** O estado de histórico só com a marca do app, para um `replaceState` que não a perca; `null` sem ela. */
+  ownHistoryState: () => Record<string, true> | null;
   push: (value: string) => void;
   dismiss: () => void;
 }
@@ -44,6 +46,10 @@ export function createSheetRoute(param: string, historyMark: string): SheetRoute
     return historyMark in state && state[historyMark] === true;
   }
 
+  function ownHistoryState(): Record<string, true> | null {
+    return wasPushedByApp() ? { [historyMark]: true } : null;
+  }
+
   function push(value: string): void {
     const { pathname, search } = window.location;
 
@@ -61,5 +67,5 @@ export function createSheetRoute(param: string, historyMark: string): SheetRoute
     window.history.replaceState(null, '', baseHref(pathname, search));
   }
 
-  return { param, href, push, dismiss };
+  return { param, href, ownHistoryState, push, dismiss };
 }

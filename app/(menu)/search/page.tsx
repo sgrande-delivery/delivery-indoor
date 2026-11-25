@@ -1,14 +1,11 @@
-import type { ReactElement } from 'react';
-import SearchResultsScreen from '@/components/search/SearchResultsScreen';
-import SearchScreen from '@/components/search/SearchScreen';
-import { hasActiveSearch, parseSearchFilters } from '@/helpers/search-params';
+import { type ReactElement, Suspense } from 'react';
+import SearchPage from '@/components/search/SearchPage';
 
-interface SearchPageProps {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}
-
-export default async function SearchPage({ searchParams }: SearchPageProps): Promise<ReactElement> {
-  const filters = parseSearchFilters(await searchParams);
-
-  return hasActiveSearch(filters) ? <SearchResultsScreen filters={filters} /> : <SearchScreen />;
+// `useSearchParams` precisa de fronteira para o prerender: o do layout do grupo é só da folha do produto.
+export default function Page(): ReactElement {
+  return (
+    <Suspense fallback={null}>
+      <SearchPage />
+    </Suspense>
+  );
 }

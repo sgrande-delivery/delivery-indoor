@@ -7,16 +7,14 @@ import CategoryProductList from '@/components/category/CategoryProductList';
 import InlineError from '@/components/error/InlineError';
 import RouteErrorState from '@/components/error/RouteErrorState';
 import { MENU_ERROR_DESCRIPTION, MENU_REFRESH_ERROR } from '@/components/menu/menu-copy';
-import MenuScreenLayout from '@/components/menu/MenuScreenLayout';
 import PhoneOnly from '@/components/menu/PhoneOnly';
 import ProductGridCard from '@/components/menu/ProductGridCard';
 import ProductGridSkeleton from '@/components/menu/ProductGridSkeleton';
-import { useMenuScreenScroller } from '@/components/menu/menu-scroller';
 import { tabletGutter } from '@/components/menu/tablet-gutter';
 import { tabletShellMediaQuery } from '@/components/shell/shell-metrics';
 import { EmptyState } from '@/components/ui';
-import { buildSearchHref, SearchFilters } from '@/helpers/search-params';
 import { resolveScrollBehavior } from '@/helpers/scroll-behavior';
+import { buildSearchHref, SearchFilters } from '@/helpers/search-params';
 import { useLoadMore } from '@/hooks/use-load-more';
 import { useQueryScreenState } from '@/hooks/use-query-screen-state';
 import { useIsOffline } from '@/providers/connectivity/ConnectivityProvider';
@@ -27,21 +25,15 @@ import { createRelaxSuggestion } from './relax-suggestion';
 import RelaxSuggestionBand from './RelaxSuggestionBand';
 import { searchLayoutMetrics } from './search-metrics';
 import SearchControlsRail from './SearchControlsRail';
-import SearchHeader from './SearchHeader';
 import SearchProductItem from './SearchProductItem';
 import SearchResultsCount from './SearchResultsCount';
-import SearchTermField from './SearchTermField';
-import { useSearchNavigation } from './use-search-navigation';
+import { SearchNavigation } from './use-search-navigation';
 import { useSearchResults } from './use-search-results';
 
 const ERROR_TITLE = 'Não conseguimos fazer a busca';
 const EMPTY_TITLE = 'Nada encontrado';
 const END_LABEL = 'Você viu todos os resultados';
 const EMPTY_DESCRIPTION = 'Tente outro termo ou tire um dos filtros.';
-
-export interface SearchResultsScreenProps {
-  filters: SearchFilters;
-}
 
 // O fim da lista de linhas do celular; o tablet leva o respiro na própria grade.
 const Body = styled('div')({
@@ -57,14 +49,46 @@ const NoticeSlot = styled('div')({
   ...tabletGutter('paddingInline'),
 });
 
-const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ filters }) => {
-  const { query, products, total, relaxed, categoryFacets, lastLoadedPage, hidesStaleResults } =
-    useSearchResults(filters);
+export interface SearchResultsView {
+  /** A trilha de controles e a faixa de relaxamento: ficam no cabeçalho, depois do campo. */
+  controls: React.ReactNode;
+  band: React.ReactNode;
+  body: React.ReactNode;
+}
+
+export interface UseSearchResultsViewParams {
+  filters: SearchFilters;
+  enabled: boolean;
+  navigation: SearchNavigation;
+  scrollerRef: React.RefObject<HTMLElement | null>;
+  isTablet: boolean;
+}
+
+/**
+ * O resultado dividido em cabeçalho e corpo: o campo da busca fica fora daqui, num lugar que não troca, e é isso que
+ * mantém o mesmo `input` (e o teclado aberto) entre a entrada e a lista.
+ */
+export function useSearchResultsView({
+  filters,
+  enabled,
+  navigation,
+  scrollerRef,
+  isTablet,
+}: UseSearchResultsViewParams): SearchResultsView {
+  const {
+    query,
+    products,
+    total,
+    relaxed,
+    categoryFacets,
+    lastLoadedPage,
+    hidesStaleResults,
+    isPlaceholderData,
+    displayedTerm,
+  } = useSearchResults(filters, enabled);
   const catalog = useIngredients('').data;
   const screen = useQueryScreenState(query);
-  const navigation = useSearchNavigation(filters);
   const isOffline = useIsOffline();
-  const { regionRef, scrollerRef, isTablet } = useMenuScreenScroller();
   const href = buildSearchHref(filters);
   const lastHref = useRef(href);
 
@@ -74,7 +98,12 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ filters }) =>
   }, [fetchNextPage]);
 
   const sentinelRef = useLoadMore(
-    query.hasNextPage && !query.isFetchingNextPage && !query.isFetchNextPageError && !isOffline,
+    enabled &&
+      !isPlaceholderData &&
+      query.hasNextPage &&
+      !query.isFetchingNextPage &&
+      !query.isFetchNextPageError &&
+      !isOffline,
     loadMore,
     scrollerRef
   );
@@ -96,34 +125,24 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ filters }) =>
 
   const renderItem = useCallback(
     (product: ProductSummary) => (
-      <SearchProductItem product={product} term={filters.term} includedIngredients={includedNames} />
+      <SearchProductItem product={product} term={displayedTerm} includedIngredients={includedNames} />
     ),
-    [filters.term, includedNames]
+    [displayedTerm, includedNames]
   );
 
   const renderGridItem = useCallback(
-    (product: ProductSummary) => <ProductGridCard product={product} term={filters.term} />,
-    [filters.term]
-  );
-
-  const header = (
-    <SearchHeader>
-      <SearchTermField
-        key={filters.term ?? ''}
-        initialTerm={filters.term ?? ''}
-        onSubmit={navigation.submit}
-        onClear={navigation.clear}
-      />
-    </SearchHeader>
+    (product: ProductSummary) => <ProductGridCard product={product} term={displayedTerm} />,
+    [displayedTerm]
   );
 
   const controls = <SearchControlsRail filters={filters} facets={categoryFacets} onChange={navigation.go} />;
-
   const isRetryingHidden = hidesStaleResults && query.isFetching;
 
   if (screen.view === 'error' || (hidesStaleResults && !isRetryingHidden)) {
-    return (
-      <MenuScreenLayout header={header} regionRef={regionRef}>
+    return {
+      controls: null,
+      band: null,
+      body: (
         <RouteErrorState
           error={screen.error}
           failureStreak={screen.failureStreak}
@@ -131,27 +150,23 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ filters }) =>
           title={ERROR_TITLE}
           description={MENU_ERROR_DESCRIPTION}
         />
-      </MenuScreenLayout>
-    );
+      ),
+    };
   }
 
   if (screen.view === 'skeleton' || isRetryingHidden) {
-    return (
-      <MenuScreenLayout
-        header={
-          <>
-            {header}
-            {controls}
-          </>
-        }
-        regionRef={regionRef}
-      >
-        <PhoneOnly>
-          <CategoryListSkeleton />
-        </PhoneOnly>
-        <ProductGridSkeleton />
-      </MenuScreenLayout>
-    );
+    return {
+      controls,
+      band: null,
+      body: (
+        <>
+          <PhoneOnly>
+            <CategoryListSkeleton />
+          </PhoneOnly>
+          <ProductGridSkeleton />
+        </>
+      ),
+    };
   }
 
   const suggestion = createRelaxSuggestion(relaxed, filters);
@@ -160,40 +175,34 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ filters }) =>
   );
 
   if (products.length === 0 && !query.hasNextPage) {
-    return (
-      <MenuScreenLayout
-        header={
-          <>
-            {header}
-            {controls}
-          </>
-        }
-        regionRef={regionRef}
-      >
-        <EmptyState icon="search_off" title={EMPTY_TITLE} description={EMPTY_DESCRIPTION} />
-        {band}
-      </MenuScreenLayout>
-    );
-  }
-
-  return (
-    <MenuScreenLayout
-      header={
+    return {
+      controls,
+      band: null,
+      body: (
         <>
-          {header}
-          {controls}
+          <EmptyState icon="search_off" title={EMPTY_TITLE} description={EMPTY_DESCRIPTION} />
           {band}
         </>
-      }
-      regionRef={regionRef}
-    >
+      ),
+    };
+  }
+
+  return {
+    controls,
+    band,
+    body: (
       <Body>
         {query.isRefetchError && (
           <NoticeSlot>
             <InlineError message={MENU_REFRESH_ERROR} onRetry={screen.retry} isRetrying={query.isFetching} />
           </NoticeSlot>
         )}
-        <SearchResultsCount total={total ?? products.length} term={filters.term} page={lastLoadedPage} />
+        <SearchResultsCount
+          total={total ?? products.length}
+          term={filters.term}
+          page={lastLoadedPage}
+          isUpdating={isPlaceholderData}
+        />
         <CategoryProductList
           products={products}
           renderItem={renderItem}
@@ -207,8 +216,6 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({ filters }) =>
           sentinelRef={sentinelRef}
         />
       </Body>
-    </MenuScreenLayout>
-  );
-};
-
-export default SearchResultsScreen;
+    ),
+  };
+}
