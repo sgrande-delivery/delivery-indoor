@@ -27,7 +27,7 @@ export function shellTabsFor(format: ShellFormat): readonly ShellTab[] {
   return format === 'tablet' ? shellTabs.filter(tab => TABLET_TAB_KEYS.includes(tab.key)) : shellTabs;
 }
 
-function isInTree(pathname: string, route: string): boolean {
+export function isInTree(pathname: string, route: string): boolean {
   return pathname === route || pathname.startsWith(`${route}/`);
 }
 
