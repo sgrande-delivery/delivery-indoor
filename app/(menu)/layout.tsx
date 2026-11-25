@@ -1,4 +1,5 @@
 import { PropsWithChildren, ReactElement, Suspense } from 'react';
+import CartAddActionProvider from '@/components/cart/CartAddActionProvider';
 import ProductSheet from '@/components/product/sheet/ProductSheet';
 
 // O detalhe do produto é uma sobreposição endereçada por `?product=`, montada uma vez para as rotas do
@@ -8,9 +9,11 @@ export default function MenuLayout({ children }: PropsWithChildren): ReactElemen
   return (
     <>
       {children}
-      <Suspense fallback={null}>
-        <ProductSheet />
-      </Suspense>
+      <CartAddActionProvider>
+        <Suspense fallback={null}>
+          <ProductSheet />
+        </Suspense>
+      </CartAddActionProvider>
     </>
   );
 }
