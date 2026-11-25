@@ -34,7 +34,7 @@ A sacola do `delivery-client` já é o carrinho v2, e é a fonte: `src/services/
 | 02 | Identidade de quem pede: diálogo de nome, persistência e troca | [#47](https://github.com/sgrande-delivery/delivery-indoor/issues/47) | [47-ordering-person-identity.md](./tasks/47-ordering-person-identity.md) | #20 | shipped |
 | 03 | Envio do pedido e tela de "pedido enviado" | [#48](https://github.com/sgrande-delivery/delivery-indoor/issues/48) | [48-send-order-confirmation.md](./tasks/48-send-order-confirmation.md) | 01, 02, 04, #23 (01 e 03) | shipped |
 | 04 | Sacola no tablet: coluna fixa em paisagem e painel inferior em retrato | [#49](https://github.com/sgrande-delivery/delivery-indoor/issues/49) | [49-tablet-cart-panel.md](./tasks/49-tablet-cart-panel.md) | 01 (e, para o roteiro em navegador, #21 03 e 05) | shipped |
-| 05 | Recusas do envio e estados da sacola (vazia, limpando, offline) | [#50](https://github.com/sgrande-delivery/delivery-indoor/issues/50) | [50-send-refusals-cart-states.md](./tasks/50-send-refusals-cart-states.md) | 03 | pendente |
+| 05 | Recusas do envio e estados da sacola (vazia, limpando, offline) | [#50](https://github.com/sgrande-delivery/delivery-indoor/issues/50) | [50-send-refusals-cart-states.md](./tasks/50-send-refusals-cart-states.md) | 03 | executada |
 
 Status: `a especificar` → `pendente` → `executada` → `shipped`.
 

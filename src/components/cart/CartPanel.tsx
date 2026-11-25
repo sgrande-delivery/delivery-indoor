@@ -10,9 +10,11 @@ import CartEmpty from './CartEmpty';
 import CartItemList from './CartItemList';
 import CartLoadError from './CartLoadError';
 import CartScreenSkeleton from './CartScreenSkeleton';
+import CartSendPending from './CartSendPending';
 import CartTotals from './CartTotals';
 import { useCart } from './use-cart';
 import { useCartActions } from './use-cart-actions';
+import { useSendStatus } from './use-send-status';
 
 const REFRESH_ERROR = 'Não foi possível atualizar a sacola.';
 
@@ -77,6 +79,7 @@ const CartPanel: React.FC<CartPanelProps> = ({ tableRow, toastAnchorRef, variant
   const { cart, query, isFetching, retry } = useCart();
   const screen = useQueryScreenState(query);
   const actions = useCartActions({ anchorRef: toastAnchorRef });
+  const { isRetryable } = useSendStatus();
   const rootRef = useRef<HTMLDivElement>(null);
 
   function handleRemove(itemId: number): void {
@@ -91,6 +94,10 @@ const CartPanel: React.FC<CartPanelProps> = ({ tableRow, toastAnchorRef, variant
   const isEmpty = cart === null || (cart !== undefined && cart.items.length === 0);
 
   function renderContent(): React.ReactNode {
+    if (cart === null && isRetryable) {
+      return <CartSendPending />;
+    }
+
     if (isEmpty) {
       return <CartEmpty hasMenuAction={variant === 'screen'} />;
     }
@@ -124,7 +131,7 @@ const CartPanel: React.FC<CartPanelProps> = ({ tableRow, toastAnchorRef, variant
   }
 
   return (
-    <Root ref={rootRef} tabIndex={-1} isCentered={isEmpty} form={variant} className={className}>
+    <Root ref={rootRef} tabIndex={-1} data-cart-panel isCentered={isEmpty} form={variant} className={className}>
       {renderContent()}
     </Root>
   );

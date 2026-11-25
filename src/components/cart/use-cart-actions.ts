@@ -1,14 +1,24 @@
 'use client';
 
 import { RefObject } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useIsMutating, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui';
-import { isCartAlreadyCheckedOut, isCartNotFound, removeCartItem, updateCartItemQuantity } from '@/services/cart';
-import { CART_QUERY_KEY } from './cart-query';
+import { useIsOffline } from '@/providers/connectivity/ConnectivityProvider';
+import {
+  isCartAlreadyCheckedOut,
+  isCartItemNotFound,
+  isCartNotFound,
+  removeCartItem,
+  updateCartItemQuantity,
+} from '@/services/cart';
+import { getSendState } from './send-store';
+import { CART_CLEAR_MUTATION_KEY, CART_QUERY_KEY, CART_WRITE_MUTATION_KEY } from './cart-query';
 
 const QUANTITY_ERROR = 'Não foi possível mudar a quantidade. Tente de novo.';
 const REMOVE_ERROR = 'Não foi possível remover este item. Tente de novo.';
 const REMOVE_SUCCESS = 'Item removido da sacola.';
+const CLEAR_SUCCESS = 'Sacola limpa.';
+const CLEAR_PARTIAL_ERROR = 'Não foi possível limpar a sacola inteira. Veja o que ficou.';
 
 interface ChangeQuantityInput {
   itemId: number;
@@ -23,13 +33,18 @@ export interface UseCartActionsOptions {
 export interface UseCartActions {
   /**
    * A barreira, e é ela que desenha os controles: as escritas mexem na mesma sacola e todas releem ao terminar,
-   * então enquanto uma está em voo nenhuma outra dispara.
+   * então enquanto uma está em voo, em qualquer moldura, nenhuma outra dispara. Offline também a liga: a escrita
+   * nasceria pausada e dispararia sozinha quando a rede voltasse.
    */
   isPending: boolean;
+  /** A limpeza está em voo; é uma escrita, então `isPending` também vale. */
+  isClearing: boolean;
   /** O item que é o assunto da escrita em voo. Só serve ao `aria-busy` da linha dele. */
   subjectItemId: number | null;
   changeQuantity: (itemId: number, quantity: number) => void;
   remove: (itemId: number, onRemoved: () => void) => void;
+  /** Apaga em série os itens da sacola **lida**: o que chegou depois, de outra aba, fica e a releitura mostra. */
+  clear: (itemIds: number[]) => void;
 }
 
 /**
@@ -40,6 +55,7 @@ export interface UseCartActions {
 export function useCartActions({ anchorRef }: UseCartActionsOptions = {}): UseCartActions {
   const queryClient = useQueryClient();
   const toast = useToast();
+  const isOffline = useIsOffline();
 
   function invalidateCart(): Promise<void> {
     return queryClient.invalidateQueries({ queryKey: [CART_QUERY_KEY] });
@@ -47,7 +63,7 @@ export function useCartActions({ anchorRef }: UseCartActionsOptions = {}): UseCa
 
   // A sacola que o servidor não tem mais ou que já virou pedido: reler esquece o guardado e a tela mostra o vazio.
   function handleWriteError(error: unknown, message: string): void {
-    if (isCartNotFound(error) || isCartAlreadyCheckedOut(error)) {
+    if (isCartNotFound(error) || isCartItemNotFound(error) || isCartAlreadyCheckedOut(error)) {
       void invalidateCart();
     }
 
@@ -55,18 +71,36 @@ export function useCartActions({ anchorRef }: UseCartActionsOptions = {}): UseCa
   }
 
   const quantityMutation = useMutation({
+    mutationKey: CART_WRITE_MUTATION_KEY,
     mutationFn: ({ itemId, quantity }: ChangeQuantityInput) => updateCartItemQuantity(itemId, quantity),
     onSuccess: invalidateCart,
     onError: error => handleWriteError(error, QUANTITY_ERROR),
   });
 
   const removeMutation = useMutation({
+    mutationKey: CART_WRITE_MUTATION_KEY,
     mutationFn: removeCartItem,
     onSuccess: invalidateCart,
     onError: error => handleWriteError(error, REMOVE_ERROR),
   });
 
-  const isPending = quantityMutation.isPending || removeMutation.isPending;
+  // Não há rota de esvaziar: um `DELETE` por item, em série. Para no primeiro que falha, e a releitura (no `onSettled`)
+  // mostra o que sobrou, que é o sucesso parcial. Os avisos são da mutação, e não do `mutate`: a sacola esvaziada
+  // desmonta o botão que a disparou, e o callback do `mutate` morre com ele.
+  const clearMutation = useMutation({
+    mutationKey: CART_CLEAR_MUTATION_KEY,
+    mutationFn: async (itemIds: number[]) => {
+      for (const itemId of itemIds) {
+        await removeCartItem(itemId);
+      }
+    },
+    onSuccess: () => toast.show({ message: CLEAR_SUCCESS, variant: 'success', anchorRef }),
+    onError: () => toast.show({ message: CLEAR_PARTIAL_ERROR, variant: 'error', anchorRef }),
+    onSettled: invalidateCart,
+  });
+
+  const isPending = useIsMutating({ mutationKey: CART_WRITE_MUTATION_KEY }) > 0 || isOffline;
+  const isClearing = useIsMutating({ mutationKey: CART_CLEAR_MUTATION_KEY }) > 0;
 
   function resolveSubjectItemId(): number | null {
     if (quantityMutation.isPending) {
@@ -101,5 +135,14 @@ export function useCartActions({ anchorRef }: UseCartActionsOptions = {}): UseCa
     });
   }
 
-  return { isPending, subjectItemId: resolveSubjectItemId(), changeQuantity, remove };
+  function clear(itemIds: number[]): void {
+    // a guarda é do hook, e não só da tela: o envio em voo leu a sacola inteira
+    if (isPending || getSendState().isSending || itemIds.length === 0) {
+      return;
+    }
+
+    clearMutation.mutate(itemIds);
+  }
+
+  return { isPending, isClearing, subjectItemId: resolveSubjectItemId(), changeQuantity, remove, clear };
 }

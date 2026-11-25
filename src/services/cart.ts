@@ -17,9 +17,10 @@ export const BOARD_SHIPMENT_METHOD = 'board';
 const NOT_FOUND_STATUS = 404;
 const UNPROCESSABLE_STATUS = 422;
 const CART_NOT_FOUND_CODE = 'cart_not_found';
+const CART_ITEM_NOT_FOUND_CODE = 'cart_item_not_found';
 const CART_ALREADY_CHECKED_OUT_CODE = 'cart_already_checked_out';
 const ITEM_REJECTION_STATUSES = [NOT_FOUND_STATUS, UNPROCESSABLE_STATUS];
-const CART_FAILURE_CODES = [CART_NOT_FOUND_CODE, CART_ALREADY_CHECKED_OUT_CODE];
+const CART_FAILURE_CODES = [CART_NOT_FOUND_CODE, CART_ITEM_NOT_FOUND_CODE, CART_ALREADY_CHECKED_OUT_CODE];
 
 /** O que o aparelho guarda: a sacola só vale para a movimentação em que nasceu. */
 export interface StoredCart {
@@ -105,6 +106,13 @@ export function clearStoredCart(): void {
   forgetStoredCart();
 }
 
+/** Esquece só se a guardada ainda é esta: a falha de uma tentativa antiga não apaga a sacola que veio depois. */
+export function forgetStoredCartIf(cartId: string): void {
+  if (peekStoredCart()?.id === cartId) {
+    forgetStoredCart();
+  }
+}
+
 function storeCart(stored: StoredCart): void {
   writeRawStoredCart(JSON.stringify(stored));
   notifyStoredCartChanged();
@@ -167,6 +175,18 @@ export function isCartNotFound(error: unknown): boolean {
   }
 
   return error.response?.status === NOT_FOUND_STATUS && error.response.data?.internal_code === CART_NOT_FOUND_CODE;
+}
+
+/**
+ * O `PATCH` e o `DELETE` de item respondem `cart_item_not_found` quando a sacola é de outro token ou o item sumiu, e
+ * não `cart_not_found`: quem escreve trata os dois do mesmo jeito, relendo a sacola.
+ */
+export function isCartItemNotFound(error: unknown): boolean {
+  if (!isAxiosError<ApiResponseError>(error)) {
+    return false;
+  }
+
+  return error.response?.status === NOT_FOUND_STATUS && error.response.data?.internal_code === CART_ITEM_NOT_FOUND_CODE;
 }
 
 export function isCartAlreadyCheckedOut(error: unknown): boolean {

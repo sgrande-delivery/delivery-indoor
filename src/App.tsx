@@ -3,6 +3,7 @@
 import React, { PropsWithChildren, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AppShell from '@/components/shell/AppShell';
+import RestaurantStateListener from '@/components/restaurant/RestaurantStateListener';
 import { ToastProvider } from '@/components/ui';
 import ConnectivityProvider from '@/providers/connectivity/ConnectivityProvider';
 import ThemeProvider from './providers/theme/ThemeProvider';
@@ -23,6 +24,7 @@ const App: React.FC<PropsWithChildren> = ({ children }) => {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <RestaurantStateListener />
       <ThemeProvider>
         <RestaurantBrandStyles />
         <ToastProvider>

@@ -48,3 +48,8 @@ export function subscribeToSend(listener: Listener): () => void {
     listeners.delete(listener);
   };
 }
+
+/** Esquece a falha e a tentativa: a mesa de que elas falavam não é mais a da tela. */
+export function resetSendState(): void {
+  setSendState(IDLE);
+}

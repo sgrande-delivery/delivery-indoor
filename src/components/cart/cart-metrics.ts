@@ -10,6 +10,11 @@ export const cartMetrics = {
   // O glifo do voltar (24) e o da lixeira (18) ficam onde o desenho os põe, e o alvo de 44 sangra para fora deles.
   backBleed: (TOUCH_TARGET - cartHeaderMetrics.backIconSize) / 2,
   removeBleed: (TOUCH_TARGET - cartItemMetrics.removeIconSize) / 2,
+  // O "Limpar" do celular é o `clearFontSize` do tema (12); o dos artboards de tablet desenha 13, com 4 de folga na coluna e 8 no painel em pé.
+  clearDockFontSize: 13,
+  clearColumnPaddingInline: 4,
+  clearSheetPaddingInline: 8,
+  clearConfirmGap: 10,
   tableRowCompactIconSize: 18,
   totalsNoteFontSize: 11,
   totalsNoteLineHeight: 1.5,

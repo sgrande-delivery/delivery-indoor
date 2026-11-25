@@ -3,18 +3,20 @@
 import React from 'react';
 import ButtonBase from '@mui/material/ButtonBase';
 import { styled } from '@mui/material/styles';
-import { resolveErrorCode } from '@/services/http-error-code';
 import { controlSizes, focusRing, fontFamilies, fontWeights, interactionOpacities, pxToRem } from '@/theme';
+import { SendFailure } from './send-failure';
 import { sendMetrics } from './send-metrics';
 
-const MESSAGE = 'Não foi possível enviar o pedido.';
 const RETRY_LABEL = 'Tentar novamente';
+const READ_QR_LABEL = 'Ler o QR code';
 
 export interface SendFailureNoticeProps {
-  error: unknown;
+  failure: SendFailure;
   onRetry: () => void;
+  onReadQr: () => void;
   isRetrying: boolean;
-  isOffline: boolean;
+  /** Offline, cozinha fechada ou limpeza em voo: o envio não dispara, e o retry também não. */
+  isBlocked: boolean;
 }
 
 const Root = styled('div')({
@@ -40,7 +42,7 @@ const Code = styled('span')(({ theme }) => ({
   color: theme.vars.palette.surface.muted,
 }));
 
-const Retry = styled(ButtonBase)(({ theme }) => ({
+const Action = styled(ButtonBase)(({ theme }) => ({
   minBlockSize: controlSizes.md.height,
   paddingInline: sendMetrics.failure.retryPaddingInline,
   font: 'inherit',
@@ -58,17 +60,21 @@ const Retry = styled(ButtonBase)(({ theme }) => ({
 }));
 
 /**
- * A falha do envio, no rodapé e acima do CTA. A sacola continua intacta, e o código (`erro de rede`, `erro 422 · …`) é o
- * que o cliente diz ao garçom. O `message` da api não passa: não é copy de cliente.
+ * A recusa do envio, no rodapé e acima do CTA. A sacola continua intacta, e o código (`erro de rede`, `erro 422 · …`) é
+ * o que o cliente diz ao garçom. O texto é o do mapa de `send-failure`, nunca o `message` cru da api. O "ver conta" não
+ * passa por aqui: a recusa que o pede some com a sacola, e quem a anuncia é o toast.
  */
-const SendFailureNotice: React.FC<SendFailureNoticeProps> = ({ error, onRetry, isRetrying, isOffline }) => {
+const SendFailureNotice: React.FC<SendFailureNoticeProps> = ({ failure, onRetry, onReadQr, isRetrying, isBlocked }) => {
   return (
     <Root role="alert">
-      <Message>{MESSAGE}</Message>
-      <Code>{resolveErrorCode(error)}</Code>
-      <Retry disabled={isRetrying || isOffline} onClick={onRetry}>
-        {RETRY_LABEL}
-      </Retry>
+      <Message>{failure.message}</Message>
+      <Code>{failure.code}</Code>
+      {failure.action === 'retry' && (
+        <Action disabled={isRetrying || isBlocked} onClick={onRetry}>
+          {RETRY_LABEL}
+        </Action>
+      )}
+      {failure.action === 'read-qr' && <Action onClick={onReadQr}>{READ_QR_LABEL}</Action>}
     </Root>
   );
 };

@@ -11,7 +11,9 @@ import SheetTransition from '@/components/ui/SheetTransition';
 import { useSheetDrag } from '@/components/ui/use-sheet-drag';
 import { REDUCED_MOTION_QUERY } from '@/helpers/reduced-motion';
 import { touchTargetArea } from '@/helpers/touch-target';
+import { useRestoredToastAnchor } from '@/providers/connectivity/ConnectivityProvider';
 import { cartHeaderMetrics, focusRing, fontFamilies, pxToRem, sheetMetrics } from '@/theme';
+import CartClearAction from '../CartClearAction';
 import CartFooter from '../CartFooter';
 import CartPanel from '../CartPanel';
 import CartTableRow from '../CartTableRow';
@@ -30,8 +32,6 @@ export interface CartSheetProps {
   summary: CartBarSummary | null;
   open: boolean;
   onClose: () => void;
-  /** O lugar do "Limpar", entre a contagem e o fechar. */
-  action?: React.ReactNode;
 }
 
 const Root = styled(Modal)({
@@ -149,10 +149,11 @@ const ToastAnchor = styled('div')({
  * O painel da sacola do tablet em pé: forma própria da mesa, e não o `Sheet` do DS. Continua aberto se a sacola esvazia
  * lá dentro. O `useSheetDrag` e o backdrop são os do DS, só importados.
  */
-const CartSheet: React.FC<CartSheetProps> = ({ summary, open, onClose, action }) => {
+const CartSheet: React.FC<CartSheetProps> = ({ summary, open, onClose }) => {
   const titleId = useId();
   const isReducedMotion = useMediaQuery(REDUCED_MOTION_QUERY);
   const toastAnchorRef = useRef<HTMLDivElement>(null);
+  useRestoredToastAnchor(toastAnchorRef);
   const surfaceRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -219,7 +220,7 @@ const CartSheet: React.FC<CartSheetProps> = ({ summary, open, onClose, action })
                 <Title id={titleId}>{TITLE}</Title>
                 {summary && <Count>{`· ${summary.itemsLabel}`}</Count>}
                 <Spacer />
-                {action}
+                <CartClearAction form="sheet" anchorRef={toastAnchorRef} />
                 <Close aria-label={CLOSE_LABEL} onClick={handleClose}>
                   <Icon name="close" size={sheetMetrics.closeIconSize} />
                 </Close>
