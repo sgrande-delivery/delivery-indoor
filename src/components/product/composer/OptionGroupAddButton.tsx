@@ -4,7 +4,8 @@ import React from 'react';
 import ButtonBase from '@mui/material/ButtonBase';
 import { styled } from '@mui/material/styles';
 import { Icon } from '@/components/ui';
-import { controlSizes, focusRing, HOVER_MEDIA_QUERY, optionGroupMetrics } from '@/theme';
+import { touchTargetArea } from '@/helpers/touch-target';
+import { focusRing, HOVER_MEDIA_QUERY, optionGroupMetrics } from '@/theme';
 
 export interface OptionGroupAddButtonProps {
   label: string;
@@ -12,9 +13,11 @@ export interface OptionGroupAddButtonProps {
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
+// O "+" tem o tamanho do client; o alvo de 44 do tablet vem da área invisível.
 const Root = styled(ButtonBase)(({ theme }) => ({
-  width: controlSizes.md.height,
-  height: controlSizes.md.height,
+  ...touchTargetArea,
+  width: optionGroupMetrics.addButtonSize,
+  height: optionGroupMetrics.addButtonSize,
   flexShrink: 0,
   borderRadius: optionGroupMetrics.addButtonRadius,
   backgroundColor: theme.vars.palette.surface.field,

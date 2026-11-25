@@ -1,3 +1,5 @@
+import { badgeMetrics, bottomNavMetrics } from '@/theme';
+
 // RF-09: 744 é o tablet em pé mais estreito da loja; a altura mínima tira o celular deitado,
 // que passa por qualquer min-width sozinho.
 export const tabletShellMediaQuery = '(min-width: 744px) and (min-height: 600px)';
@@ -31,4 +33,10 @@ export const tableTopBarMetrics = {
   tabPaddingInline: 16,
   tabGap: 7,
   tabIconSize: 19,
+} as const;
+
+// O contador da aba Sacola pousa no canto superior direito do ícone: o `Badge` `count` fica metade dentro, metade fora.
+export const shellNavCartBadgeOffset = {
+  blockStart: -badgeMetrics.countSize / 2,
+  inlineStart: bottomNavMetrics.iconSize / 2,
 } as const;
