@@ -1,4 +1,4 @@
-import { componentRadii, spacingScale } from '@/theme';
+import { componentRadii, elevations, spacingScale } from '@/theme';
 
 // As medidas do artboard `Conta · celular · em aberto` que o tema ainda não tem.
 export const boardMetrics = {
@@ -10,6 +10,7 @@ export const boardMetrics = {
   paddingInline: 18,
   gap: spacingScale.sm,
   cardRadius: componentRadii.paper,
+  cardShadow: elevations.sm,
   cardPadding: 18,
 } as const;
 
