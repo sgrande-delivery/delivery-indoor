@@ -118,7 +118,7 @@ Canvas Brasa Punch Indoor (cópia extraída em `/tmp/brasa-indoor-canvas.yzmPZk/
 - **Teclado em paisagem.** A coluna tem rolagem própria e altura definida pelo `Frame`. **Sem `100dvh`** nela (aprendizado da 06 da #20): a altura vem do `Frame`, que já desconta a barra de 72.
 - **A grade da #21 não pode medir a viewport.** Com a coluna no shell, a área do cardápio é `100% − 380`. A grade de 3 colunas precisa ser relativa ao `Scroller`. Está escrito na #45 (decisão 6 e armadilhas de lá), que não reserva lugar para a coluna.
 - **Alvos.**
-  - O stepper é `md`, 52 com botões de 40: follow-up único na [#43](../../21-indoor-menu-v2/tasks/43-product-detail-composer.md) ("Follow-ups").
+  - O stepper é o `xs` da linha da sacola. *(Revisto em 2026-11-25 pelo dev:* o controle de quantidade segue o tamanho do app do cliente (`xs` nos adicionais e na linha da sacola, `sm` no rodapé do detalhe), e o alvo de 44 vem de uma área de toque invisível em volta de cada botão (`touchTargetArea`, `src/helpers/touch-target.ts`). *O `md` de 52 que estava aqui saiu.)*
   - "Ver sacola" e o fechar do `Sheet` têm 44 ou mais.
   - A barra inteira é alvo de 92.
 
@@ -228,7 +228,7 @@ Não há suíte automatizada.
     - no celular, nem coluna nem barra: a navegação inferior com a aba Sacola, da 01;
     - no desktop, a coluna de paisagem.
 11. **Sem mesa** ("Ver o cardápio" da tela "sem mesa", estado `browsing`). Esperado: sem coluna e sem barra.
-12. **Em todos os formatos:** nenhum alvo de toque abaixo de 44 (o stepper fica com a pendência da 01).
+12. **Em todos os formatos:** nenhum alvo de toque abaixo de 44. No stepper, o alvo é a área invisível de 44 em volta de cada botão.
 
 ## Critérios de aceitação
 

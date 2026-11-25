@@ -116,6 +116,7 @@ Do carrinho: 404 `cart_not_found` e 422 `cart_already_checked_out`.
    - Fica como no client e no artboard do celular: `min={1}` no stepper e `IconButton` `delete` na linha do nome.
    - No tablet, onde o artboard não desenha lixeira, é também o único jeito de remover.
 9. **Stepper `md`.** O `design-system/README.md` ("Os três formatos") manda controle de quantidade em `md` ou maior. O `md` tem 52 de altura, com botões de 40 (`component-tokens.ts:199-209`). O client usa `xs` (32), que fica abaixo dos 44 da RF-13. Os botões de 40 são do primitivo compartilhado, e subir para 44 é mudança no client: é o **follow-up único** registrado na [#43](../../21-indoor-menu-v2/tasks/43-product-detail-composer.md) ("Follow-ups"), que cobre o detalhe e a sacola. Não se registra outro aqui.
+   **Revisto em 2026-11-25 pelo dev:** o `md` ficou grande demais perto do app do cliente. Agora o controle de quantidade segue o tamanho do app do cliente (`xs` nos adicionais e na linha da sacola, `sm` no rodapé do detalhe), e o alvo de 44 vem de uma área de toque invisível em volta de cada botão (`touchTargetArea`, `src/helpers/touch-target.ts`).
 10. **Total e promoção.**
     - O rodapé mostra "Total do pedido" com `cart.total`.
     - Quando `cart.discount > 0`, entram acima "Subtotal" (`cart.subtotal`) e "Promoções" (`− cart.discount`), como no `CartSummary` do client. Sem elas, a soma das linhas não bate com o total na frente do cliente.
@@ -389,7 +390,7 @@ Nenhuma.
 - **Lixeira e voltar são `ButtonBase` de 44, e não `IconButton`.** O `IconButton` não tem variante sem fundo, e o artboard desenha o glifo solto. O alvo de 44 (`controlSizes.md.height`) sangra por fora do glifo com margem negativa (`cart-metrics.ts`), sem mudar a altura do cabeçalho nem da linha do nome.
 - **Linha do total só ganha filete com desconto.** O artboard sem promoção não tem borda entre o total e o resto; com "Subtotal" e "Promoções" acima, o filete do `CartSummary` do client entra.
 - **A linha da mesa só aparece com itens**, e a variante `compact` escreve "Mesa 12 · vai direto para a cozinha" numa linha.
-- **Esqueleto com a altura do stepper `md`.** `cartScreenMetrics.skeleton.itemBlockSize` do tema parte do `xs`, então o item do esqueleto tem medida própria em `cart-metrics.ts`.
+- **Esqueleto:** com o stepper `xs` (revisão de 2026-11-25), o item do esqueleto volta a ser o `cartScreenMetrics.skeleton.itemBlockSize` do tema, e a medida própria saiu de `cart-metrics.ts`.
 - **`cart` de `useCart()` é `undefined` enquanto a sessão da mesa carrega**, para a tela não piscar o vazio antes de saber qual é a mesa. Sacola com `items: []` também mostra o vazio.
 - **Foco depois de remover:** o painel é focável (`tabIndex={-1}`) e recebe o foco quando a linha some, como o corpo da sacola do client.
 - **Espelho em memória do guardado** (`memoryStoredCart` em `src/services/cart.ts`): com o `localStorage` negado, a escrita vai para a memória e a leitura cai nela, senão o `POST /items` sairia sem o token e voltaria 404. Vale até o reload.
@@ -435,7 +436,7 @@ Playwright com o Chromium do sistema, contra a delivery-api local (`master` com 
 - **10.** Com a api fora (`/cart` abortado), aparece o erro de rota. "Tentar novamente" volta à lista.
 - **11.** Por `http://192.168.0.169:3462` (`isSecureContext: false`, sem `crypto.randomUUID`) a sacola é criada, com o token v4 do fallback.
 - **12.** A 390×844:
-  - voltar e lixeira têm 44, e o stepper `md` tem botões de 40 (follow-up da #43);
+  - voltar e lixeira têm 44. O stepper passou a `xs` na revisão de 2026-11-25 (32 de desenho, botões de 26), com toque a 20px do centro de cada botão medido no celular e no tablet;
   - os respiros são 14 do cabeçalho à mesa, 16 da mesa ao item e 14 do item ao total.
 - **Storage negado** (`localStorage` lançando): o item entra (`201`, com o token) e a aba conta 1. É o espelho em memória.
 - **Recusa ao adicionar** (422 simulado):
