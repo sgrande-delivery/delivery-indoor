@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** #20 (na base); #21 — task 01 ([#40](../../21-indoor-menu-v2/tasks/40-catalog-v2-services-types.md): tipos do catálogo v2, `ProductSelection` e `formatCents`) e task 04 ([#43](../../21-indoor-menu-v2/tasks/43-product-detail-composer.md): o detalhe, `app/(menu)/layout.tsx` e o `ProductAddActionProvider`)
-**Status:** pendente
+**Status:** shipped
 **Reconciliado com a #21 (2026-11-23):** o encaixe do "adicionar" é o da #43 — o detalhe chama `useProductAddAction().add(selection)` e não importa nada da sacola; esta task cria o `CartAddActionProvider`, que monta o valor a partir de `useAddCartItem()` e entra em `app/(menu)/layout.tsx` em volta do host. O corpo de `POST /cart/{cartId}/items` é a `ProductSelection` da #40 (snake_case), mandada como está: saiu o `AddCartItemPayload` camelCase. As mensagens de falha ao adicionar são desta task; a regra de quando o CTA aparece ou desabilita é da #43. `formatCents` vem só da #40, sem porta de reserva aqui. O stepper de 40 aponta para o follow-up único da #43.
 **Alinhado à #24 e à delivery-api#1608 (2026-11-23):** o gerador de UUID sai do serviço da sacola para `src/helpers/random-uuid.ts` (`randomUuid()`), que esta task cria e que a #48 (chave do envio) e a #24 (chave do pagamento) importam: um gerador só, com o fallback de `crypto.getRandomValues`. Do lado da api: a posse da sacola é **só** pelo `x-cart-session-token`, sem header de movimentação (#1629); o `POST /cart` recusa movimentação inexistente, liberada ou fechada com os códigos fixados na 1608 (#1628, a mensagem é da 05); e a entrada de item passa a cobrar o ambiente do carrinho, de modo que o produto só de mesa entra e o que a mesa não vende é `422 product_unavailable` (#1766).
 
@@ -343,19 +343,118 @@ Não há suíte automatizada.
 
 ## Critérios de aceitação
 
-- [ ] A primeira adição cria a sacola com `POST /cart { board_movement_id }` e `x-cart-session-token`, e o `localStorage` guarda `{ id, sessionToken, movementId }` em `indoor:cart`.
-- [ ] O token sai de `randomUuid()` (`src/helpers/random-uuid.ts`), que funciona em `http://` de rede local, e nenhum outro arquivo gera UUID.
-- [ ] Duas adições antes da primeira resposta produzem um `POST /cart` só.
-- [ ] Quantidade e remoção vão ao servidor (`PATCH { quantity }`, `DELETE`), e a tela só muda depois da releitura. Nenhum total, subtotal ou desconto é somado no cliente (`grep` por `reduce` em `src/components/cart` acha só a contagem de itens).
-- [ ] A composição da linha bate com o que o detalhe montou, lida de `options[].name` e `removed_ingredients[].name`.
-- [ ] O "Total do pedido" é `cart.total` formatado de centavos. Com desconto, as linhas mostram `subtotal` e `discount` da resposta.
-- [ ] A sacola de outra movimentação não aparece nem é reaproveitada.
-- [ ] Sem sacola guardada, `/cart` mostra o vazio sem request. Com sacola, o reload não pisca o vazio.
-- [ ] A aba Sacola leva a `/cart` e mostra a soma das quantidades.
-- [ ] O `CartAddActionProvider` em `app/(menu)/layout.tsx` liga o CTA do detalhe da #43 ao `POST /cart/{cartId}/items`, com a `ProductSelection` da #40 como corpo, sem tradução e com ids numéricos. A falha ao adicionar é anunciada pelo provedor, e o detalhe fica aberto.
-- [ ] Nenhum arquivo de `src/components/product/` importa de `src/components/cart/`, e não existe `useCanWriteCart()`.
-- [ ] Sem `<main>`, sem `100dvh`, sem hex nos arquivos novos. Ícones só da união atual.
-- [ ] `npx tsc --noEmit`, o lint e o `yarn build` com as vars de restaurante passam.
+- [x] A primeira adição cria a sacola com `POST /cart { board_movement_id }` e `x-cart-session-token`, e o `localStorage` guarda `{ id, sessionToken, movementId }` em `indoor:cart`.
+- [x] O token sai de `randomUuid()` (`src/helpers/random-uuid.ts`), que funciona em `http://` de rede local, e nenhum outro arquivo gera UUID.
+- [x] Duas adições antes da primeira resposta produzem um `POST /cart` só.
+- [x] Quantidade e remoção vão ao servidor (`PATCH { quantity }`, `DELETE`), e a tela só muda depois da releitura. Nenhum total, subtotal ou desconto é somado no cliente (`grep` por `reduce` em `src/components/cart` acha só a contagem de itens).
+- [x] A composição da linha bate com o que o detalhe montou, lida de `options[].name` e `removed_ingredients[].name`.
+- [x] O "Total do pedido" é `cart.total` formatado de centavos. Com desconto, as linhas mostram `subtotal` e `discount` da resposta.
+- [x] A sacola de outra movimentação não aparece nem é reaproveitada.
+- [x] Sem sacola guardada, `/cart` mostra o vazio sem request. Com sacola, o reload não pisca o vazio.
+- [x] A aba Sacola leva a `/cart` e mostra a soma das quantidades.
+- [x] O `CartAddActionProvider` em `app/(menu)/layout.tsx` liga o CTA do detalhe da #43 ao `POST /cart/{cartId}/items`, com a `ProductSelection` da #40 como corpo, sem tradução e com ids numéricos. A falha ao adicionar é anunciada pelo provedor, e o detalhe fica aberto.
+- [x] Nenhum arquivo de `src/components/product/` importa de `src/components/cart/`, e não existe `useCanWriteCart()`.
+- [x] Sem `<main>`, sem `100dvh`, sem hex nos arquivos novos. Ícones só da união atual.
+- [x] `npx tsc --noEmit`, o lint e o `yarn build` com as vars de restaurante passam.
+
+## Implementação
+
+**Concluída em:** 2026-11-25
+
+### Camadas tocadas
+
+- **Helper:** `src/helpers/random-uuid.ts` (`randomUuid()`, com fallback por `crypto.getRandomValues`).
+- **Tipo:** `src/types/cart.ts`.
+- **Serviço:** `src/services/cart.ts` (guardado `indoor:cart` com `{ id, sessionToken, movementId }`, `ensureCart` com uma criação em voo por vez, leituras e escritas).
+- **Hooks e medidas:** `src/components/cart/` — `cart-query.ts`, `use-cart.ts`, `use-cart-item-count.ts`, `use-cart-actions.ts`, `use-add-cart-item.ts`, `cart-item-composition.ts`, `cart-metrics.ts`.
+- **Componentes:** `CartScreen`, `CartHeader`, `CartPanel`, `CartTableRow`, `CartItemList`, `CartItemRow`, `CartItemThumb`, `CartTotals`, `CartEmpty`, `CartScreenSkeleton`, `CartLoadError`, `CartAddActionProvider`.
+- **Página:** `app/cart/page.tsx`.
+- **Ligação no detalhe:** `app/(menu)/layout.tsx` (`CartAddActionProvider` em volta do `Suspense` do `ProductSheet`).
+- **Aba Sacola:** `src/components/shell/shell-tabs.ts` (`cart` com `isAvailable: true`), `ShellNav.tsx` (itens montados no render), `ShellNavCartIcon.tsx` (novo) e `shell-metrics.ts` (deslocamento do contador).
+
+### Contratos consumidos
+
+- `POST /cart` com `{ board_movement_id }` e `x-cart-session-token`; `GET /cart/{id}`; `POST /cart/{id}/items` com a `ProductSelection` como está (resposta: sacola inteira); `PATCH /cart/items/{id}` com `{ quantity }`; `DELETE /cart/items/{id}` (resposta: sacola). Todos em centavos. Conferido contra a task (`CartPresenter`/`CartItemPresenter`); a delivery-api não foi reaberta.
+- Códigos lidos: `cart_not_found` (esquece o guardado), recusas de item (`product_not_found_for_cart`, `invalid_option_selection`, `missing_required_size`, `ingredient_not_removable`, `product_unavailable`), e só o `product_unavailable` leva o `message` do servidor ao toast (ver "Correções do review").
+- Aviso de ordem de deploy: até a delivery-api#1628 subir, a sacola nasce sem mesa (o `POST /cart` ignora `board_movement_id`) e a recusa de mesa fechada não chega; o payload já é o do contrato. A #1766 decide se o produto só de mesa entra.
+
+### Variáveis de ambiente novas
+
+Nenhuma.
+
+### Decisões que tomei por conta própria
+
+- **Forma da linha: cartão com sombra, e não linha com separador.** A mudança 4 pede "linha com separador (`.ci`)", mas o artboard `Carrinho-Celular` desenha o cartão (raio 18, sombra, foto de 62) e só os artboards de tablet usam `.ci`. Segui o celular, com `cartItemMetrics`. A 04 precisa de uma variante de linha para o tablet.
+- **Totais no corpo, sem rodapé.** O texto da task diz "o rodapé é `CartTotals`" na mudança 5 e coloca os totais no `CartPanel` na mudança 4. O artboard põe o cartão do total dentro da área que rola (`margin-top: 14`) e deixa o rodapé para o "Enviar pedido" (03). Montei `CartTotals` no `CartPanel`, e `CartScreen` não tem rodapé; a 03 acrescenta o dela. O passo 12 do roteiro ("rodapé acima da navegação") fica sem objeto até a 03.
+- **Lixeira e voltar são `ButtonBase` de 44, e não `IconButton`.** O `IconButton` não tem variante sem fundo, e o artboard desenha o glifo solto. O alvo de 44 (`controlSizes.md.height`) sangra por fora do glifo com margem negativa (`cart-metrics.ts`), sem mudar a altura do cabeçalho nem da linha do nome.
+- **Linha do total só ganha filete com desconto.** O artboard sem promoção não tem borda entre o total e o resto; com "Subtotal" e "Promoções" acima, o filete do `CartSummary` do client entra.
+- **A linha da mesa só aparece com itens**, e a variante `compact` escreve "Mesa 12 · vai direto para a cozinha" numa linha.
+- **Esqueleto com a altura do stepper `md`.** `cartScreenMetrics.skeleton.itemBlockSize` do tema parte do `xs`, então o item do esqueleto tem medida própria em `cart-metrics.ts`.
+- **`cart` de `useCart()` é `undefined` enquanto a sessão da mesa carrega**, para a tela não piscar o vazio antes de saber qual é a mesa. Sacola com `items: []` também mostra o vazio.
+- **Foco depois de remover:** o painel é focável (`tabIndex={-1}`) e recebe o foco quando a linha some, como o corpo da sacola do client.
+- **Espelho em memória do guardado** (`memoryStoredCart` em `src/services/cart.ts`): com o `localStorage` negado, a escrita vai para a memória e a leitura cai nela, senão o `POST /items` sairia sem o token e voltaria 404. Vale até o reload.
+- **`CartLoadError` na forma `inline`** é um `EmptyState` com o código de erro na descrição; a 04 pode trocar se o tablet desenhar outra coisa.
+
+### Correções do review
+
+- **Diverge do texto da task (mudança 7: "toast com o `message` do servidor").** O `message` da api só aparece quando `internal_code === 'product_unavailable'` (`readProductUnavailableMessage`, `src/services/cart.ts:196`), porque é a única recusa com copy para o cliente. Medido: 4 dos 5 códigos de recusa vêm técnicos e em inglês ("Option group item 45 not found.", "validation error"). Todo o resto cai em "Não foi possível adicionar à sacola. Tente de novo." (`CartAddActionProvider.tsx:27`). `isCartItemRejected` ficou sem consumidor, para a #50.
+- `PATCH`/`DELETE` que falham com `cart_not_found` ou `cart_already_checked_out` invalidam `['cart']` (`use-cart-actions.ts:49`); o `fetchStoredCart` devolve `null` e a tela mostra o vazio.
+- O 404 só apaga o guardado se ele ainda é o da sacola lida (`cart.ts:286`).
+- Lixeira com `marginInlineStart: 'auto'` (`CartItemRow.tsx:74`); foco depois de remover só se estiver no `body` (`CartPanel.tsx:75`); `filter` com type guard na composição (`cart-item-composition.ts:20`); comentário dos tipos sem citar issue (`types/cart.ts:48,72`); deslocamento do contador derivado de `badgeMetrics.countSize` e `bottomNavMetrics.iconSize` (`shell-metrics.ts:40-41`).
+
+### Como testar
+
+1. `yarn dev` (com `.env.development`).
+2. Abrir `http://localhost:3000/cart?session=<uuid-aberto>` com o `localStorage` limpo: "Nenhum item ainda", sem requisição a `/cart`, aba Sacola acesa e sem contador.
+3. Seguir o roteiro "No navegador" desta task (passos 2 a 12), tendo em mente as decisões acima (linha em cartão, totais no corpo, sem rodapé).
+
+### Validado no navegador (2026-11-25)
+
+Playwright com o Chromium do sistema, contra a delivery-api local (`master` com a #1793, nginx em `127.0.0.1:8095`), restaurante 1 (`uses_v2_orders = 1`, 82 produtos de mesa), mesas 004 e 003. **39 de 39 verificações passaram** (roteiro em `/tmp/indoor-qa-22/qa46.mjs`):
+
+- **1.** Vazio sem nenhuma requisição a `/cart`, e aba sem contador.
+- **2.** `X Salada Bacon` com "+ Bacon" e "Sem Alface":
+  - `POST /cart` com `{ board_movement_id }` e `x-cart-session-token`;
+  - `POST /items` com `product_id: 132`, `option_group_item_id: 693` inteiros e `removed_ingredients` em uuid;
+  - `indoor:cart` com `{ id, sessionToken, movementId }`;
+  - aba "Sacola, 1 item".
+- **3.** Dois toques no CTA fazem um `POST /cart` só.
+- **4.** Na sacola:
+  - "Mesa 004 · SGrande Delivery" e "Vai direto para a cozinha";
+  - a composição "Bacon · sem Alface", igual à resposta;
+  - a linha e o total iguais a `cart.total`;
+  - a nota da taxa.
+- **5.** `PATCH { quantity: 2 }`, seguido de `GET`, e o total redesenhado a partir da resposta. Toques no `+` e na lixeira durante o round-trip não saem (um `PATCH`, nenhum `DELETE`).
+- **6.**
+  - o `−` fica desabilitado no 1;
+  - o `DELETE` vai ao servidor, e a linha só some depois da releitura;
+  - o toast "Item removido da sacola." termina em 761, e a navegação começa em 771.
+- **7.** O desconto foi simulado na resposta do `GET`, porque não há promoção de mesa no banco local. Com ele aparecem "Subtotal", "Promoções − R$ 2,00" e o total, todos lidos da resposta.
+- **8.** O reload de `/cart` não pisca o vazio (conferido com MutationObserver).
+- **9.** Na mesa 003 a sacola está vazia. Adicionar faz um `POST /cart` novo com a 003, e o `indoor:cart` é sobrescrito.
+- **10.** Com a api fora (`/cart` abortado), aparece o erro de rota. "Tentar novamente" volta à lista.
+- **11.** Por `http://192.168.0.169:3462` (`isSecureContext: false`, sem `crypto.randomUUID`) a sacola é criada, com o token v4 do fallback.
+- **12.** A 390×844:
+  - voltar e lixeira têm 44, e o stepper `md` tem botões de 40 (follow-up da #43);
+  - os respiros são 14 do cabeçalho à mesa, 16 da mesa ao item e 14 do item ao total.
+- **Storage negado** (`localStorage` lançando): o item entra (`201`, com o token) e a aba conta 1. É o espelho em memória.
+- **Recusa ao adicionar** (422 simulado):
+  - `invalid_option_selection` mostra "Não foi possível adicionar à sacola. Tente de novo.", sem o texto cru;
+  - `product_unavailable` mostra o `message` do servidor;
+  - nos dois casos o detalhe fica aberto.
+
+### O que NÃO foi verificado
+
+- **Promoção calculada pelo servidor.** Só a exibição foi conferida, com o desconto simulado.
+- **`board_movement_id` na resposta e recusa de mesa fechada no `POST /cart`.** A api local ainda é a de antes da #1628: ignora o campo e não recusa.
+- **Tablet real e celular real.** No tablet, `/cart` é a tela do celular esticada, com margens de 18, até a #49 trocar pela coluna e pelo painel.
+- O `[api] request failed` que o interceptor de `src/services/api.ts` escreve no console a cada 4xx acende o indicador de "issue" do `next dev`. É anterior a esta task.
+
+## Follow-ups identificados em review
+
+- Forma `inline` do `CartLoadError` (hoje um `EmptyState` com o código na descrição): desenhar na #49.
+- Ação do `CartEmpty` ("Ver o cardápio") na coluna do tablet: rever na #49.
+- Anúncio do toast de falha ao adicionar fora do modal do detalhe, para leitor de tela.
 
 ## Fora de escopo
 
@@ -370,4 +469,4 @@ Não há suíte automatizada.
 
 ## Branch
 
-`task/46-board-cart-v2`, base sugerida: `feat/indoor-v2` depois da fila da #20 e das tasks 01 e 04 da #21. Se a 04 da #21 ainda não tiver mergeado, a base é a branch dela.
+`task/46-board-cart-v2`, cortada de `feat/indoor-v2` (`b453dc9`) em 2026-11-25. A #20 e as tasks 01 (#40) e 04 (#43) da #21 já estão na base.
