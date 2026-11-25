@@ -6,10 +6,18 @@ import { CSSObject, styled } from '@mui/material/styles';
 import { Icon, QuantityStepper } from '@/components/ui';
 import { touchTargetArea } from '@/helpers/touch-target';
 import { formatCents } from '@/helpers/money';
-import { cartItemMetrics, focusRing, fontFamilies, HOVER_MEDIA_QUERY, interactionOpacities, pxToRem } from '@/theme';
+import {
+  cartItemMetrics,
+  focusRing,
+  fontFamilies,
+  HOVER_MEDIA_QUERY,
+  interactionOpacities,
+  pxToRem,
+  spacingScale,
+} from '@/theme';
 import { CartItem } from '@/types/cart';
 import { buildCartItemComposition } from './cart-item-composition';
-import { cartMetrics } from './cart-metrics';
+import { CartLineDimensions, CartVariant, cartLineMetrics, cartMetrics } from './cart-metrics';
 import CartItemThumb from './CartItemThumb';
 
 const UNNAMED_ITEM = 'item';
@@ -26,17 +34,49 @@ export interface CartItemRowProps {
   isSubject: boolean;
   onQuantityChange: (itemId: number, quantity: number) => void;
   onRemove: (itemId: number) => void;
+  /** O cartão do celular, ou a linha com separador da coluna e do painel do tablet. */
+  variant?: CartVariant;
 }
 
-const Root = styled('li')(({ theme }) => ({
-  display: 'flex',
-  gap: cartItemMetrics.gap,
-  padding: cartItemMetrics.padding,
-  listStyle: 'none',
-  borderRadius: cartItemMetrics.radius,
-  backgroundColor: theme.vars.palette.surface.card,
-  boxShadow: cartItemMetrics.shadow,
-}));
+const cardDimensions: CartLineDimensions = {
+  thumbSize: cartItemMetrics.imageSize,
+  nameFontSize: cartItemMetrics.nameFontSize,
+  compositionFontSize: cartItemMetrics.compositionFontSize,
+  totalFontSize: cartItemMetrics.totalFontSize,
+};
+
+function resolveDimensions(variant: CartVariant): CartLineDimensions {
+  return variant === 'screen' ? cardDimensions : cartLineMetrics[variant];
+}
+
+interface RootProps {
+  rowVariant: CartVariant;
+}
+
+const Root = styled('li', {
+  shouldForwardProp: prop => prop !== 'rowVariant',
+})<RootProps>(({ theme, rowVariant }) =>
+  rowVariant === 'screen'
+    ? {
+        display: 'flex',
+        gap: cartItemMetrics.gap,
+        padding: cartItemMetrics.padding,
+        listStyle: 'none',
+        borderRadius: cartItemMetrics.radius,
+        backgroundColor: theme.vars.palette.surface.card,
+        boxShadow: cartItemMetrics.shadow,
+      }
+    : {
+        display: 'flex',
+        gap: cartLineMetrics.gap,
+        paddingBlock: cartLineMetrics.paddingBlock,
+        listStyle: 'none',
+        borderBlockEnd: `${cartLineMetrics.borderWidth}px solid ${theme.vars.palette.surface.line}`,
+        '&:last-of-type': {
+          borderBlockEnd: 0,
+        },
+      }
+);
 
 const Body = styled('div')({
   flex: 1,
@@ -49,12 +89,14 @@ const NameRow = styled('div')({
   gap: cartItemMetrics.nameRowGap,
 });
 
-const Name = styled('span')(({ theme }) => ({
+const Name = styled('span', {
+  shouldForwardProp: prop => prop !== 'fontSize',
+})<{ fontSize: number }>(({ theme, fontSize }) => ({
   overflow: 'hidden',
   whiteSpace: 'nowrap',
   textOverflow: 'ellipsis',
   fontFamily: fontFamilies.text,
-  fontSize: pxToRem(cartItemMetrics.nameFontSize),
+  fontSize: pxToRem(fontSize),
   fontWeight: cartItemMetrics.nameWeight,
   lineHeight: cartItemMetrics.nameLineHeight,
   color: theme.vars.palette.surface.ink,
@@ -92,14 +134,25 @@ const Remove = styled(ButtonBase, {
   },
 }));
 
-const Composition = styled('p')(({ theme }) => ({
+const Composition = styled('p', {
+  shouldForwardProp: prop => prop !== 'fontSize',
+})<{ fontSize: number }>(({ theme, fontSize }) => ({
   margin: 0,
   marginBlockStart: cartItemMetrics.compositionMarginBlockStart,
   fontFamily: fontFamilies.text,
-  fontSize: pxToRem(cartItemMetrics.compositionFontSize),
+  fontSize: pxToRem(fontSize),
   lineHeight: cartItemMetrics.compositionLineHeight,
   color: theme.vars.palette.surface.muted,
 }));
+
+// O painel de retrato tem largura para o stepper e o total na mesma linha do nome e da composição.
+const WideBody = styled('div')({
+  display: 'flex',
+  alignItems: 'center',
+  flex: 1,
+  minInlineSize: 0,
+  gap: spacingScale.md,
+});
 
 const Footer = styled('div')({
   display: 'flex',
@@ -119,11 +172,14 @@ const Stepper = styled(QuantityStepper, {
   '& button': touchTargetArea,
 }));
 
-const Total = styled('span')(({ theme }) => ({
+const Total = styled('span', {
+  shouldForwardProp: prop => prop !== 'fontSize' && prop !== 'inlineSize',
+})<{ fontSize: number; inlineSize?: number }>(({ theme, fontSize, inlineSize }) => ({
   flexShrink: 0,
+  ...(inlineSize && { inlineSize, textAlign: 'end' }),
   whiteSpace: 'nowrap',
   fontFamily: fontFamilies.text,
-  fontSize: pxToRem(cartItemMetrics.totalFontSize),
+  fontSize: pxToRem(fontSize),
   fontWeight: cartItemMetrics.totalWeight,
   color: theme.vars.palette.surface.ink,
 }));
@@ -132,7 +188,15 @@ const Total = styled('span')(({ theme }) => ({
  * Quantidade e remoção vão ao servidor, e a linha desenha o que voltou: `line_total` é o do servidor, em centavos.
  * O stepper para no 1 e a lixeira, na linha do nome, é o único jeito de remover.
  */
-const CartItemRow: React.FC<CartItemRowProps> = ({ item, isPending, isSubject, onQuantityChange, onRemove }) => {
+const CartItemRow: React.FC<CartItemRowProps> = ({
+  item,
+  isPending,
+  isSubject,
+  onQuantityChange,
+  onRemove,
+  variant = 'screen',
+}) => {
+  const dimensions = resolveDimensions(variant);
   const composition = buildCartItemComposition(item);
   const subject = item.name ?? UNNAMED_ITEM;
 
@@ -152,36 +216,62 @@ const CartItemRow: React.FC<CartItemRowProps> = ({ item, isPending, isSubject, o
     onRemove(item.id);
   }
 
+  const isWide = variant === 'sheet';
+
+  const nameRow = (
+    <>
+      <NameRow>
+        {item.name && <Name fontSize={dimensions.nameFontSize}>{item.name}</Name>}
+        <Remove
+          isPending={isPending}
+          aria-label={`${REMOVE_LABEL} ${subject}`}
+          aria-disabled={isPending || undefined}
+          onClick={handleRemove}
+        >
+          <Icon name="delete" size={cartItemMetrics.removeIconSize} />
+        </Remove>
+      </NameRow>
+      {composition && <Composition fontSize={dimensions.compositionFontSize}>{composition}</Composition>}
+    </>
+  );
+
+  const stepper = (
+    <Stepper
+      size="xs"
+      isPending={isPending}
+      value={item.quantity}
+      min={MINIMUM_QUANTITY}
+      decreaseLabel={`${DECREASE_LABEL} ${subject}`}
+      increaseLabel={`${INCREASE_LABEL} ${subject}`}
+      aria-disabled={isPending || undefined}
+      onChange={handleQuantityChange}
+    />
+  );
+
+  const total = (
+    <Total fontSize={dimensions.totalFontSize} inlineSize={dimensions.totalInlineSize}>
+      {formatCents(item.line_total)}
+    </Total>
+  );
+
   return (
-    <Root aria-busy={isSubject || undefined}>
-      <CartItemThumb imageUrl={item.image_url} />
-      <Body>
-        <NameRow>
-          {item.name && <Name>{item.name}</Name>}
-          <Remove
-            isPending={isPending}
-            aria-label={`${REMOVE_LABEL} ${subject}`}
-            aria-disabled={isPending || undefined}
-            onClick={handleRemove}
-          >
-            <Icon name="delete" size={cartItemMetrics.removeIconSize} />
-          </Remove>
-        </NameRow>
-        {composition && <Composition>{composition}</Composition>}
-        <Footer>
-          <Stepper
-            size="xs"
-            isPending={isPending}
-            value={item.quantity}
-            min={MINIMUM_QUANTITY}
-            decreaseLabel={`${DECREASE_LABEL} ${subject}`}
-            increaseLabel={`${INCREASE_LABEL} ${subject}`}
-            aria-disabled={isPending || undefined}
-            onChange={handleQuantityChange}
-          />
-          <Total>{formatCents(item.line_total)}</Total>
-        </Footer>
-      </Body>
+    <Root rowVariant={variant} aria-busy={isSubject || undefined}>
+      <CartItemThumb imageUrl={item.image_url} size={dimensions.thumbSize} />
+      {isWide ? (
+        <WideBody>
+          <Body>{nameRow}</Body>
+          {stepper}
+          {total}
+        </WideBody>
+      ) : (
+        <Body>
+          {nameRow}
+          <Footer>
+            {stepper}
+            {total}
+          </Footer>
+        </Body>
+      )}
     </Root>
   );
 };

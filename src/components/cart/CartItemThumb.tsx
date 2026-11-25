@@ -7,13 +7,16 @@ import { cartItemMetrics } from '@/theme';
 
 export interface CartItemThumbProps {
   imageUrl: string | null;
+  size?: number;
 }
 
-const Root = styled('span')(({ theme }) => ({
+const Root = styled('span', {
+  shouldForwardProp: prop => prop !== 'size',
+})<{ size: number }>(({ theme, size }) => ({
   position: 'relative',
   display: 'block',
-  inlineSize: cartItemMetrics.imageSize,
-  blockSize: cartItemMetrics.imageSize,
+  inlineSize: size,
+  blockSize: size,
   flexShrink: 0,
   borderRadius: cartItemMetrics.imageRadius,
   overflow: 'hidden',
@@ -24,8 +27,8 @@ const Photo = styled(Image)({
   objectFit: 'cover',
 });
 
-const CartItemThumb: React.FC<CartItemThumbProps> = ({ imageUrl }) => {
-  return <Root>{imageUrl && <Photo src={imageUrl} alt="" fill sizes={`${cartItemMetrics.imageSize}px`} />}</Root>;
+const CartItemThumb: React.FC<CartItemThumbProps> = ({ imageUrl, size = cartItemMetrics.imageSize }) => {
+  return <Root size={size}>{imageUrl && <Photo src={imageUrl} alt="" fill sizes={`${size}px`} />}</Root>;
 };
 
 export default CartItemThumb;

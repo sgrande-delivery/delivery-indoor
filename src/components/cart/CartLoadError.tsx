@@ -2,12 +2,11 @@
 
 import React from 'react';
 import RouteErrorState from '@/components/error/RouteErrorState';
-import { Button, EmptyState } from '@/components/ui';
-import { resolveErrorCode } from '@/services/http-error-code';
+import InlineError from '@/components/error/InlineError';
 
 const TITLE = 'Não conseguimos carregar a sacola';
 const DESCRIPTION = 'Verifique a conexão e tente de novo — ou chame o garçom.';
-const RETRY_LABEL = 'Tentar novamente';
+const INLINE_MESSAGE = 'Não conseguimos carregar a sacola.';
 
 export interface CartLoadErrorProps {
   form: 'route' | 'inline';
@@ -18,8 +17,8 @@ export interface CartLoadErrorProps {
 }
 
 /**
- * O formato é de quem monta o painel: a tela do celular usa o erro de rota, e a coluna do tablet, que não é a rota
- * inteira, usa a forma de bloco.
+ * O formato é de quem monta o painel: a tela do celular usa o erro de rota, e a coluna e o painel do tablet falham
+ * como um bloco só, com o cardápio ao lado ainda valendo.
  */
 const CartLoadError: React.FC<CartLoadErrorProps> = ({ form, error, failureStreak, isRetrying, onRetry }) => {
   if (form === 'route') {
@@ -34,18 +33,7 @@ const CartLoadError: React.FC<CartLoadErrorProps> = ({ form, error, failureStrea
     );
   }
 
-  return (
-    <EmptyState
-      icon="error"
-      title={TITLE}
-      description={`${DESCRIPTION} (${resolveErrorCode(error)})`}
-      action={
-        <Button variant="secondary" size="md" loading={isRetrying} onClick={onRetry}>
-          {RETRY_LABEL}
-        </Button>
-      }
-    />
-  );
+  return <InlineError message={INLINE_MESSAGE} onRetry={onRetry} isRetrying={isRetrying} />;
 };
 
 export default CartLoadError;

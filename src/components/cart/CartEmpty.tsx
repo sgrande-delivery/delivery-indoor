@@ -9,16 +9,23 @@ const TITLE = 'Nenhum item ainda';
 const DESCRIPTION = 'Toque num produto para montar o pedido da mesa. Ele só vai para a cozinha quando você enviar.';
 const ACTION_LABEL = 'Ver o cardápio';
 
-const CartEmpty: React.FC = () => {
+export interface CartEmptyProps {
+  /** A coluna e o painel do tablet não levam ao cardápio: ele está ao lado, ou por baixo. */
+  hasMenuAction?: boolean;
+}
+
+const CartEmpty: React.FC<CartEmptyProps> = ({ hasMenuAction = true }) => {
   return (
     <EmptyState
       icon="shopping_bag"
       title={TITLE}
       description={DESCRIPTION}
       action={
-        <Button size="md" component={Link} href={HOME_ROUTE}>
-          {ACTION_LABEL}
-        </Button>
+        hasMenuAction ? (
+          <Button size="md" component={Link} href={HOME_ROUTE}>
+            {ACTION_LABEL}
+          </Button>
+        ) : undefined
       }
     />
   );

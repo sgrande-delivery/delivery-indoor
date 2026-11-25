@@ -19,11 +19,18 @@ const TableRow = styled(Skeleton)({
   marginBlockEnd: cartScreenMetrics.restaurantMarginBlockEnd,
 });
 
+export interface CartScreenSkeletonProps {
+  /** A coluna de paisagem não tem a linha da mesa, que é o chip da barra superior. */
+  hasTableRow?: boolean;
+}
+
 /** A forma do item, sem o total: no primeiro frame não se sabe se a sacola tem item algum. */
-const CartScreenSkeleton: React.FC = () => {
+const CartScreenSkeleton: React.FC<CartScreenSkeletonProps> = ({ hasTableRow = true }) => {
   return (
     <div role="status" aria-label={LOADING_LABEL}>
-      <TableRow height={cartScreenMetrics.skeleton.restaurantBlockSize} radius={cartRowMetrics.radius} />
+      {hasTableRow && (
+        <TableRow height={cartScreenMetrics.skeleton.restaurantBlockSize} radius={cartRowMetrics.radius} />
+      )}
       <List>
         {ITEMS.map(index => (
           <Skeleton key={index} height={cartScreenMetrics.skeleton.itemBlockSize} radius={cartItemMetrics.radius} />
