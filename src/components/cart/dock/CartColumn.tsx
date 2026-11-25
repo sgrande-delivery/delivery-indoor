@@ -2,7 +2,11 @@
 
 import React, { useRef } from 'react';
 import { styled } from '@mui/material/styles';
+import CartFooter from '../CartFooter';
 import CartPanel from '../CartPanel';
+import OrderSentColumn from '../sent/OrderSentColumn';
+import { useCart } from '../use-cart';
+import { useSendOrder } from '../use-send-order';
 import { cartDockMetrics } from './cart-dock-metrics';
 import CartColumnHeader from './CartColumnHeader';
 import CartDockTotals from './CartDockTotals';
@@ -31,7 +35,7 @@ const ToastAnchor = styled('div')({
   flexShrink: 0,
 });
 
-// Hoje o rodapé só tem o total, e sem itens ele some (`:empty`). O `:empty` sai na #48, quando o rodapé ganhar "Pedindo como" e o botão de enviar, que ficam montados com a coluna vazia.
+// Fica montado com a coluna vazia: o botão de enviar aparece desabilitado, para a coluna não piscar.
 const Footer = styled('footer')(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
@@ -41,17 +45,31 @@ const Footer = styled('footer')(({ theme }) => ({
   paddingInline: cartDockMetrics.column.footerPaddingInline,
   paddingBlockEnd: cartDockMetrics.column.footerPaddingBlockEnd,
   borderBlockStart: `1px solid ${theme.vars.palette.surface.line}`,
-  '&:empty': {
-    display: 'none',
-  },
 }));
 
 /**
  * A sacola do tablet em paisagem: fixa ao lado do cardápio, com rolagem própria, e que não some quando está vazia.
- * A altura vem do `Workspace` do shell, que já desconta a barra superior.
+ * Enviado o pedido, a confirmação ocupa a coluna até "Continuar no cardápio" ou até a sacola voltar a ter item. A
+ * altura vem do `Workspace` do shell, que já desconta a barra superior.
  */
 const CartColumn: React.FC = () => {
   const toastAnchorRef = useRef<HTMLDivElement>(null);
+  const { cart } = useCart();
+  const send = useSendOrder();
+  const { sent, resetSent } = send;
+
+  // ajustado no render, e não em efeito: a confirmação de uma sacola que já passou não ocupa nem um frame da nova
+  if (sent !== null && cart && cart.items.length > 0 && cart.id !== sent.cartId) {
+    resetSent();
+  }
+
+  if (sent) {
+    return (
+      <Root aria-label={ARIA_LABEL}>
+        <OrderSentColumn sent={sent} variant="column" onContinue={resetSent} />
+      </Root>
+    );
+  }
 
   return (
     <Root aria-label={ARIA_LABEL}>
@@ -62,6 +80,7 @@ const CartColumn: React.FC = () => {
       </Body>
       <Footer>
         <CartDockTotals variant="column" />
+        <CartFooter cart={cart ?? null} layout="stacked" send={send} />
       </Footer>
     </Root>
   );

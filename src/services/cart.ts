@@ -1,12 +1,19 @@
 import { AxiosRequestConfig, isAxiosError } from 'axios';
 import { randomUuid } from '@/helpers/random-uuid';
 import { Cart } from '@/types/cart';
+import { PlacedOrder } from '@/types/order';
 import { ProductSelection } from '@/types/product-selection';
 import { api } from './api';
 import { ApiResponseError } from './api-error-interceptor';
 
 const CART_STORAGE_KEY = 'indoor:cart';
 const CART_SESSION_TOKEN_HEADER = 'x-cart-session-token';
+const IDEMPOTENCY_KEY_HEADER = 'Idempotency-Key';
+const SERVER_ERROR_STATUS = 500;
+const CONFLICT_STATUS = 409;
+const IDEMPOTENCY_IN_FLIGHT_CODE = 'idempotency_key_in_flight';
+/** O envio de mesa: o pedido entra na conta da mesa, sem endereço, frete ou pagamento. */
+export const BOARD_SHIPMENT_METHOD = 'board';
 const NOT_FOUND_STATUS = 404;
 const UNPROCESSABLE_STATUS = 422;
 const CART_NOT_FOUND_CODE = 'cart_not_found';
@@ -134,6 +141,12 @@ export function readStoredCartIdFor(movementId: string | null): string | null {
   const stored = peekStoredCart();
 
   return stored !== null && stored.movementId === movementId ? stored.id : null;
+}
+
+export function readStoredCartSessionToken(cartId: string): string | undefined {
+  const stored = peekStoredCart();
+
+  return stored !== null && stored.id === cartId ? stored.sessionToken : undefined;
 }
 
 function cartRequestConfig(sessionToken: string | undefined = peekStoredCart()?.sessionToken): AxiosRequestConfig {
@@ -309,4 +322,45 @@ export async function removeCartItem(itemId: number): Promise<Cart> {
   const response = await api.delete<Cart>(`/cart/items/${itemId}`, cartRequestConfig());
 
   return response.data;
+}
+
+/**
+ * O único lugar que monta o corpo do envio: nenhum campo de entrega, pagamento, agendamento ou observação se aplica à
+ * mesa. A resposta é o pedido criado (201), e a conta da mesa o recebe pelo `board_movement_id` do carrinho.
+ */
+export async function checkoutCart(
+  cartId: string,
+  customerName: string,
+  idempotencyKey: string,
+  sessionToken?: string
+): Promise<PlacedOrder> {
+  const config = cartRequestConfig(sessionToken);
+  const response = await api.post<PlacedOrder>(
+    `/cart/${cartId}/checkout`,
+    { customer_name: customerName, shipment_method: BOARD_SHIPMENT_METHOD },
+    { ...config, headers: { ...config.headers, [IDEMPOTENCY_KEY_HEADER]: idempotencyKey } }
+  );
+
+  return response.data;
+}
+
+/**
+ * O servidor grava a resposta 2xx e 4xx da chave e a repete: reenviar com ela depois de um 4xx devolveria o mesmo 4xx
+ * para sempre. A chave só se repete quando o pedido pode ter entrado sem o app saber: sem resposta, 5xx (que o
+ * servidor não grava) ou a primeira tentativa ainda em voo.
+ */
+export function isIdempotencyKeyReusable(error: unknown): boolean {
+  if (!isAxiosError<ApiResponseError>(error)) {
+    return false;
+  }
+
+  if (!error.response) {
+    return true;
+  }
+
+  const { status, data } = error.response;
+
+  return (
+    status >= SERVER_ERROR_STATUS || (status === CONFLICT_STATUS && data?.internal_code === IDEMPOTENCY_IN_FLIGHT_CODE)
+  );
 }

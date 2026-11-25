@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useId, useRef } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 import ButtonBase from '@mui/material/ButtonBase';
 import Modal from '@mui/material/Modal';
 import { styled } from '@mui/material/styles';
@@ -12,9 +12,12 @@ import { useSheetDrag } from '@/components/ui/use-sheet-drag';
 import { REDUCED_MOTION_QUERY } from '@/helpers/reduced-motion';
 import { touchTargetArea } from '@/helpers/touch-target';
 import { cartHeaderMetrics, focusRing, fontFamilies, pxToRem, sheetMetrics } from '@/theme';
+import CartFooter from '../CartFooter';
 import CartPanel from '../CartPanel';
 import CartTableRow from '../CartTableRow';
+import OrderSentColumn from '../sent/OrderSentColumn';
 import { useCart } from '../use-cart';
+import { useSendOrder } from '../use-send-order';
 import { cartDockMetrics } from './cart-dock-metrics';
 import CartDockTotals from './CartDockTotals';
 import { CartBarSummary } from './describe-cart-bar';
@@ -153,8 +156,25 @@ const CartSheet: React.FC<CartSheetProps> = ({ summary, open, onClose, action })
   const surfaceRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const isExitedRef = useRef(true);
   const { cart } = useCart();
+  const send = useSendOrder();
+  const { sent, resetSent } = send;
   const hasItems = Boolean(cart && cart.items.length > 0);
+
+  // fechar o painel descarta a confirmação quando ele termina de descer; a que chega com o painel já fechado sai na hora
+  useEffect(() => {
+    if (open) {
+      isExitedRef.current = false;
+    } else if (sent !== null && isExitedRef.current) {
+      resetSent();
+    }
+  }, [open, sent, resetSent]);
+
+  function handleExited(): void {
+    isExitedRef.current = true;
+    resetSent();
+  }
 
   function handleClose(): void {
     if (!open) {
@@ -188,7 +208,7 @@ const CartSheet: React.FC<CartSheetProps> = ({ summary, open, onClose, action })
         },
       }}
     >
-      <SheetTransition in={open} reducedMotion={isReducedMotion}>
+      <SheetTransition in={open} reducedMotion={isReducedMotion} onExited={handleExited}>
         <Frame role="dialog" aria-modal="true" aria-labelledby={titleId}>
           <Panel ref={surfaceRef}>
             <DragArea {...drag.areaProps}>
@@ -206,12 +226,17 @@ const CartSheet: React.FC<CartSheetProps> = ({ summary, open, onClose, action })
               </Header>
             </DragArea>
             <Body ref={bodyRef}>
-              <CartPanel variant="sheet" tableRow={<CartTableRow compact />} toastAnchorRef={toastAnchorRef} />
+              {sent ? (
+                <OrderSentColumn sent={sent} variant="sheet" onContinue={handleClose} />
+              ) : (
+                <CartPanel variant="sheet" tableRow={<CartTableRow compact />} toastAnchorRef={toastAnchorRef} />
+              )}
             </Body>
-            {hasItems && (
+            {(hasItems || send.isRetryable) && !sent && (
               <Footer>
                 <ToastAnchor ref={toastAnchorRef} aria-hidden />
                 <CartDockTotals variant="sheet" />
+                <CartFooter cart={cart ?? null} layout="inline" send={send} />
               </Footer>
             )}
           </Panel>

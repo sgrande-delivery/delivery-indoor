@@ -2,9 +2,15 @@
 
 import React, { useRef } from 'react';
 import { styled } from '@mui/material/styles';
+import { cartFooterMetrics } from '@/theme';
+import CartFooter from './CartFooter';
 import CartHeader from './CartHeader';
 import CartPanel from './CartPanel';
 import CartTableRow from './CartTableRow';
+import { sendMetrics } from './send-metrics';
+import OrderSentPanel from './sent/OrderSentPanel';
+import { useCart } from './use-cart';
+import { useSendOrder } from './use-send-order';
 
 const Root = styled('div')({
   display: 'flex',
@@ -18,15 +24,45 @@ const ToastAnchor = styled('div')({
   flexShrink: 0,
 });
 
-/** A sacola do celular: cabeçalho fixo e o painel, que rola por dentro. A raiz preenche o scroller do `AppShell`. */
+const Footer = styled('footer')(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  flexShrink: 0,
+  gap: sendMetrics.footerGap,
+  paddingBlockStart: cartFooterMetrics.paddingBlockStart,
+  paddingInline: cartFooterMetrics.paddingInline,
+  paddingBlockEnd: cartFooterMetrics.paddingBlockEnd,
+  borderBlockStart: `${cartFooterMetrics.borderWidth}px solid ${theme.vars.palette.surface.line}`,
+  backgroundColor: theme.vars.palette.surface.card,
+}));
+
+/**
+ * A sacola do celular: cabeçalho fixo, o painel que rola por dentro e o rodapé de envio. Enviado o pedido, o corpo
+ * inteiro vira a confirmação, e sair da rota a descarta. A raiz preenche o scroller do `AppShell`.
+ */
 const CartScreen: React.FC = () => {
   const toastAnchorRef = useRef<HTMLDivElement>(null);
+  const { cart } = useCart();
+  const send = useSendOrder();
+
+  if (send.sent) {
+    return (
+      <Root>
+        <OrderSentPanel sent={send.sent} />
+      </Root>
+    );
+  }
 
   return (
     <Root>
       <CartHeader />
       <CartPanel tableRow={<CartTableRow />} toastAnchorRef={toastAnchorRef} />
       <ToastAnchor ref={toastAnchorRef} aria-hidden />
+      {((cart && cart.items.length > 0) || send.isRetryable) && (
+        <Footer>
+          <CartFooter cart={cart ?? null} layout="stacked" send={send} />
+        </Footer>
+      )}
     </Root>
   );
 };

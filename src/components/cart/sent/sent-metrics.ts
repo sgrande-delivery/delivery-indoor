@@ -1,0 +1,55 @@
+import { spacingScale } from '@/theme';
+
+// A confirmação do envio. O celular segue o README do `OrderSentPanel` (círculo de 64, título 19/800, corpo 13) e o
+// artboard `Carrinho · celular · primeiro pedido` no resto; o artboard desenha círculo de 92 e título de 24, e o DS vence.
+// A coluna e o painel do tablet são `Pedido enviado · tablet deitado`. Os tokens (cor, raio, fonte) vêm do tema.
+export const sentMetrics = {
+  markWashOpacity: 0.12,
+  panel: {
+    paddingInline: 32,
+    gap: 14,
+    markSize: 64,
+    markIconSize: 34,
+    titleMarginBlockStart: 8,
+    bodyFontSize: 13,
+    bodyLineHeight: 1.6,
+    actionsPaddingBlockStart: 18,
+    actionsPaddingInline: 20,
+    actionsPaddingBlockEnd: 26,
+    actionsGap: 10,
+  },
+  column: {
+    paddingBlockStart: 26,
+    paddingInline: 24,
+    sheetPaddingInline: 28,
+    paddingBlockEnd: 26,
+    gap: 13,
+    markSize: 80,
+    markIconSize: 42,
+    titleFontSize: 26,
+    titleLineHeight: 1.12,
+    titleMarginBlockStart: 4,
+    bodyFontSize: 14,
+    bodyLineHeight: 1.6,
+    sealGap: spacingScale.xs,
+    sealFontSize: 10,
+    sealWeight: 800,
+    sealLetterSpacing: '0.08em',
+    listMarginBlockStart: 10,
+    sectionFontSize: 11,
+    sectionWeight: 800,
+    sectionLetterSpacing: '0.08em',
+    actionsGap: 10,
+    actionsPaddingBlockStart: 16,
+    skeletonNumberInlineSize: 12,
+  },
+  item: {
+    thumbSize: 46,
+    gap: 11,
+    paddingBlock: 11,
+    nameFontSize: 13.5,
+    compositionFontSize: 11.5,
+    priceFontSize: 13.5,
+    borderWidth: 1,
+  },
+} as const;
