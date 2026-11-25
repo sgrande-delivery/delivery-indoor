@@ -4,6 +4,7 @@ import React from 'react';
 import ButtonBase from '@mui/material/ButtonBase';
 import { CSSObject, styled } from '@mui/material/styles';
 import { Icon, QuantityStepper } from '@/components/ui';
+import { touchTargetArea } from '@/helpers/touch-target';
 import { formatCents } from '@/helpers/money';
 import { cartItemMetrics, focusRing, fontFamilies, HOVER_MEDIA_QUERY, interactionOpacities, pxToRem } from '@/theme';
 import { CartItem } from '@/types/cart';
@@ -114,6 +115,8 @@ const Stepper = styled(QuantityStepper, {
   flexShrink: 0,
   transition: theme.transitions.create(['opacity']),
   ...inertWhilePending(isPending),
+  // O tamanho é o do client (`xs`); o alvo de 44 do tablet vem da área invisível de cada botão.
+  '& button': touchTargetArea,
 }));
 
 const Total = styled('span')(({ theme }) => ({
@@ -167,7 +170,7 @@ const CartItemRow: React.FC<CartItemRowProps> = ({ item, isPending, isSubject, o
         {composition && <Composition>{composition}</Composition>}
         <Footer>
           <Stepper
-            size="md"
+            size="xs"
             isPending={isPending}
             value={item.quantity}
             min={MINIMUM_QUANTITY}

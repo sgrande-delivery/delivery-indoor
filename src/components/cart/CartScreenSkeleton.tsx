@@ -4,7 +4,6 @@ import React from 'react';
 import { styled } from '@mui/material/styles';
 import { Skeleton } from '@/components/ui';
 import { cartItemMetrics, cartRowMetrics, cartScreenMetrics } from '@/theme';
-import { cartMetrics } from './cart-metrics';
 
 const LOADING_LABEL = 'Carregando a sua sacola';
 
@@ -27,7 +26,7 @@ const CartScreenSkeleton: React.FC = () => {
       <TableRow height={cartScreenMetrics.skeleton.restaurantBlockSize} radius={cartRowMetrics.radius} />
       <List>
         {ITEMS.map(index => (
-          <Skeleton key={index} height={cartMetrics.skeletonItemBlockSize} radius={cartItemMetrics.radius} />
+          <Skeleton key={index} height={cartScreenMetrics.skeleton.itemBlockSize} radius={cartItemMetrics.radius} />
         ))}
       </List>
     </div>

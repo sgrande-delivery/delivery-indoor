@@ -1,4 +1,4 @@
-import { cartHeaderMetrics, cartItemMetrics, controlSizes, stepperSizes } from '@/theme';
+import { cartHeaderMetrics, cartItemMetrics, controlSizes } from '@/theme';
 
 // O que a sacola da mesa desenha e o tema (que veio do client) não tem. Medidas de `Carrinho-Celular` do canvas da
 // mesa; o resto vem de `cartHeaderMetrics`, `cartRowMetrics`, `cartItemMetrics`, `cartSummaryMetrics` e
@@ -13,13 +13,4 @@ export const cartMetrics = {
   tableRowCompactIconSize: 18,
   totalsNoteFontSize: 11,
   totalsNoteLineHeight: 1.5,
-  // O item do esqueleto acompanha o stepper `md` da linha (o do tema dimensiona com o `xs`).
-  skeletonItemBlockSize: Math.round(
-    cartItemMetrics.padding * 2 +
-      cartItemMetrics.nameFontSize * cartItemMetrics.nameLineHeight +
-      cartItemMetrics.compositionMarginBlockStart +
-      cartItemMetrics.compositionFontSize * cartItemMetrics.compositionLineHeight +
-      cartItemMetrics.compositionMarginBlockEnd +
-      stepperSizes.md.height
-  ),
 } as const;
