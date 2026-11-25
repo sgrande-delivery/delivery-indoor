@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** 01 (#46). Para o passo 2 do roteiro em navegador, também a 03 e a 05 da #21 ([#42](../../21-indoor-menu-v2/tasks/42-category-listing-infinite-scroll.md), [#44](../../21-indoor-menu-v2/tasks/44-menu-search-v2.md)), que criam `/menu` e `/search`
-**Status:** pendente
+**Status:** shipped
 **Reconciliado com a #21 (2026-11-23):** esta task é a **única** dona da coluna e da barra da sacola do tablet, no `AppShell`. A [#45](../../21-indoor-menu-v2/tasks/45-tablet-menu-grid.md) perdeu o `MenuFrame` e o slot `aside` e não mexe em `app/(menu)/layout.tsx`; a grade dela preenche o `Scroller` que sobra ao lado da coluna. Os dois cortes de orientação nascem na [#40](../../21-indoor-menu-v2/tasks/40-catalog-v2-services-types.md), e esta task só os lê (mudança 1). `isCartDockRoute` e o grupo `app/(menu)/` falam das mesmas rotas. O stepper de 40 aponta para o follow-up único da #43.
 
 ## Objetivo
@@ -253,4 +253,99 @@ Não há suíte automatizada.
 
 ## Branch
 
-`task/49-tablet-cart-panel`, base sugerida: a branch da 01 (`task/46-board-cart-v2`), ou `feat/indoor-v2` se a 01 já tiver mergeado. Corre em paralelo com a 02 (#47).
+`task/49-tablet-cart-panel`, cortada de `task/46-board-cart-v2` (`52da4ee`, PR #85 ainda aberto) em 2026-11-25. O PR vai contra `task/46-board-cart-v2` enquanto o #85 não entrar; depois, contra `feat/indoor-v2`.
+
+## Implementação
+
+**Concluída em:** 2026-11-25
+
+### Camadas tocadas
+
+- **Shell:** `src/components/shell/AppShell.tsx` (o `Workspace`, `CartColumnSlot`, `TabletCartBarSlot` e a condição `showsCartDock`; `Scroller` ganhou `minInlineSize: 0`). `shell-metrics.ts` e `app/(menu)/layout.tsx` não mudaram.
+- **Novos, em `src/components/cart/dock/`:** `cart-dock-routes.ts` (`isCartDockRoute`), `cart-dock-metrics.ts`, `describe-cart-bar.ts`, `CartColumn.tsx`, `CartColumnHeader.tsx`, `CartDockTotals.tsx`, `TabletCartDock.tsx`, `TabletCartBar.tsx`, `CartSheet.tsx`.
+- **Alterados em `src/components/cart/`:**
+  - `CartPanel` (prop `variant: 'screen' | 'column' | 'sheet'`);
+  - `CartItemRow`, `CartItemList` e `CartItemThumb` (linha com separador);
+  - `CartTotals` (variante solta, sem cartão);
+  - `CartEmpty` (`hasMenuAction`);
+  - `CartLoadError` (forma `inline`);
+  - `CartScreenSkeleton` (`hasTableRow`);
+  - `cart-metrics.ts`.
+
+### Contratos consumidos
+
+Nenhum novo. Tudo vem do `useCart()` da #46 (`cart.items`, `cart.total`, `cart.discount`, em centavos). Nada é somado no cliente.
+
+### Variáveis de ambiente novas
+
+Nenhuma.
+
+### Decisões que tomei por conta própria
+
+- **`CartPanel` ganhou `variant` (`screen | column | sheet`)**, e a prop `errorForm` saiu: `screen` usa o erro de rota, `column` e `sheet` o `InlineError`. Um eixo só comanda a linha (cartão ou separador), as margens, o total (dentro do corpo só no `screen`), a ação do vazio (só no `screen`) e o erro.
+- **O total sai do corpo no tablet.** A task pede `CartTotals` no rodapé, e o `CartPanel` da #46 o tinha no fim do corpo. Na coluna e no painel ele fica no rodapé fixo (`CartDockTotals`), em forma solta (`CartTotals variant`), como no artboard (sem cartão, "Total do pedido" 14/24 na coluna e 15/26 no painel).
+- **O rodapé da coluna some sem itens** (`:empty`): hoje ele só tem o total. O `:empty` sai na #48, quando o rodapé ganhar "Pedindo como" e o botão de enviar, que ficam montados com a coluna vazia.
+- **Linha `.ci`:** variantes `column` (miniatura de 64, estrutura do celular: nome e lixeira, composição, stepper e total em coluna) e `sheet` (72, nome 15, total 16, com o stepper e o total na linha do nome, ver abaixo). O stepper segue `xs` e o alvo de 44 vem de `touchTargetArea`.
+- **O painel de retrato é forma própria da mesa, e não o `Sheet` do DS.** O `Sheet` para em 480 (`appShellMetrics.maxInlineSize`) e o artboard `Carrinho · tablet em pé` é de largura inteira. `CartSheet` é `Modal` + `SheetBackdrop` + `SheetTransition` (+ `useSheetDrag`, importados do DS sem edição), no molde do `PersonNamePanel` da #47:\n  - largura inteira, raio `sheetMetrics.radius` só em cima, fundo `card`, altura pelo conteúdo até 54% da tela (640 em 1180), corpo rolando por dentro;\n  - puxador e cabeçalho com \"Sua sacola\" em display 22/800, \"· N itens\" em `muted` na mesma linha, o slot `action` (\"Limpar\", da #50) e o fechar à direita, com X solto e alvo de 44 (`touchTargetArea`);\n  - margens de 28 (`cartDockMetrics.sheet`), linha da mesa compacta em `field`, e rodapé com o total e a nota da taxa (o \"Pedindo como\" e o \"Enviar pedido\" entram na #48);\n  - backdrop e `Esc` fecham, foco preso, `aria-modal` e `aria-labelledby` no título, e arrastar o puxador para baixo fecha (o `useSheetDrag` do DS serviu).\n- **Linha do painel:** miniatura de 72, nome e composição num bloco, e o stepper `xs` e o total (coluna de 84) na mesma linha. **A lixeira ficou ao lado do nome**, no canto do bloco de texto, como no celular.
+- **A sombra da barra** é `0 -10px 26px -18px` na tinta de `staticSurfaces.inverse` (`toColorChannel`, como o `menuHeroMetrics.shadow`), a 0,45. Os `elevations` do tema só sombreiam para baixo.
+- **O botão "Ver sacola" da barra é um `span` estilizado com os tokens do botão primário `lg`**, e não o `Button` como `span`: o `ButtonBase` põe `role="button"` e `tabIndex` num `span`, o que daria foco dentro do foco.
+- **A âncora do toast fica no topo do rodapé** (painel, deslocada pela folga de cima do `Sheet` para o aviso não invadir o filete) e no limite inferior do corpo (coluna). O painel sem itens fica sem âncora, e o aviso cai no pé da viewport.
+- **A forma `inline` do `CartLoadError` é o `InlineError`** com "Não conseguimos carregar a sacola." e "Tentar de novo". O código de erro saiu da descrição. Fecha o follow-up da #46.
+- **O vazio mantém a copy da #46** ("Toque num produto para montar o pedido da mesa..."), e não a do artboard ("Toque no + de um produto"), como a task manda (decisão 9).
+- **O vazio da coluna e do painel é centralizado**, como o artboard. As proporções 2/7 e 5/7 ficam só na `screen`.
+- **O texto da região viva sai de `describeCartBar` (`announcement`)**, e o resumo que o `TabletCartDock` calcula desce ao `CartSheet` por prop. A barra tem `aria-haspopup="dialog"`. **O anúncio da região viva diz "Sua sacola, 2 itens, total R$ ..."**, e o `aria-label` da barra é o `accessibleLabel` ("Ver sacola, ..."). Um anúncio com "Ver sacola" soaria como ação.
+
+### Como testar
+
+1. `yarn dev` (com `.env.development`) e `/?session=<uuid-aberto>`.
+2. Seguir o roteiro "No navegador" desta task (passos 1 a 12), com a sacola da #46 com dois itens.
+3. Pontos a olhar:
+   - o respiro entre a coluna e a grade;
+   - o cabeçalho, a lista, o total e o fim da coluna;
+   - a barra de 92 em retrato e o painel por cima.
+
+### O que NÃO foi verificado
+
+- **Nada no navegador** (a validação é do dev): layout, rolagem independente, a não remontagem da coluna ao navegar, a rotação do DevTools e o fechar do painel ao sair do retrato.
+- **O toast sobre o painel** (z-index do `Toast` contra o do `Modal`) e o foco depois de remover dentro do painel.
+- **O passo 2 do roteiro** (`/menu` e `/search`) e a grade de 3 colunas ao lado da coluna: a #42, a #44 e a #45 já estão na base (`app/(menu)` tem `/`, `/menu` e `/search`, e `f650434` é ancestral), então os dois passam a ser verificáveis no navegador. Não foram vistos: a coluna não remonta por ser filha do shell, mas isso é leitura do código.
+
+### Validado no navegador (2026-11-25)
+
+Playwright com o Chromium do sistema, contra a delivery-api local (restaurante 1, mesa 004). **25 de 25 verificações passaram** (`/tmp/indoor-qa-22/qa49.mjs`).
+
+**Paisagem, 1180×820**
+- **Coluna:**
+  - a coluna tem 380, e o vazio aparece centralizado, sem "Ver o cardápio";
+  - adicionar pelo detalhe mostra os itens na coluna, em linhas `.ci` com separador, e o total no rodapé fixo;
+  - o stepper `xs` (botão de 26) sobe a quantidade com um toque a 20px do centro.
+- **Navegação:**
+  - a coluna não remonta ao adicionar, nem na navegação de cliente `/` → `/menu?category=1` → `/search`, conferido pelo mesmo nó no DOM;
+  - a grade de 3 colunas da #45 cabe ao lado da coluna, sem rolagem horizontal, e também a 1024×768 e a 962×601;
+  - em `/cart` não há coluna.
+
+**Retrato, 820×1180**
+- **Barra:** sem itens, não há barra nem coluna. Com itens, a barra "Ver sacola" de 92 fica embaixo.
+- **Painel:**
+  - abre com a largura inteira (820), com título, "· 1 item", fechar à direita (glifo de 23, toque de 44 conferido a 20px) e a linha da mesa compacta;
+  - na linha do item, o nome vem com a lixeira, depois o stepper e o total;
+  - o rodapé mostra o total;
+  - `Esc` fecha o painel, e girar para paisagem também, com a coluna aparecendo.
+
+**Celular, 390×844:** não há coluna nem barra, e `/cart` mantém a tela da #46.
+
+**Não verificado:**
+- tablet real (toque, arrasto do puxador, teclado);
+- leitor de tela;
+- o fim da lista na coluna (m4 do review, 30 contra 18), que não ficou visível como problema com dois itens;
+- a altura do painel com muitos itens (teto de 54%, 640 em 1180).
+
+## Follow-ups identificados em review
+
+1. **Área de 44 no fechar do `PanelHeader`**, que é do DS: corrigir no client e trazer no sync. (O painel de retrato não depende mais dele: tem o próprio fechar.)
+3. **Avisos sem âncora em retrato** caem sobre a barra de 92, porque o `CHROME_BOTTOM_INSET_VAR` não mede a barra.
+4. **Anúncio dos avisos dentro do painel**, com o `aria-hidden` que o Modal põe no resto da página.
+5. **Esqueleto da coluna e do painel na forma da linha** (64 e 72, com separador); hoje é o cartão do celular.
+6. **Tirar o `:empty` do rodapé da coluna na #48.**
+7. **Barreira das escritas por instância de `CartPanel`:** rotacionar com escrita em voo deixa a outra instância livre; `useIsMutating(['cart'])` resolve.
+8. **O "voltar" do Android não fecha o painel**, que não tem URL.
