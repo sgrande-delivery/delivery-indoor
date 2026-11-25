@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { InfiniteData, useInfiniteQuery, UseInfiniteQueryResult } from '@tanstack/react-query';
 import { flattenUniqueProducts } from '@/components/category/use-category-products';
 import { SearchFilters } from '@/helpers/search-params';
@@ -18,6 +18,7 @@ export interface UseSearchResults {
   /** `meta.total` da primeira página: o número é do conjunto inteiro, não da lista rolada. */
   total: number | null;
   relaxed: RelaxCandidate[];
+  /** As da página carregada ou, enquanto o recorte novo carrega, as últimas conhecidas (ver `useRetainedFacets`). */
   categoryFacets: SearchFacetCategory[];
   /** A última página carregada: `página X de Y`. */
   lastLoadedPage: { current: number; last: number } | null;
@@ -27,6 +28,21 @@ export interface UseSearchResults {
    * entra: a primeira página já foi confirmada com o filtro.
    */
   hidesStaleResults: boolean;
+}
+
+/**
+ * As categorias ficam na trilha durante o carregamento do recorte novo. Sem isso a trilha encolhe por um instante, o
+ * navegador puxa o scroll horizontal para o novo limite, e a chip tocada no fim dela sai da tela. Trocar de categoria
+ * devolve as mesmas chips, porque a faceta ignora o próprio filtro.
+ */
+function useRetainedFacets(current: SearchFacetCategory[] | undefined): SearchFacetCategory[] {
+  const [known, setKnown] = useState<SearchFacetCategory[]>([]);
+
+  if (current !== undefined && current !== known) {
+    setKnown(current);
+  }
+
+  return current ?? known;
 }
 
 export function useSearchResults(filters: SearchFilters): UseSearchResults {
@@ -44,13 +60,14 @@ export function useSearchResults(filters: SearchFilters): UseSearchResults {
   const products = useMemo(() => flattenUniqueProducts(pages ?? []), [pages]);
   const first = pages?.[0];
   const last = pages?.[pages.length - 1];
+  const categoryFacets = useRetainedFacets(first?.categoryFacets);
 
   return {
     query,
     products,
     total: first?.meta.total ?? null,
     relaxed: first?.relaxed ?? [],
-    categoryFacets: first?.categoryFacets ?? [],
+    categoryFacets,
     hidesStaleResults,
     lastLoadedPage: last ? { current: last.meta.current_page, last: last.meta.last_page } : null,
   };

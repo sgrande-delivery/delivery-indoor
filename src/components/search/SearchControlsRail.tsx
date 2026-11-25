@@ -5,7 +5,8 @@ import { styled } from '@mui/material/styles';
 import MenuCategoryChip from '@/components/menu/MenuCategoryChip';
 import { tabletGutter } from '@/components/menu/tablet-gutter';
 import { resolveSearchSort, SearchFilters } from '@/helpers/search-params';
-import { ProductSort } from '@/types/product-page';
+import { ProductSort, SearchFacetCategory } from '@/types/product-page';
+import CategoryFacetChipList from './CategoryFacetChipList';
 import { searchLayoutMetrics } from './search-metrics';
 import IngredientFilterChips from './ingredients/IngredientFilterChips';
 import SearchSortChip from './SearchSortChip';
@@ -16,6 +17,8 @@ const OFFERS_LABEL = 'Só promoções';
 
 export interface SearchControlsRailProps {
   filters: SearchFilters;
+  /** As categorias da faceta do servidor; vazio enquanto a primeira página não chega. */
+  facets: SearchFacetCategory[];
   onChange: (next: SearchFilters) => void;
 }
 
@@ -34,8 +37,11 @@ const Rail = styled('div')({
   ...tabletGutter('paddingInline'),
 });
 
-/** Cada toque aplica na hora: ordenação e promoções são `router.push`, sem folha de confirmação. */
-const SearchControlsRail: React.FC<SearchControlsRailProps> = ({ filters, onChange }) => {
+/**
+ * Ordenação, filtros e categorias numa trilha só, que rola na horizontal: duas linhas de chips empurrariam a lista para
+ * baixo. Cada toque aplica na hora — é `router.push`, sem folha de confirmação.
+ */
+const SearchControlsRail: React.FC<SearchControlsRailProps> = ({ filters, facets, onChange }) => {
   const [isSortOpen, setSortOpen] = useState(false);
   const sort = resolveSearchSort(filters.sort);
 
@@ -60,6 +66,11 @@ const SearchControlsRail: React.FC<SearchControlsRailProps> = ({ filters, onChan
           onClick={() => onChange({ ...filters, onlyOffers: !filters.onlyOffers })}
         />
         <IngredientFilterChips filters={filters} onChange={onChange} />
+        <CategoryFacetChipList
+          facets={facets}
+          categoryId={filters.categoryId}
+          onSelect={categoryId => onChange({ ...filters, categoryId })}
+        />
       </Rail>
       <SearchSortOverlay
         open={isSortOpen}
