@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** [#79](https://github.com/sgrande-delivery/delivery-indoor/pull/79) (trilha única da busca)
-**Status:** executada
+**Status:** shipped
 
 ## Objetivo
 

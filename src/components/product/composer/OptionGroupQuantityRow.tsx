@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { styled } from '@mui/material/styles';
 import { QuantityStepper } from '@/components/ui';
+import { touchTargetArea } from '@/helpers/touch-target';
 import { OptionGroupItem } from '@/types/product-detail';
 import OptionGroupAddButton from './OptionGroupAddButton';
 import OptionGroupItemText from './OptionGroupItemText';
@@ -25,8 +26,10 @@ const Text = styled('div')({
   minWidth: 0,
 });
 
+// O tamanho é o do client (`xs`); o alvo de 44 do tablet vem da área invisível de cada botão.
 const Stepper = styled(QuantityStepper)({
   flexShrink: 0,
+  '& button': touchTargetArea,
 });
 
 const OptionGroupQuantityRow: React.FC<OptionGroupQuantityRowProps> = ({
@@ -96,7 +99,7 @@ const OptionGroupQuantityRow: React.FC<OptionGroupQuantityRowProps> = ({
       {hasQuantity ? (
         <Stepper
           ref={stepperRef}
-          size="md"
+          size="xs"
           min={EMPTY_QUANTITY}
           max={maxQuantity}
           value={quantity}

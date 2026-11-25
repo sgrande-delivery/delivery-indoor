@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** #20 (na base)
-**Status:** pendente
+**Status:** shipped
 
 ## Objetivo
 
@@ -247,15 +247,15 @@ Não há suíte automatizada.
 
 ## Critérios de aceitação
 
-- [ ] `usePerson()` expõe `{ person, needsPerson, setPerson }` como na mudança 2. `person` é `undefined` até a leitura no cliente, e `needsPerson` só é `true` com mesa `ready`, leitura feita e sem nome.
-- [ ] O nome fica em `localStorage` sob `indoor:person:<movement.id>`, normalizado e com no máximo 60 caracteres, e é outro para outra movimentação.
-- [ ] Confirmar vazio ou só com espaços mostra "Informe seu nome para enviar o pedido" e não chama `onConfirm`.
-- [ ] "trocar" abre o mesmo diálogo, preenchido, em modo `change`, que grava sem enviar.
-- [ ] Durante `isSubmitting` o diálogo não fecha e o CTA mostra spinner.
-- [ ] Abaixo de 1024 é folha embaixo. A partir de 1024 é painel no topo com ponteiro de toque e centrado com ponteiro fino. Nenhuma alteração em `src/components/ui/` nem em `src/theme/`.
-- [ ] O diff de `src/App.tsx` é o aninhamento do `PersonProvider` e um import.
-- [ ] A copy é a do README e dos artboards (decisão 6). A copy derivada do modo `change` está marcada para confirmação.
-- [ ] `npx tsc --noEmit`, o lint e o `yarn build` passam.
+- [x] `usePerson()` expõe `{ person, needsPerson, setPerson }` como na mudança 2. `person` é `undefined` até a leitura no cliente, e `needsPerson` só é `true` com mesa `ready`, leitura feita e sem nome.
+- [x] O nome fica em `localStorage` sob `indoor:person:<movement.id>`, normalizado e com no máximo 60 caracteres, e é outro para outra movimentação.
+- [x] Confirmar vazio ou só com espaços mostra "Informe seu nome para enviar o pedido" e não chama `onConfirm`.
+- [x] "trocar" abre o mesmo diálogo, preenchido, em modo `change`, que grava sem enviar.
+- [x] Durante `isSubmitting` o diálogo não fecha e o CTA mostra spinner.
+- [x] Abaixo de 1024 é folha embaixo. A partir de 1024 é painel no topo com ponteiro de toque e centrado com ponteiro fino. Nenhuma alteração em `src/components/ui/` nem em `src/theme/`.
+- [x] O diff de `src/App.tsx` é o aninhamento do `PersonProvider` e um import.
+- [x] A copy é a do README e dos artboards (decisão 6). A copy derivada do modo `change` está marcada para confirmação.
+- [x] `npx tsc --noEmit`, o lint e o `yarn build` passam.
 
 ## Fora de escopo
 
@@ -267,4 +267,89 @@ Não há suíte automatizada.
 
 ## Branch
 
-`task/47-ordering-person-identity`, base sugerida: `feat/indoor-v2` depois da fila da #20. Corre em paralelo com a 01 (#46). Conflito esperado na junção: só `src/App.tsx`, que a 01 não toca.
+`task/47-ordering-person-identity`, cortada de `feat/indoor-v2` (`b453dc9`) em 2026-11-25. Corre em paralelo com a 01 (#46). Conflito esperado na junção: só `src/App.tsx`, que a 01 não toca.
+
+## Implementação
+
+**Concluída em:** 2026-11-25
+
+### Camadas tocadas
+
+- Serviço: `src/services/person-identity.ts`.
+- Provider: `src/providers/person/PersonProvider.tsx` e `index.ts`; `src/App.tsx` (aninhamento e import).
+- Componentes: `src/components/person/` (`PersonNameDialog`, `PersonNamePanel`, `PersonNameForm`, `OrderingAsRow`, `person-name-metrics.ts`, `ordering-as-metrics.ts`).
+- Sandbox: `app/sandbox/pessoa/page.tsx` e `_components/PersonSandbox.tsx`.
+- Nada em `src/components/ui/` nem em `src/theme/`.
+
+### Contratos consumidos
+
+- Nenhum da API. Só `localStorage` (`indoor:person:<movement.id>`) e `useBoardSession()`.
+
+### Variáveis de ambiente novas
+
+- Nenhuma.
+
+### Decisões que tomei por conta própria
+
+- **Fechar fica dentro do form, nas duas formas.** O `Sheet` com `aria-label` não tem cabeçalho, e o cabeçalho dele exigiria um título duplicado. O fechar é um `ButtonBase` local de 44x44, transparente, com o `Icon` `close` em `muted` (o X solto dos artboards), na linha do título.
+- **Campo `readOnly` (não `disabled`) durante o envio**, para não perder o foco nem derrubar o teclado.
+- **Cor do ícone:** `brand.onSoft` sobre `brand.soft`, o par documentado no `tokens.json`, em vez do `#C2410C` do artboard.
+- **Título em `typographyTokens.h3`** (19/800, o do README), não os 21/22 dos artboards.
+- **Respiro:** 14 entre blocos na folha, 16 no painel, 12 (folha) e 14 (painel) entre ícone e título, 4 entre título e corpo.
+- **`normalizePersonName` corta em 60 e reaplica `trim`**, para o corte não deixar espaço no fim. `readPerson` descarta valor inválido guardado.
+- **`person` do provider vale `undefined` até o efeito ler a movimentação atual**, inclusive no intervalo em que `movement.id` muda, para o nome da mesa anterior não vazar.
+- **Painel no topo com `paddingBlockStart: dialogMetrics.gutter`** (32) sob `(pointer: coarse)`.
+- **Copy derivada do modo `change`** ("Salvar nome", "Informe seu nome") e a frase "Só pedimos uma vez" sem "por pessoa" seguem a task e **precisam de confirmação do dev**.
+- **"trocar" desabilitado** usa `interactionOpacities.disabled`.
+- **"trocar" em 700**, como o README do `OrderingAsRow` e o artboard; o DS venceu o texto da task (800). O "·" antes dele é `aria-hidden`.
+- **Nome inválido lança** em `savePerson` e `setPerson` (RN-03 também no provider).
+- **`totalLabel` obrigatório em `first-send`**, por união discriminada em `PersonNameDialogProps`.
+- **O texto e o erro moram no `PersonNameDialog`** e zeram na abertura, para sobreviver à troca de folha por painel ao girar o tablet.
+- **Nome acessível da folha:** o título, "Como podemos te chamar?".
+- **Painel com `maxBlockSize` em `100%`** (como o `Overlay`): a RF-14 se cumpre pela âncora no topo e pela altura natural, não por `dvh`.
+- **Erro de validação devolve o foco ao campo.**
+
+### Como testar
+
+1. `yarn dev` (não rodado por mim).
+2. Abrir `http://localhost:3000/sandbox/pessoa?session=<uuid-aberto>` e seguir o roteiro de "Testes > No navegador".
+
+### Validado no navegador (2026-11-25)
+
+Playwright com o Chromium do sistema, contra a delivery-api local (restaurante 1, mesas 004 e 003), em `/sandbox/pessoa`. **36 de 36 verificações passaram** (roteiro em `/tmp/indoor-qa-22/qa47.mjs`).
+
+- **1.** Sem nome, a linha não aparece e `needsPerson` é `true`. O diálogo abre com o foco no campo.
+- **2.**
+  - vazio e só espaços mostram "Informe seu nome para enviar o pedido", e `onConfirm` não roda;
+  - digitar limpa o erro.
+- **3.** "  Marina   Souza ":
+  - o CTA mostra o spinner (`aria-busy`), e `Esc` e o backdrop não fecham durante o envio;
+  - grava `indoor:person:<uuid>` = "Marina Souza";
+  - a linha lê "Pedindo como Marina Souza · trocar", em texto corrido.
+- **4.** O reload não pisca "sem nome" nem `needsPerson` (MutationObserver) e não abre o diálogo.
+- **5.** "trocar" abre `change` preenchido com "Salvar nome". Vazio mostra "Informe seu nome", e Enter salva.
+- **6.** Na mesa 003 não há nome nem linha.
+- **7.** 80 caracteres param em 60.
+- **8.**
+  - 390×844 e 820×1180: folha embaixo, com a borda inferior na borda da tela;
+  - 1180×820 com toque (`pointer: coarse`): painel de 440 no topo (`top` 32), com "Cancelar" e o CTA;
+  - 1440×900 com mouse: painel centrado;
+  - girar de 820×1180 para 1180×820 com o diálogo aberto mantém "Marina" no campo.
+- **9.** O teclado foi simulado com a viewport a 1180×492, cerca de 60% da altura. O CTA termina em 275, inteiro na tela.
+- **10.** Fechar 44×44, "Cancelar" e CTA com 52 de altura, "trocar" 57×44.
+- **Respiro da linha "Pedindo como"**, medido contra o artboard `Carrinho · celular · nome salvo`:
+  - o alvo do "trocar" deixava 12 entre o nome e o "·", contra 7 no artboard;
+  - a margem negativa do padding devolveu 6 (`OrderingAsRow.tsx`).
+
+### O que NÃO foi verificado
+
+- **O teclado de verdade**, num tablet real em paisagem e em pé, e no iOS. Isso inclui o `readOnly` durante o envio mantendo o teclado aberto.
+- **Leitor de tela.**
+
+## Follow-ups identificados em review
+
+- Fundo da folha: o `Sheet` usa `surface.page`, e o artboard desenha `card`.
+- Largura do painel: 440 (DS) contra 560 do artboard do tablet deitado.
+- `autoComplete="given-name"` no campo: rever se o preenchimento automático serve a um aparelho de mesa compartilhado.
+- Folha com teclado no tablet em pé (820): o `Sheet` embaixo pode ficar coberto pelo teclado.
+- Posição no `Overlay` do `delivery-client`: propor `top`/`center`, e trocar o `PersonNamePanel` por ela quando vier no sync.

@@ -6,6 +6,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { styled } from '@mui/material/styles';
 import InlineError from '@/components/error/InlineError';
 import { Icon, QuantityStepper, Skeleton, VisuallyHidden } from '@/components/ui';
+import { touchTargetArea } from '@/helpers/touch-target';
 import { useBoardSession } from '@/providers/board-session';
 import { useIsOffline } from '@/providers/connectivity/ConnectivityProvider';
 import { tabletShellMediaQuery } from '@/components/shell/shell-metrics';
@@ -87,8 +88,10 @@ const PriceError = styled(InlineError)({
   marginBlockEnd: productFooterMetrics.summaryMarginBlockEnd,
 });
 
+// O tamanho é o do client (`sm`); o alvo de 44 do tablet vem da área invisível de cada botão.
 const Stepper = styled(QuantityStepper)({
   flexShrink: 0,
+  '& button': touchTargetArea,
 });
 
 // O CTA bloqueado continua focável e clicável de propósito: é o clique que revela o alerta e leva o
@@ -264,7 +267,7 @@ const ProductSheetFooter: React.FC<ProductSheetFooterProps> = ({
       )}
       <Actions>
         <Stepper
-          size="md"
+          size="sm"
           value={quantity}
           min={MINIMUM_QUANTITY}
           disabled={isSubmitting || isUnavailable || isLocked}

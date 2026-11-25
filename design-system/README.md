@@ -37,7 +37,7 @@ Nenhuma tela deste app é "a mesma com `max-width` diferente":
 | Tablet em pé | 820 × 1180 | `TableTopBar` fixa, uma coluna, barra de ações fixa embaixo |
 | Tablet deitado | 1180 × 820 | `TableTopBar` fixa e duas colunas com rolagem independente, sem rolar a página inteira |
 
-O tablet não tem barra de navegador (app em tela cheia), fica deitado na mesa e é manuseado por mais de uma pessoa: **nenhum alvo de toque abaixo de 44px** (`touch-min`), e controle de quantidade, aba e botão de ação ficam no tamanho `md` ou maior.
+O tablet não tem barra de navegador (app em tela cheia), fica deitado na mesa e é manuseado por mais de uma pessoa: **nenhum alvo de toque abaixo de 44px** (`touch-min`), e aba e botão de ação ficam no tamanho `md` ou maior. O controle de quantidade é a exceção, por decisão do dev em 2026-11-25: o desenho é o do app do cliente (`xs` na linha, `sm` no rodapé do produto), e o alvo de 44 vem de uma área de toque invisível em volta de cada botão (`touchTargetArea`, em `src/helpers/touch-target.ts`). Aumentar o desenho do stepper para chegar aos 44 é o que o dev reprovou.
 
 ## Cor, tipografia, forma e voz
 

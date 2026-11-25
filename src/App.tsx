@@ -8,6 +8,7 @@ import ConnectivityProvider from '@/providers/connectivity/ConnectivityProvider'
 import ThemeProvider from './providers/theme/ThemeProvider';
 import RestaurantBrandStyles from './providers/theme/RestaurantBrandStyles';
 import { BoardSessionGate, BoardSessionProvider } from '@/providers/board-session';
+import { PersonProvider } from '@/providers/person';
 
 function createQueryClient(): QueryClient {
   return new QueryClient({
@@ -27,9 +28,11 @@ const App: React.FC<PropsWithChildren> = ({ children }) => {
         <ToastProvider>
           <ConnectivityProvider>
             <BoardSessionProvider>
-              <AppShell>
-                <BoardSessionGate>{children}</BoardSessionGate>
-              </AppShell>
+              <PersonProvider>
+                <AppShell>
+                  <BoardSessionGate>{children}</BoardSessionGate>
+                </AppShell>
+              </PersonProvider>
             </BoardSessionProvider>
           </ConnectivityProvider>
         </ToastProvider>
