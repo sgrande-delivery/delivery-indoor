@@ -18,6 +18,10 @@ export const sendMetrics = {
     lineHeight: 1.45,
     retryPaddingInline: 8,
   },
+  block: {
+    fontSize: 12,
+    lineHeight: 1.5,
+  },
   cta: {
     blockSize: cartFooterMetrics.ctaHeight,
   },

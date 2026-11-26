@@ -1,4 +1,5 @@
 import { CartItem } from '@/types/cart';
+import { readSendFailure, SendFailureKind } from './send-failure';
 
 /**
  * A foto do envio, guardada inteira: reenviar depois de uma falha sem resposta não pode depender da sacola lida,
@@ -47,4 +48,29 @@ export function subscribeToSend(listener: Listener): () => void {
   return () => {
     listeners.delete(listener);
   };
+}
+
+/** Esquece a falha e a tentativa: a mesa de que elas falavam não é mais a da tela. */
+export function resetSendState(): void {
+  setSendState(IDLE);
+}
+
+// Só a recusa por item muda com a sacola. Mesa fechada, loja sem v2 e cozinha fechada não dependem dela: a api não as
+// confere no PATCH nem no DELETE de item, então apagar o aviso deixaria o CTA habilitado diante de uma recusa de pé.
+const ANSWERED_BY_CART_WRITE = new Set<SendFailureKind>(['item-unavailable']);
+
+/**
+ * Descarta a recusa por item (sem tentativa pendente) quando a sacola perde itens. A falha com tentativa fica: o pedido
+ * pode ter entrado.
+ */
+export function dismissAnsweredFailure(): void {
+  if (state.attempt !== null || state.error === null) {
+    return;
+  }
+
+  if (!ANSWERED_BY_CART_WRITE.has(readSendFailure(state.error).kind)) {
+    return;
+  }
+
+  setSendState({ ...state, error: null });
 }

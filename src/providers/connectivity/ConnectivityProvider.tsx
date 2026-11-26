@@ -10,6 +10,25 @@ import { probeConnection } from '@/services/connection-probe';
 
 const RECOVERY_POLL_MS = 15000;
 
+// As telas com rodapé fixo registram a âncora: o aviso global de "conexão restabelecida" sobe dela, e não da borda do
+// viewport, onde cobriria o CTA. Mais de uma pode estar montada (o tablet mantém a coluna e o painel, um deles oculto).
+const toastAnchors = new Set<React.RefObject<HTMLElement>>();
+
+/** Registra a âncora enquanto a tela está montada. */
+export function useRestoredToastAnchor(anchorRef: React.RefObject<HTMLElement>): void {
+  useEffect(() => {
+    toastAnchors.add(anchorRef);
+
+    return () => {
+      toastAnchors.delete(anchorRef);
+    };
+  }, [anchorRef]);
+}
+
+function resolveVisibleToastAnchor(): React.RefObject<HTMLElement> | undefined {
+  return Array.from(toastAnchors).find(anchorRef => (anchorRef.current?.getClientRects().length ?? 0) > 0);
+}
+
 // O listener padrão do React Query, que o provider desliga enquanto está montado.
 function listenToWindowConnection(setOnline: (online: boolean) => void): () => void {
   const handleOnline = (): void => setOnline(true);
@@ -154,7 +173,11 @@ const ConnectivityProvider: React.FC<React.PropsWithChildren> = ({ children }) =
     onlineManager.setOnline(true);
     setIsOffline(false);
     setOfflineSince(null);
-    toastRef.current.show({ message: OFFLINE_RESTORED_MESSAGE, variant: 'success' });
+    toastRef.current.show({
+      message: OFFLINE_RESTORED_MESSAGE,
+      variant: 'success',
+      anchorRef: resolveVisibleToastAnchor(),
+    });
     void queryClient.refetchQueries({ type: 'active' }, { cancelRefetch: false });
   }, [clearPoll, queryClient]);
 

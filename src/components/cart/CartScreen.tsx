@@ -2,6 +2,7 @@
 
 import React, { useRef } from 'react';
 import { styled } from '@mui/material/styles';
+import { useRestoredToastAnchor } from '@/providers/connectivity/ConnectivityProvider';
 import { cartFooterMetrics } from '@/theme';
 import CartFooter from './CartFooter';
 import CartHeader from './CartHeader';
@@ -42,6 +43,7 @@ const Footer = styled('footer')(({ theme }) => ({
  */
 const CartScreen: React.FC = () => {
   const toastAnchorRef = useRef<HTMLDivElement>(null);
+  useRestoredToastAnchor(toastAnchorRef);
   const { cart } = useCart();
   const send = useSendOrder();
 
@@ -55,7 +57,7 @@ const CartScreen: React.FC = () => {
 
   return (
     <Root>
-      <CartHeader />
+      <CartHeader toastAnchorRef={toastAnchorRef} />
       <CartPanel tableRow={<CartTableRow />} toastAnchorRef={toastAnchorRef} />
       <ToastAnchor ref={toastAnchorRef} aria-hidden />
       {((cart && cart.items.length > 0) || send.isRetryable) && (

@@ -15,7 +15,7 @@ paths:
 
 ## Erro não morre em `console.error`
 
-Vários hooks da `master` engolem a falha num `console.error` — é o padrão que o redesign substitui. **Em código novo, propague estado de erro para a UI**, e a UI escolhe o formato: tela cheia quando a rota inteira depende da requisição, modal no desktop/tablet, toast quando foi uma ação repetível, inline quando um bloco secundário falhou. Toda tela de erro mostra o código do erro em texto pequeno, para suporte.
+Vários hooks da `master` engolem a falha num `console.error` — é o padrão que o redesign substitui. **Em código novo, propague estado de erro para a UI**, e a UI escolhe o formato: tela cheia quando a rota inteira depende da requisição, modal no desktop/tablet, toast quando foi uma ação repetível, inline quando um bloco secundário falhou. Toda tela de erro mostra o código do erro em texto pequeno, para suporte. Exceção (decisão do dev, 2026-11-26): a recusa que o servidor responde com um `internal_code` que a tela traduz em mensagem própria (as recusas do envio em `send-failure.ts`) não mostra o código. A falha sem resposta, o 5xx e o código fora do mapa continuam mostrando, inclusive quando têm copy própria, como a de rede.
 
 ## Paginação
 

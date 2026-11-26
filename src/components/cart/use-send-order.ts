@@ -2,17 +2,28 @@
 
 import { useCallback, useState, useSyncExternalStore } from 'react';
 import { flushSync } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/components/ui';
+import { restaurantQueryKey } from '@/hooks/use-restaurant';
 import { useIsOffline } from '@/providers/connectivity/ConnectivityProvider';
 import { useBoardSession } from '@/providers/board-session';
 import { randomUuid } from '@/helpers/random-uuid';
 import { boardProductsQueryKey } from '@/services/board-bill';
 import { boardMovementQueryKey } from '@/services/board-movement';
-import { checkoutCart, clearStoredCart, isIdempotencyKeyReusable, readStoredCartSessionToken } from '@/services/cart';
+import {
+  checkoutCart,
+  forgetStoredCartIf,
+  isIdempotencyKeyReusable,
+  readStoredCartSessionToken,
+} from '@/services/cart';
 import { firstName } from '@/services/person-identity';
 import { CartItem } from '@/types/cart';
 import { PlacedOrder } from '@/types/order';
-import { cartQueryKey } from './cart-query';
+import { BOARD_ROUTE } from '@/routes/app-routes';
+import { Restaurant } from '@/types/restaurant';
+import { CART_CLEAR_MUTATION_KEY, cartQueryKey } from './cart-query';
+import { ALREADY_SENT_MESSAGE, CART_EXPIRED_MESSAGE, readSendFailure, SendFailure } from './send-failure';
 import { getSendState, SendAttempt, setSendState, subscribeToSend } from './send-store';
 import { useCart } from './use-cart';
 
@@ -27,13 +38,15 @@ export interface SentOrder {
   cartId: string;
 }
 
+const SEE_BILL_LABEL = 'Ver conta da mesa';
+
 export interface SendCallbacks {
   /** Roda quando a tentativa termina, com sucesso ou não. */
   onSettled?: () => void;
 }
 
 export interface UseSendOrder {
-  /** Devolve `false` quando recusou: já há envio em voo, está offline ou não há sacola lida. */
+  /** Devolve `false` quando recusou: já há envio ou limpeza em voo, está offline ou não há sacola lida. */
   send: (customerName: string, callbacks?: SendCallbacks) => boolean;
   /** Reenvia a tentativa que falhou sem resposta registrada, com a mesma chave e sem depender da sacola lida. */
   retry: () => boolean;
@@ -54,6 +67,8 @@ export interface UseSendOrder {
  */
 export function useSendOrder(): UseSendOrder {
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const toast = useToast();
   const session = useBoardSession();
   const isOffline = useIsOffline();
   const { cart } = useCart();
@@ -78,7 +93,7 @@ export function useSendOrder(): UseSendOrder {
           cartId: attempt.cartId,
         })
       );
-      clearStoredCart();
+      forgetStoredCartIf(attempt.cartId);
       queryClient.removeQueries({ queryKey: cartQueryKey(attempt.cartId) });
       void queryClient.invalidateQueries({ queryKey: boardMovementQueryKey(attempt.movementId) });
       void queryClient.invalidateQueries({ queryKey: boardProductsQueryKey(attempt.movementId) });
@@ -86,12 +101,58 @@ export function useSendOrder(): UseSendOrder {
     },
     // o erro e o fim do spinner mudam juntos: separados, o CTA ficaria um frame sem spinner e sem falha
     onError: (error, attempt) => {
-      setSendState({ attempt: isIdempotencyKeyReusable(error) ? attempt : null, isSending: false, error });
+      const failure = readSendFailure(error);
+
+      setSendState({
+        attempt: isIdempotencyKeyReusable(error) ? attempt : null,
+        isSending: false,
+        error: isAnnouncedByToast(failure) ? null : error,
+      });
+
+      handleFailure(failure, attempt);
     },
   });
 
+  // O que esvazia a sacola vira toast e não fica preso no rodapé. A da cozinha fica guardada: o rodapé a esconde quando
+  // o estado derivado (a trava do CTA) já a diz, e a mostra quando o restaurante não está no cache.
+  function isAnnouncedByToast({ kind }: SendFailure): boolean {
+    return kind === 'already-sent' || kind === 'cart-expired';
+  }
+
+  function forgetCart(attempt: SendAttempt): void {
+    forgetStoredCartIf(attempt.cartId);
+    queryClient.removeQueries({ queryKey: cartQueryKey(attempt.cartId) });
+  }
+
+  function handleFailure({ kind }: SendFailure, attempt: SendAttempt): void {
+    if (kind === 'kitchen-closed') {
+      // o CTA trava já, sem esperar a releitura; ela confirma, e reabrir destrava
+      queryClient.setQueryData<Restaurant>(restaurantQueryKey, current =>
+        current ? { ...current, is_kitchen_open: false } : current
+      );
+      void queryClient.invalidateQueries({ queryKey: restaurantQueryKey });
+    }
+
+    if (kind === 'already-sent') {
+      forgetCart(attempt);
+      void queryClient.invalidateQueries({ queryKey: boardMovementQueryKey(attempt.movementId) });
+      void queryClient.invalidateQueries({ queryKey: boardProductsQueryKey(attempt.movementId) });
+      toast.show({
+        message: ALREADY_SENT_MESSAGE,
+        variant: 'info',
+        action: { label: SEE_BILL_LABEL, onClick: () => router.push(BOARD_ROUTE) },
+      });
+    }
+
+    if (kind === 'cart-expired') {
+      forgetCart(attempt);
+      toast.show({ message: CART_EXPIRED_MESSAGE, variant: 'warning' });
+    }
+  }
+
   function run(attempt: SendAttempt, callbacks?: SendCallbacks): boolean {
-    if (getSendState().isSending || isOffline) {
+    // a limpeza apaga item a item: um envio no meio mandaria uma sacola pela metade
+    if (getSendState().isSending || isOffline || queryClient.isMutating({ mutationKey: CART_CLEAR_MUTATION_KEY }) > 0) {
       return false;
     }
 

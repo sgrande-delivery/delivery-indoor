@@ -1,6 +1,6 @@
 # Spec — Carrinho e envio do pedido pelo carrinho v2
 
-**Status:** rascunho
+**Status:** entregue
 **Criada em:** 2026-11-16
 **Escopo:** cross-repo
 **Issue:** [#22](https://github.com/sgrande-delivery/delivery-indoor/issues/22)

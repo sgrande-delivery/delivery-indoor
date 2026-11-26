@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { RefObject } from 'react';
 import Link from 'next/link';
 import ButtonBase, { ExtendButtonBase } from '@mui/material/ButtonBase';
 import { styled } from '@mui/material/styles';
@@ -8,9 +8,15 @@ import { Icon } from '@/components/ui';
 import { HOME_ROUTE } from '@/routes/app-routes';
 import { cartHeaderMetrics, focusRing, fontFamilies, pxToRem, radii } from '@/theme';
 import { cartMetrics } from './cart-metrics';
+import CartClearAction from './CartClearAction';
 
 const BACK_LABEL = 'Voltar ao cardápio';
 const TITLE = 'Sua sacola';
+
+export interface CartHeaderProps {
+  /** De onde os avisos do "Limpar" sobem. */
+  toastAnchorRef?: RefObject<HTMLElement>;
+}
 
 interface BackTypeMap {
   props: object;
@@ -54,13 +60,14 @@ const Title = styled('h1')(({ theme }) => ({
 }));
 
 /** O voltar é um `Link` para o cardápio: a entrada do app é o QR, e voltar no histórico pode sair dele. */
-const CartHeader: React.FC = () => {
+const CartHeader: React.FC<CartHeaderProps> = ({ toastAnchorRef }) => {
   return (
     <Root>
       <Back href={HOME_ROUTE} LinkComponent={Link} aria-label={BACK_LABEL}>
         <Icon name="arrow_back" size={cartHeaderMetrics.backIconSize} />
       </Back>
       <Title>{TITLE}</Title>
+      <CartClearAction form="screen" anchorRef={toastAnchorRef} />
     </Root>
   );
 };
