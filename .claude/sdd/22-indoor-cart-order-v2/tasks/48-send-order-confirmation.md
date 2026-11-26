@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** 01 (#46), 02 (#47), 04 (#49) e, da #23, as tasks 01 ([#53](../../23-indoor-board-bill-redesign/tasks/53-board-bill-reads-and-screen-frame.md): `useBoardProducts`, `boardProductsQueryKey` e o tipo `BoardProductItem`) e 03 ([#55](../../23-indoor-board-bill-redesign/tasks/55-board-round-grouped-items.md): `round-status.ts` e `RoundStatusPill`). Para o selo mudar ao vivo no roteiro, também a 06 da #23 ([#58](../../23-indoor-board-bill-redesign/tasks/58-board-realtime-socket.md)), que transforma `board.order_status_changed` em releitura.
-**Status:** pendente
+**Status:** shipped
 **Reconciliado com a #21 (2026-11-23):** `formatCents` é o de `src/helpers/money.ts` criado pela [#40](../../21-indoor-menu-v2/tasks/40-catalog-v2-services-types.md), e não "da 01" desta feature, que só o consome. A coluna e o painel em que a confirmação aparece seguem no `AppShell` (#49), único dono. Nada mais muda.
 **Alinhado à #23 e à delivery-api#1752 (2026-11-23):** o selo da rodada deixa de traduzir o `status` cru da resposta do checkout. Sai o `order-round-status.ts`, e o estado passa a ser o `round_status` do item da rodada (delivery-api#1754), lido por `useBoardProducts` da #53 e casado pelo `order_public_id`. O rótulo, o tom e o selo vêm de `src/components/board/round-status.ts` e `RoundStatusPill.tsx`, de que a #55 é dona. O selo sai "enviado" até a cozinha imprimir e muda ao vivo com `board.order_status_changed`. O `PlacedOrder` perde o `status`, que ninguém lê mais, e a pendência do `o` sem rótulo foi fechada pela 1752.
 **Alinhado à #24 (2026-11-23):** a `Idempotency-Key` sai de `randomUuid()`, de `src/helpers/random-uuid.ts`, que a #46 cria e a #24 importa. Não há gerador próprio aqui.
@@ -333,7 +333,7 @@ Não há suíte automatizada. O envio de verdade só fecha com a [delivery-api#1
 - [ ] O selo sai "enviado" depois do envio e muda para "em preparo" sem reload quando a cozinha imprime (com a #58 na base).
 - [ ] Na coluna vazia o CTA aparece desabilitado.
 - [ ] Offline o CTA fica desabilitado. Qualquer falha mantém a sacola e mostra o código com "Tentar novamente".
-- [ ] `npx tsc --noEmit`, o lint e o `yarn build` passam.
+- [x] `npx tsc --noEmit`, o lint e o `yarn build` passam.
 
 ## Fora de escopo
 
@@ -347,4 +347,111 @@ Não há suíte automatizada. O envio de verdade só fecha com a [delivery-api#1
 
 ## Branch
 
-`task/48-send-order-confirmation`, base sugerida: a ponta da junção de 01, 02 e 04 sobre `feat/indoor-v2`, com as tasks 01 e 03 da #23 (#53 e #55) na base. Se nenhuma tiver mergeado, a base é a branch da 04 (`task/49-tablet-cart-panel`), com a 02 rebaseada antes.
+`task/48-send-order-confirmation`, cortada em 2026-11-25 de `task/55-board-round-grouped-items` (`768fbf0`, PR #88), com `task/49-tablet-cart-panel` (`6b1e409`, PR #87) mergeada por cima (`5150aff`). A #46 e a #47 já estão na `feat/indoor-v2`. Antes do PR, a branch foi rebaseada na `feat/indoor-v2` (`440d59b`, com o #86, o #87 e o #89 dentro), e o diff ficou só com a #48. Depois do rebase: `tsc`, `eslint` e `next build` limpos.
+
+## Implementação
+
+**Concluída em:** 2026-11-25
+
+### Camadas tocadas
+
+- **Tipo:** `src/types/order.ts` (`PlacedOrder`).
+- **Serviço:** `src/services/cart.ts` ganha `BOARD_SHIPMENT_METHOD`, `checkoutCart` e `isIdempotencyKeyReusable`.
+- **Hook:** `src/components/cart/use-send-order.ts` (`useSendOrder`, `SentOrder`).
+- **Rodapé:** `CartFooter.tsx`, `CartSendButton.tsx`, `SendFailureNotice.tsx` e `send-metrics.ts`, em `src/components/cart/`.
+- **Confirmações:** `src/components/cart/sent/` (`OrderSentPanel`, `OrderSentColumn`, `SentItemList`, `SentItemRow`, `SentRoundSeal`, `SentSuccessMark`, `use-sent-order-round.ts`, `sent-metrics.ts`).
+- **Molduras:** `CartScreen.tsx` (celular), `dock/CartColumn.tsx` (o `:empty` do rodapé saiu) e `dock/CartSheet.tsx` (painel de retrato).
+- Nada em `src/theme/` nem em `src/components/ui/`. Sem `order-round-status.ts`: o selo vem de `round-status.ts` e `RoundStatusPill` da #55.
+
+### Contratos consumidos
+
+- `POST /cart/{cartId}/checkout`, com `{ customer_name, shipment_method: "board" }` e os headers `x-cart-session-token` e `Idempotency-Key`. Conferido contra o plan e a spec da 1608 (branch `feature/1608-client-board-cart-checkout`): corpo, valor `board` e headers batem. A api ainda não o implementa (delivery-api#1631): o envio de verdade só fecha com ela no ambiente.
+- Resposta lida: `id`, `customer_name`, `board_movement_id` e `total` (centavos). O `status` cru não é lido.
+- `internal_code` `idempotency_key_in_flight` (409), conferido em `IdempotencyKeyInFlightException.php`.
+- `GET /boardMovements/{id}/products` (pela `useBoardProducts` da #53): `round` e `round_status` do item cujo `order_public_id` é o `id` do pedido.
+
+### Variáveis de ambiente novas
+
+- Nenhuma.
+
+### Decisões que tomei por conta própria
+
+- **`isSending` liga no próprio `send`, antes do `mutate`**, num `useState` junto com o `ref` de "em voo", e não vem de `mutation.isPending`: o `isPending` só chega no render seguinte, e o dialog e o CTA precisam do spinner no mesmo toque.
+- **`send(customerName, { onSettled })`**: a interface da task era `send(customerName)`. O callback existe para o diálogo do primeiro envio fechar ao fim da tentativa (sucesso ou falha), como a decisão 3 manda, sem o `CartFooter` espiar o `isSending`.
+- **`flushSync` na confirmação.** A troca do `cart_id` guardado é por `useSyncExternalStore` (síncrona), e o `setSent` é de lane padrão: sem `flushSync` o `setSent` vem depois do `clearStoredCart` e a coluna piscaria o vazio antes da confirmação. Por isso o `SentOrder` leva o `cartId`, e a coluna descarta a confirmação quando aparece uma sacola de **outro id** com itens (e não "count > 0", que mataria a confirmação no commit em que a sacola ainda existe).
+- **O painel de retrato descarta a confirmação por efeito em `open === false`**, e não só no clique de fechar: o 201 pode chegar com o painel já fechado, e a confirmação apareceria por cima da próxima sacola.
+- **Celular: o rodapé só aparece com a sacola lida e com itens.** A task só pede o CTA desabilitado na coluna do tablet (RF-12); no celular o vazio já tem "Ver o cardápio", e um "Enviar pedido" desabilitado embaixo seria ruído. Painel de retrato mantém a regra que já tinha (`hasItems`).
+- **Retry da tentativa, e não da sacola lida (review B1).** Quando o pedido entra e a resposta se perde, a releitura devolve `checked_out` e a sacola vira `null`. O `send-store.ts` (escopo do módulo) guarda a foto da tentativa reaproveitável (`cartId`, nome, chave, `sessionToken`, itens, contagem, mesa), e `retry()` a reenvia sem olhar a sacola. O `checkoutCart` aceita o token explícito. As três molduras mantêm a falha e o "Tentar novamente" com `isRetryable`, mesmo com sacola `null`; o 201 do replay mostra a confirmação normalmente.
+- **Trava e chave no módulo (M3):** `isSending`, a tentativa e o erro vivem em `send-store.ts`, lidos por `useSyncExternalStore`. Coluna, painel e celular compartilham a trava, e girar o tablet com envio em voo não dispara outro. O erro e o fim do spinner mudam no mesmo `setSendState`. `send` devolve se aceitou, e o diálogo fecha quando recusa.
+- **Painel de retrato (M1):** a confirmação é descartada no `onExited` da transição; só o 201 que chega com o painel já fechado a descarta na hora.
+- **Acessibilidade (M4):** `role="status"` só no selo da rodada; o título da confirmação recebe o foco ao montar (`tabIndex={-1}`).
+- **O diálogo de nome desmonta junto com o rodapé no 201**, sem animação de saída: a confirmação substitui o corpo e o rodapé não existe nela. O alternativo (manter o rodapé montado só pelo diálogo) trazia um componente de pé só para a animação.
+- **CTA a 54 em todas as molduras** (`cartFooterMetrics`), como a task manda; os artboards de tablet desenham 56 e 58.
+- **Linha "Pedindo como" com margem negativa de 5** (`sendMetrics.orderingBleed`): o `OrderingAsRow` tem o alvo de 44 do "trocar", e o artboard desenha ~34. Sem a compensação o respiro entre totais, linha e CTA sairia 10px maior que o desenho.
+- **`SendFailureNotice` é próprio**, e não o `InlineError`, porque a task pede o código de suporte e o rótulo "Tentar novamente" (o do `InlineError` é "Tentar de novo"). Cor da mensagem: `toneOnCard.danger`. O `message` da api não passa (aprendizado de 2026-11-25).
+- **O selo da rodada** é "PEDIDO {n}" em caixa alta (o estilo do cabeçalho da rodada na conta) seguido do `RoundStatusPill`, e não o chip único verde do artboard, porque a task manda o `RoundStatusPill` da #55.
+  - Com a leitura em voo e sem o item: "Pedido" mais um esqueleto de texto no lugar do número, sem estado.
+  - Falha ou item ausente depois da leitura: nada.
+- **Celular segue o README do `OrderSentPanel`** (`design-system/components/OrderSentPanel/README.md`, que está no repo): círculo de 64 com ícone de 34, título `h3` 19/800 e corpo de 13. O artboard desenha círculo de 92 com título de 24; o 64 do artboard é a miniatura do item, e não o círculo. Para o dev confirmar.
+- **A confirmação é `role="status"`**, o que faz o leitor de tela anunciar também a mudança do selo ("enviado" para "em preparo").
+- **Follow-up 5 da #55 (contraste do selo):** a confirmação desenha o `RoundStatusPill` sobre `surface.card` nas duas molduras (coluna e corpo do painel), que é a superfície contra a qual `toneOnCard.badge` é derivado. Não mexi no tom; não medi a razão de contraste em navegador.
+
+### Como testar
+
+1. `yarn dev` (com `.env.development`) e `http://localhost:3000/?session=<uuid-aberto>`, com a api na branch `feature/1608-client-board-cart-checkout` quando existir e a loja com `uses_v2_orders`.
+2. Seguir o roteiro "No navegador" desta task, passos 1 a 11.
+3. Para provar o duplo toque, usar `click({ force: true })` duas vezes seguidas e contar os `POST` (o `aria-disabled` do CTA em voo faz o Playwright esperar sem `force`).
+4. Pontos a olhar: o respiro entre totais, "Pedindo como" e o CTA nas três molduras; a coluna vazia com o CTA desabilitado; a confirmação sem piscar o vazio; o selo mudando para "em preparo" sem reload (precisa da #58 e da delivery-api#1756).
+
+### O que NÃO foi verificado
+
+- **O teclado em paisagem** (passo 11, aparelho real). O resto do roteiro passou no navegador (ver as duas seções abaixo).
+- **A regra de chave** (reuso depois de rede, 5xx ou 409 em voo; chave nova depois de 4xx ou com outro nome) foi escrita e revisada, não exercitada.
+- **O `flushSync`** (sem piscar o vazio) e o contraste do selo na superfície da confirmação dependem de olhar na tela.
+- A `/board` ("Ver conta da mesa") existe nesta base, mas a conta em tempo real depende da #58.
+
+### Validado com o checkout real (2026-11-25)
+
+Contra a delivery-api local na branch `feature/1608-client-board-cart-checkout` (#1628 a #1633), restaurante 1, mesa 004, sem nada simulado. Rodou no servidor da #50, que traz esta task sem mudar o caminho do envio que dá certo.
+
+- A sacola nasce com a mesa no servidor (`carts.board_movement_id`).
+- O primeiro envio pede o nome, o checkout responde 201 e a mesa ganha um pedido. Os itens entram na conta com o `person` digitado e a composição ("Marina · + Bacon · S/ Alface").
+- A sacola consumida é esquecida no aparelho e fica `checked_out` no servidor.
+- Dois toques rápidos no envio: um POST e um pedido.
+- No tablet deitado, a confirmação na coluna mostra o número lido da conta ("PEDIDO 9").
+- O selo segue sem estado, porque o `round_status` só chega com a delivery-api#1754.
+
+### Validado no navegador (2026-11-25), com o checkout simulado
+
+A delivery-api#1631 ainda não existe, então o `POST /cart/{id}/checkout` foi simulado no Playwright: devolve 201 com o `OrderPresenter`, ou corta a rede, ou devolve 422. O resto é real e vem da delivery-api local (restaurante 1, mesa 004): sacola, itens, conta e sessão. **18 de 18 verificações passaram** (`/tmp/indoor-qa-22/qa48.mjs`).
+
+**Celular, 390×844**
+- O primeiro envio abre o diálogo do nome e não faz POST antes. Com o nome vazio, aparece o erro e o POST também não sai.
+- Com o nome "Marina Souza", sai `{ customer_name: "Marina Souza", shipment_method: "board" }`, só esses dois campos, com `Idempotency-Key` e `x-cart-session-token`. A tela mostra "Pedido enviado, Marina!", e `indoor:cart` é esquecido (RF-10).
+- No segundo pedido aparece "Pedindo como Marina Souza · trocar". Dois toques rápidos no envio, com 1,5 s de latência, fazem **um** POST.
+- **B1, falha sem resposta:**
+  - a rede corta o POST, a sacola passa a voltar `checked_out` e a conexão cai e volta;
+  - o "Tentar novamente" continua na tela;
+  - o retry sai com **a mesma** `Idempotency-Key` e o mesmo token;
+  - o 201 do replay abre a confirmação.
+- No 422, a tela mostra "Não foi possível enviar o pedido." com o código `erro 422 · unprocessable_entity`, e não a mensagem da api. O envio seguinte usa chave nova.
+
+**Tablet**
+- **Deitado:** na coluna vazia, "Enviar pedido" fica desabilitado. A confirmação aparece na coluna, com "Ver na conta da mesa" e "Continuar no cardápio", e o cardápio segue navegável ao lado.
+- **Em pé:** o envio pelo painel mostra a confirmação no painel. Ao fechar por "Continuar no cardápio", o painel não mostra a sacola vazia durante a descida (MutationObserver), o que confirma a correção do M1.
+
+**Não verificado**
+- O selo com estado ("Pedido N · estado"): o número já sai com o checkout real (seção acima), o estado depende da delivery-api#1754.
+- O roteiro 8 ao vivo, que depende da #58.
+- O teclado do tablet e o leitor de tela.
+- Na tela do B1, enquanto há tentativa pendente, o celular mostra o vazio da sacola acima do aviso de falha, e o toast "Conexão restabelecida" cobre parte do rodapé. É follow-up para a #50, que é dona dos estados da sacola.
+
+## Follow-ups identificados em review
+
+1. **delivery-api (#1631/#1633):** o checkout não serializa a mesma sacola entre chaves de idempotência diferentes, porque `findByIdForRequester` não tem `lockForUpdate`. O app trava por aparelho; dois aparelhos com o mesmo token não existem (RN-01), mas a garantia é do servidor.
+2. **Confirmar com o dev:**
+   - a anatomia da confirmação no celular (README ou artboard);
+   - o CTA de 54 contra os 56/58 do tablet;
+   - "de {nome}" no lugar de "da Marina";
+   - o selo "PEDIDO N" mais o `RoundStatusPill`, no lugar do chip único do artboard.
+3. **Roteiro 8 ao vivo** ("em preparo" sem reload), quando a #58 entrar.
