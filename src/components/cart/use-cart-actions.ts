@@ -90,9 +90,10 @@ export function useCartActions({ anchorRef }: UseCartActionsOptions = {}): UseCa
     onError: error => handleWriteError(error, REMOVE_ERROR),
   });
 
-  // Não há rota de esvaziar: um `DELETE` por item, em série. Para no primeiro que falha, e a releitura (no `onSettled`)
-  // mostra o que sobrou, que é o sucesso parcial. Os avisos são da mutação, e não do `mutate`: a sacola esvaziada
-  // desmonta o botão que a disparou, e o callback do `mutate` morre com ele.
+  // Não há rota de esvaziar: um `DELETE` por item, em série. Para no primeiro que falha, e a releitura mostra o que
+  // sobrou, que é o sucesso parcial. Os avisos são da mutação, e não do `mutate`: a sacola esvaziada desmonta o botão
+  // que a disparou, e o callback do `mutate` morre com ele. O aviso sai **depois** da releitura, para o `Toast` medir
+  // a âncora com o rodapé já desmontado (sacola vazia) ou ainda lá (sobrou item).
   const clearMutation = useMutation({
     mutationKey: CART_CLEAR_MUTATION_KEY,
     mutationFn: async (itemIds: number[]) => {
@@ -101,9 +102,14 @@ export function useCartActions({ anchorRef }: UseCartActionsOptions = {}): UseCa
         dismissAnsweredFailure();
       }
     },
-    onSuccess: () => toast.show({ message: CLEAR_SUCCESS, variant: 'success', anchorRef }),
-    onError: () => toast.show({ message: CLEAR_PARTIAL_ERROR, variant: 'error', anchorRef }),
-    onSettled: invalidateCart,
+    onSuccess: async () => {
+      await invalidateCart();
+      toast.show({ message: CLEAR_SUCCESS, variant: 'success', anchorRef });
+    },
+    onError: async () => {
+      await invalidateCart();
+      toast.show({ message: CLEAR_PARTIAL_ERROR, variant: 'error', anchorRef });
+    },
   });
 
   const isPending = useIsMutating({ mutationKey: CART_WRITE_MUTATION_KEY }) > 0 || isOffline;
