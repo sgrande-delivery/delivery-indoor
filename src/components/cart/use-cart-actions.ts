@@ -11,7 +11,7 @@ import {
   removeCartItem,
   updateCartItemQuantity,
 } from '@/services/cart';
-import { getSendState } from './send-store';
+import { dismissAnsweredFailure, getSendState } from './send-store';
 import { CART_CLEAR_MUTATION_KEY, CART_QUERY_KEY, CART_WRITE_MUTATION_KEY } from './cart-query';
 
 const QUANTITY_ERROR = 'Não foi possível mudar a quantidade. Tente de novo.';
@@ -57,6 +57,12 @@ export function useCartActions({ anchorRef }: UseCartActionsOptions = {}): UseCa
   const toast = useToast();
   const isOffline = useIsOffline();
 
+  function onRemoveSucceeded(): Promise<void> {
+    dismissAnsweredFailure();
+
+    return invalidateCart();
+  }
+
   function invalidateCart(): Promise<void> {
     return queryClient.invalidateQueries({ queryKey: [CART_QUERY_KEY] });
   }
@@ -80,7 +86,7 @@ export function useCartActions({ anchorRef }: UseCartActionsOptions = {}): UseCa
   const removeMutation = useMutation({
     mutationKey: CART_WRITE_MUTATION_KEY,
     mutationFn: removeCartItem,
-    onSuccess: invalidateCart,
+    onSuccess: onRemoveSucceeded,
     onError: error => handleWriteError(error, REMOVE_ERROR),
   });
 
@@ -92,6 +98,7 @@ export function useCartActions({ anchorRef }: UseCartActionsOptions = {}): UseCa
     mutationFn: async (itemIds: number[]) => {
       for (const itemId of itemIds) {
         await removeCartItem(itemId);
+        dismissAnsweredFailure();
       }
     },
     onSuccess: () => toast.show({ message: CLEAR_SUCCESS, variant: 'success', anchorRef }),
