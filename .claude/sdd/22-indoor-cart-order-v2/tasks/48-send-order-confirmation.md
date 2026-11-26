@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor
 **Depende de:** 01 (#46), 02 (#47), 04 (#49) e, da #23, as tasks 01 ([#53](../../23-indoor-board-bill-redesign/tasks/53-board-bill-reads-and-screen-frame.md): `useBoardProducts`, `boardProductsQueryKey` e o tipo `BoardProductItem`) e 03 ([#55](../../23-indoor-board-bill-redesign/tasks/55-board-round-grouped-items.md): `round-status.ts` e `RoundStatusPill`). Para o selo mudar ao vivo no roteiro, também a 06 da #23 ([#58](../../23-indoor-board-bill-redesign/tasks/58-board-realtime-socket.md)), que transforma `board.order_status_changed` em releitura.
-**Status:** executada
+**Status:** shipped
 **Reconciliado com a #21 (2026-11-23):** `formatCents` é o de `src/helpers/money.ts` criado pela [#40](../../21-indoor-menu-v2/tasks/40-catalog-v2-services-types.md), e não "da 01" desta feature, que só o consome. A coluna e o painel em que a confirmação aparece seguem no `AppShell` (#49), único dono. Nada mais muda.
 **Alinhado à #23 e à delivery-api#1752 (2026-11-23):** o selo da rodada deixa de traduzir o `status` cru da resposta do checkout. Sai o `order-round-status.ts`, e o estado passa a ser o `round_status` do item da rodada (delivery-api#1754), lido por `useBoardProducts` da #53 e casado pelo `order_public_id`. O rótulo, o tom e o selo vêm de `src/components/board/round-status.ts` e `RoundStatusPill.tsx`, de que a #55 é dona. O selo sai "enviado" até a cozinha imprimir e muda ao vivo com `board.order_status_changed`. O `PlacedOrder` perde o `status`, que ninguém lê mais, e a pendência do `o` sem rótulo foi fechada pela 1752.
 **Alinhado à #24 (2026-11-23):** a `Idempotency-Key` sai de `randomUuid()`, de `src/helpers/random-uuid.ts`, que a #46 cria e a #24 importa. Não há gerador próprio aqui.
@@ -347,7 +347,7 @@ Não há suíte automatizada. O envio de verdade só fecha com a [delivery-api#1
 
 ## Branch
 
-`task/48-send-order-confirmation`, cortada em 2026-11-25 de `task/55-board-round-grouped-items` (`768fbf0`, PR #88), com `task/49-tablet-cart-panel` (`6b1e409`, PR #87) mergeada por cima (`5150aff`). A #46 e a #47 já estão na `feat/indoor-v2`. Antes do PR, a branch é rebaseada na `feat/indoor-v2`, depois que o #86, o #87 e o #88 entrarem, para o diff ficar só com a #48.
+`task/48-send-order-confirmation`, cortada em 2026-11-25 de `task/55-board-round-grouped-items` (`768fbf0`, PR #88), com `task/49-tablet-cart-panel` (`6b1e409`, PR #87) mergeada por cima (`5150aff`). A #46 e a #47 já estão na `feat/indoor-v2`. Antes do PR, a branch foi rebaseada na `feat/indoor-v2` (`440d59b`, com o #86, o #87 e o #89 dentro), e o diff ficou só com a #48. Depois do rebase: `tsc`, `eslint` e `next build` limpos.
 
 ## Implementação
 
@@ -405,11 +405,21 @@ Não há suíte automatizada. O envio de verdade só fecha com a [delivery-api#1
 
 ### O que NÃO foi verificado
 
-- **Nada em navegador**: o roteiro manual inteiro (passos 1 a 11) está por fazer, inclusive o teclado em paisagem (passo 11, aparelho real).
-- **O envio de verdade**: a delivery-api#1631 não está no ambiente; o corpo e os headers foram conferidos contra o plan e a spec da 1608, não contra uma resposta real.
+- **O teclado em paisagem** (passo 11, aparelho real). O resto do roteiro passou no navegador (ver as duas seções abaixo).
 - **A regra de chave** (reuso depois de rede, 5xx ou 409 em voo; chave nova depois de 4xx ou com outro nome) foi escrita e revisada, não exercitada.
 - **O `flushSync`** (sem piscar o vazio) e o contraste do selo na superfície da confirmação dependem de olhar na tela.
 - A `/board` ("Ver conta da mesa") existe nesta base, mas a conta em tempo real depende da #58.
+
+### Validado com o checkout real (2026-11-25)
+
+Contra a delivery-api local na branch `feature/1608-client-board-cart-checkout` (#1628 a #1633), restaurante 1, mesa 004, sem nada simulado. Rodou no servidor da #50, que traz esta task sem mudar o caminho do envio que dá certo.
+
+- A sacola nasce com a mesa no servidor (`carts.board_movement_id`).
+- O primeiro envio pede o nome, o checkout responde 201 e a mesa ganha um pedido. Os itens entram na conta com o `person` digitado e a composição ("Marina · + Bacon · S/ Alface").
+- A sacola consumida é esquecida no aparelho e fica `checked_out` no servidor.
+- Dois toques rápidos no envio: um POST e um pedido.
+- No tablet deitado, a confirmação na coluna mostra o número lido da conta ("PEDIDO 9").
+- O selo segue sem estado, porque o `round_status` só chega com a delivery-api#1754.
 
 ### Validado no navegador (2026-11-25), com o checkout simulado
 
@@ -431,7 +441,7 @@ A delivery-api#1631 ainda não existe, então o `POST /cart/{id}/checkout` foi s
 - **Em pé:** o envio pelo painel mostra a confirmação no painel. Ao fechar por "Continuar no cardápio", o painel não mostra a sacola vazia durante a descida (MutationObserver), o que confirma a correção do M1.
 
 **Não verificado**
-- O checkout real e o selo "Pedido N · estado". Com o checkout simulado, o pedido não existe na conta, então o selo sai só como "PEDIDO", sem número. Fecha com a delivery-api#1631.
+- O selo com estado ("Pedido N · estado"): o número já sai com o checkout real (seção acima), o estado depende da delivery-api#1754.
 - O roteiro 8 ao vivo, que depende da #58.
 - O teclado do tablet e o leitor de tela.
 - Na tela do B1, enquanto há tentativa pendente, o celular mostra o vazio da sacola acima do aviso de falha, e o toast "Conexão restabelecida" cobre parte do rodapé. É follow-up para a #50, que é dona dos estados da sacola.

@@ -32,7 +32,7 @@ A sacola do `delivery-client` já é o carrinho v2, e é a fonte: `src/services/
 |---|------|-------|---------|------------|--------|
 | 01 | Carrinho v2 da mesa: criação com `board_movement_id`, token de sessão, itens e totais | [#46](https://github.com/sgrande-delivery/delivery-indoor/issues/46) | [46-board-cart-v2.md](./tasks/46-board-cart-v2.md) | #20, #21 (01 e 04) | shipped |
 | 02 | Identidade de quem pede: diálogo de nome, persistência e troca | [#47](https://github.com/sgrande-delivery/delivery-indoor/issues/47) | [47-ordering-person-identity.md](./tasks/47-ordering-person-identity.md) | #20 | shipped |
-| 03 | Envio do pedido e tela de "pedido enviado" | [#48](https://github.com/sgrande-delivery/delivery-indoor/issues/48) | [48-send-order-confirmation.md](./tasks/48-send-order-confirmation.md) | 01, 02, 04, #23 (01 e 03) | executada |
+| 03 | Envio do pedido e tela de "pedido enviado" | [#48](https://github.com/sgrande-delivery/delivery-indoor/issues/48) | [48-send-order-confirmation.md](./tasks/48-send-order-confirmation.md) | 01, 02, 04, #23 (01 e 03) | shipped |
 | 04 | Sacola no tablet: coluna fixa em paisagem e painel inferior em retrato | [#49](https://github.com/sgrande-delivery/delivery-indoor/issues/49) | [49-tablet-cart-panel.md](./tasks/49-tablet-cart-panel.md) | 01 (e, para o roteiro em navegador, #21 03 e 05) | shipped |
 | 05 | Recusas do envio e estados da sacola (vazia, limpando, offline) | [#50](https://github.com/sgrande-delivery/delivery-indoor/issues/50) | [50-send-refusals-cart-states.md](./tasks/50-send-refusals-cart-states.md) | 03 | pendente |
 
