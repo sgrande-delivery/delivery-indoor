@@ -60,15 +60,16 @@ const Action = styled(ButtonBase)(({ theme }) => ({
 }));
 
 /**
- * A recusa do envio, no rodapé e acima do CTA. A sacola continua intacta, e o código (`erro de rede`, `erro 422 · …`) é
- * o que o cliente diz ao garçom. O texto é o do mapa de `send-failure`, nunca o `message` cru da api. O "ver conta" não
- * passa por aqui: a recusa que o pede some com a sacola, e quem a anuncia é o toast.
+ * A recusa do envio, no rodapé e acima do CTA. A sacola continua intacta, e o código (`erro de rede`) só aparece na
+ * falha que o mapa não explica: é o que o cliente diz ao garçom. O texto é o do mapa de `send-failure`, nunca o
+ * `message` cru da api. O "ver conta" não passa por aqui: a recusa que o pede some com a sacola, e quem a anuncia é o
+ * toast.
  */
 const SendFailureNotice: React.FC<SendFailureNoticeProps> = ({ failure, onRetry, onReadQr, isRetrying, isBlocked }) => {
   return (
     <Root role="alert">
       <Message>{failure.message}</Message>
-      <Code>{failure.code}</Code>
+      {failure.code !== null && <Code>{failure.code}</Code>}
       {failure.action === 'retry' && (
         <Action disabled={isRetrying || isBlocked} onClick={onRetry}>
           {RETRY_LABEL}

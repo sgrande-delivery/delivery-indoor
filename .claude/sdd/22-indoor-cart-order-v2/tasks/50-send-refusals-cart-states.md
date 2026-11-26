@@ -93,7 +93,7 @@ O envio passa a dizer por que não foi. Cada recusa tem mensagem própria e a sa
    | `network` | sem resposta, ou 5xx | "Não foi possível enviar o pedido. Verifique a conexão e tente de novo." | "Tentar novamente", com a mesma chave (03, decisão 1) |
    | `unknown` | qualquer outro, inclusive o 400 `bad_request` da cozinha antes da #1767 | "Não foi possível enviar o pedido." | "Tentar novamente", com chave nova |
 
-   - **Toda mensagem leva o código de suporte** em texto pequeno (`resolveErrorCode`, RF-11 da #20).
+   - **O código de suporte só acompanha a falha que o mapa não explica** (revisto em 2026-11-26, pedido do dev; a regra original era RF-11 da #20). `unknown` e `network` mantêm o código pequeno (`resolveErrorCode`); `table-closed`, `kitchen-closed`, `item-unavailable`, `orders-disabled`, `in-flight`, `already-sent` e `cart-expired` saem sem código (`code: null`, tabela exaustiva `SHOWS_CODE`).
    - **A copy é derivada.** O canvas não desenha recusa. Confirmar com o dev.
    - **`restaurant_closed` não entra no mapa** (alinhado em 2026-11-23). Ele é a recusa do checkout **de entrega** (`RestaurantClosedException`), e a sacola de mesa nunca o recebe (RN-10 da 1608). Se um dia chegar, cai em `unknown` com o código visível, e é divergência a reportar, e não recusa a traduzir.
    - **O `already-sent` não manda tentar de novo.** Refazer um pedido que talvez exista é pior que conferir. É a mesma razão do `ALREADY_CHECKED_OUT_MESSAGE` do client.
@@ -181,7 +181,7 @@ O módulo lê o código pelo `readErrorCode` de `src/services/api-error-intercep
 `src/components/cart/SendFailureNotice.tsx` (alterado, criado pela 03):
 
 - recebe o `SendFailure`;
-- desenha a mensagem, o código e a ação da tabela;
+- desenha a mensagem, o código (só em `unknown` e `network`, decisão 1) e a ação da tabela;
 - para `network`, `in-flight` e `unknown`, a ação é "Tentar novamente", que chama o `send` da 03 com a regra de chave dela.
 
 ### 3. Trava antes do envio
@@ -224,7 +224,7 @@ Os casos 3, 4 e 7 dependem da [delivery-api#1631](https://github.com/sgrande-del
 2. `npx eslint src app scripts` sem erros novos.
 3. `yarn build` com as vars de restaurante conclui.
 4. `grep -rn "socket.off(\|socket.on(" src/hooks/use-restaurant-state-socket.ts`: mesmo número de `on` e `off`, todos com handler.
-5. `readSendFailure` por `jiti`, com erros axios montados à mão para cada linha da tabela da decisão 1, inclusive o 404 **sem** `internal_code`. Esperado: o `kind` da tabela, e o sem código em `unknown`.
+5. `readSendFailure` por `jiti`, com erros axios montados à mão para cada linha da tabela da decisão 1, inclusive o 404 **sem** `internal_code`. Esperado: o `kind` da tabela, o sem código em `unknown`, e `code: null` nas recusas conhecidas (decisão 1, revista em 2026-11-26).
 
 **No navegador**, com `?session=<uuid-aberto>`, a sacola com dois itens e nome salvo:
 
@@ -234,7 +234,7 @@ Os casos 3, 4 e 7 dependem da [delivery-api#1631](https://github.com/sgrande-del
    - o toast "Sacola limpa.", e a sacola vazia da 01.
    - Repetir com a API derrubada depois do primeiro `DELETE`: "Não foi possível limpar a sacola inteira. Veja o que ficou.", e a lista com o item que sobrou.
 2. **Liberar a mesa no PDV** (ou `UPDATE board_movements SET is_open = 0, freed_at = NOW() WHERE id = '<uuid>'`) e tocar "Enviar pedido". Esperado:
-   - a mensagem de mesa fechada com o código;
+   - a mensagem de mesa fechada, sem o código (decisão 1, revista em 2026-11-26);
    - "Ler o QR code" esquece `indoor:cart`, e a rota troca para "Leia o QR code da mesa".
 3. **Fechar a cozinha no admin com a sacola aberta.** Esperado:
    - sem reload, o CTA desabilita com "A cozinha está fechada agora…";
@@ -258,7 +258,7 @@ Os casos 3, 4 e 7 dependem da [delivery-api#1631](https://github.com/sgrande-del
 
 ## Critérios de aceitação
 
-- [x] Cada linha da tabela da decisão 1 produz a mensagem dela, com o código de suporte. Erro sem `internal_code` cai em `unknown`, e nunca numa recusa específica.
+- [x] Cada linha da tabela da decisão 1 produz a mensagem dela. Só `unknown` e `network` levam o código de suporte (revisto em 2026-11-26, decisão 1). Erro sem `internal_code` cai em `unknown`, e nunca numa recusa específica.
 - [ ] Com a movimentação liberada, o envio mostra a mensagem de mesa fechada, e "Ler o QR code" leva à tela "Leia o QR code da mesa" sem sacola guardada.
 - [ ] Com a cozinha fechada, o CTA trava com o motivo, sem reload, e a composição continua livre. A abertura destrava. Com a loja fechada e a cozinha aberta, nada trava e o envio cria o pedido.
 - [ ] O socket `/client` ouve só `kitchen_state_changed`, com um `off` por `on`, e relê o restaurante depois de reconectar.
@@ -426,6 +426,10 @@ A api local estava na branch `feature/1608-client-board-cart-checkout` (#1628 a 
 ### Correções aplicadas em review
 
 - `src/components/cart/send-store.ts`: o JSDoc de `dismissAnsweredFailure` (142 colunas) quebrado em três linhas, no `printWidth` de 120 que o resto do arquivo segue. Sem mudança de texto.
+- Review da revisão do código de suporte (2026-11-26), só nesta task:
+  - "Mudanças", item 2: o bloco desenha o código só em `unknown` e `network`;
+  - roteiro do navegador, caso 2: a mesa fechada aparece **sem** o código. Antes dizia "com o código", e o QA reprovaria o comportamento certo;
+  - follow-up 8: entrou o `BoardSessionError.tsx`, que o grep por `resolveErrorCode` não acha. O `use-error-report.ts:40` ficou marcado como payload de log, e não como tela.
 
 ## Follow-ups identificados em review
 
@@ -435,7 +439,17 @@ A api local estava na branch `feature/1608-client-board-cart-checkout` (#1628 a 
 4. **Rule `socket-da-mesa`:** o "não entre na sala do restaurante" vale para o `/board`. Texto proposto: "No `/board` não entre na sala do restaurante. O `/client` entra nela sozinho pelo handshake, e a sala só leva abertura de loja, cozinha e o histórico de pedido inscrito: pode ouvi-la."
 5. **Confirmar com o dev:**
    - a copy do `CartSendPending` e a do offline ao adicionar;
-   - a falta do código de suporte nos toasts e na trava;
+   - ~~a falta do código de suporte nos toasts e na trava~~: decidido em 2026-11-26, a recusa conhecida não mostra código (decisão 1);
    - a frase de motivo acima do CTA, quando o artboard de offline a desenha abaixo.
 6. **A escrita em voo não trava o envio** (o inverso do item 2). O `run` de `use-send-order.ts` só recusa com o `CART_CLEAR_MUTATION_KEY`, e o `isDisabled` do `CartFooter` não olha escrita: com um `PATCH`, `DELETE` ou adição em voo, o envio sai com a foto da sacola lida, e o servidor fecha a sacola dele. Efeitos: a tela de pedido enviado lista `attempt.items`, que pode não ser o que foi para a cozinha (o `PlacedOrder` não traz itens), e o `onSuccess` do remover que chega depois de um `422 product_unavailable` descarta a recusa nova pelo `dismissAnsweredFailure`. O caminho: `run` recusar com `isMutating({ mutationKey: CART_WRITE_MUTATION_KEY }) > 0` (prefixo, cobre o "Limpar") e o CTA desabilitar com escrita em voo; com o item 2, envio e escrita não se cruzam mais.
 7. **O "Tentar novamente" depois de uma escrita reenvia a foto velha.** Com tentativa pendente, a escrita que dá certo na mesma `cartId` prova que a sacola ainda está aberta, e a tentativa fica (B1 da #48); o `retry` então manda a mesma chave, o servidor fecha a sacola **atual**, e a tela de enviado mostra os itens e a contagem da foto. O caminho: o `retry` atualizar `items`/`itemCount` da tentativa a partir da sacola lida quando ela é a mesma `cartId` e está `open`, mantendo a chave.
+8. **Mapear as telas do app que mostram código técnico ao cliente e decidir caso a caso** (decisão do dev, 2026-11-26). Ponto de partida, medido por grep:
+   - `src/components/error/RouteErrorState.tsx:49`;
+   - `src/components/error/ErrorPage.tsx:178` (variante `server-error`, `Reference`);
+   - `src/components/product/sheet/ProductSheetDialog.tsx:231`, no erro de preço;
+   - `src/components/product/sheet/ProductSheetDialog.tsx:256`, na tela de erro;
+   - `src/components/search/ingredients/IngredientList.tsx:63`;
+   - `src/components/board-session/BoardSessionError.tsx:59` e `:70` ("Código erro 404 · …", no `role="alert"` e na tela). Monta o código à mão, com `readErrorCode`, e por isso o grep por `resolveErrorCode` não o acha;
+   - `src/components/error/use-error-report.ts:40` não é tela: é o `code` do payload do `/api/log`. Ele fica, seja qual for a decisão sobre a tela.
+9. **A exceção do código ainda não chegou às outras fontes que dizem "todo erro".** A RF-11 da #20 (`.claude/sdd/20-indoor-v2-foundation/spec.md:41`), o modo de falha 17 do `code-reviewer-typescript` (`.claude/agents/code-reviewer-typescript.md:92`, "com o código do erro visível") e a decisão do erro do detalhe na #43 ("rule `busca-de-dados`: todo erro mostra o código") seguem absolutos. Hoje a rule vence, mas o revisor lê o modo 17 ao pé da letra. Alinhar junto com o item 8.
+10. ~~**`readSendFailure` ainda devolve código em `already-sent` e `cart-expired`**~~ — resolvido no mesmo diff: `KINDS_WITHOUT_CODE` virou a tabela exaustiva `SHOWS_CODE: Record<SendFailureKind, boolean>`, só `network` e `unknown` com `true`.

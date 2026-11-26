@@ -19,8 +19,8 @@ export type SendFailureAction = 'retry' | 'read-qr' | 'see-bill';
 export interface SendFailure {
   kind: SendFailureKind;
   message: string;
-  /** O que o cliente diz ao garçom: `erro de rede`, `erro 422 · board_movement_closed`. */
-  code: string;
+  /** O que o cliente diz ao garçom (`erro de rede`, `erro 500`). `null` na recusa conhecida, com mensagem própria. */
+  code: string | null;
   action: SendFailureAction | null;
 }
 
@@ -74,6 +74,20 @@ const KINDS_BY_CODE = new Map<string, SendFailureKind>(
   } satisfies Record<string, SendFailureKind>)
 );
 
+// A recusa com mensagem própria já diz ao cliente o que fazer; o código técnico só entra na falha que a mensagem não
+// explica (decisão do dev, 2026-11-26). A tabela é exaustiva: um `kind` novo obriga a decidir.
+const SHOWS_CODE: Record<SendFailureKind, boolean> = {
+  'table-closed': false,
+  'kitchen-closed': false,
+  'item-unavailable': false,
+  'orders-disabled': false,
+  'already-sent': false,
+  'cart-expired': false,
+  'in-flight': false,
+  network: true,
+  unknown: true,
+};
+
 function readResponseCode(error: unknown): string | undefined {
   return isAxiosError<ApiResponseError>(error) ? readErrorCode(error.response?.data) : undefined;
 }
@@ -106,7 +120,12 @@ function resolveMessage(kind: SendFailureKind, error: unknown): string {
 export function readSendFailure(error: unknown): SendFailure {
   const kind = resolveKind(error);
 
-  return { kind, message: resolveMessage(kind, error), code: resolveErrorCode(error), action: ACTIONS[kind] };
+  return {
+    kind,
+    message: resolveMessage(kind, error),
+    code: SHOWS_CODE[kind] ? resolveErrorCode(error) : null,
+    action: ACTIONS[kind],
+  };
 }
 
 /** A mesa que a recusa de movimentação descreve, também no `POST /cart` da adição. */
