@@ -6,6 +6,9 @@ export const boardCopy = {
   errorTitle: 'Não conseguimos carregar a conta',
   errorDescription:
     'A mesa continua aberta e nada foi perdido. Verifique a conexão e tente de novo — ou chame o garçom, que ele vê a conta no caixa.',
+  itemsTitle: 'Itens da mesa',
+  itemsEmptyTitle: 'Nenhum pedido ainda',
+  itemsEmptyDescription: 'Os pedidos da mesa aparecem aqui assim que chegam à cozinha.',
   refreshFailed: 'Não foi possível atualizar a conta.',
 } as const;
 
