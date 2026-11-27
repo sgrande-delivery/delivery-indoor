@@ -16,6 +16,7 @@ import BoardHeader from './BoardHeader';
 import BoardScreenSkeleton from './BoardScreenSkeleton';
 import BoardBillCard from './bill-card/BoardBillCard';
 import BoardItemsCard from './rounds/BoardItemsCard';
+import BoardTotals from './totals/BoardTotals';
 
 const Root = styled('div')({
   display: 'flex',
@@ -99,7 +100,10 @@ const ReadyBoardScreen: React.FC<ReadyBoardScreenProps> = ({ sessionId, boardNum
           />
         )}
         {movement.data !== undefined && <BoardBillCard movement={movement.data} boardNumber={boardNumber} />}
-        <BoardItemsCard products={products.data.products} />
+        <BoardItemsCard
+          products={products.data.products}
+          footer={movement.data !== undefined && <BoardTotals movement={movement.data} appearance="footer" />}
+        />
       </Body>
     </Root>
   );
