@@ -15,6 +15,8 @@ import { boardMetrics } from './board-metrics';
 import BoardHeader from './BoardHeader';
 import BoardScreenSkeleton from './BoardScreenSkeleton';
 import BoardBillCard from './bill-card/BoardBillCard';
+import OfflineDimmed from './realtime/OfflineDimmed';
+import { useBoardOfflineLine } from './realtime/use-board-offline-line';
 import BoardItemsCard from './rounds/BoardItemsCard';
 import BoardTotals from './totals/BoardTotals';
 
@@ -56,6 +58,7 @@ const ReadyBoardScreen: React.FC<ReadyBoardScreenProps> = ({ sessionId, boardNum
   useBoardPayments(sessionId);
   const { refresh, isRefreshing } = useRefreshBoardBill(sessionId);
   const screen = useQueryScreenState(products);
+  useBoardOfflineLine(products);
 
   if (screen.view === 'skeleton') {
     return <BoardScreenSkeleton />;
@@ -100,10 +103,12 @@ const ReadyBoardScreen: React.FC<ReadyBoardScreenProps> = ({ sessionId, boardNum
           />
         )}
         {movement.data !== undefined && <BoardBillCard movement={movement.data} boardNumber={boardNumber} />}
-        <BoardItemsCard
-          products={products.data.products}
-          footer={movement.data !== undefined && <BoardTotals movement={movement.data} appearance="footer" />}
-        />
+        <OfflineDimmed>
+          <BoardItemsCard
+            products={products.data.products}
+            footer={movement.data !== undefined && <BoardTotals movement={movement.data} appearance="footer" />}
+          />
+        </OfflineDimmed>
       </Body>
     </Root>
   );

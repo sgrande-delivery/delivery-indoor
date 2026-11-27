@@ -1,6 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 
-type SocketSnapshot = {
+export type SocketSnapshot = {
   socket: Socket | null;
   isConnected: boolean;
 };
