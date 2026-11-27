@@ -4,6 +4,7 @@ import React from 'react';
 import { styled } from '@mui/material/styles';
 import InlineError from '@/components/error/InlineError';
 import RouteErrorState from '@/components/error/RouteErrorState';
+import ConnectedWaiterCallButton from '@/components/waiter/ConnectedWaiterCallButton';
 import { useBoardMovement } from '@/hooks/use-board-movement';
 import { useBoardPayments } from '@/hooks/use-board-payments';
 import { useBoardProducts } from '@/hooks/use-board-products';
@@ -15,6 +16,8 @@ import { boardMetrics } from './board-metrics';
 import { summarizeBoardProducts } from './board-summary';
 import BoardHeader from './BoardHeader';
 import BoardScreenSkeleton from './BoardScreenSkeleton';
+import BoardActionBar from './actions/BoardActionBar';
+import RequestBillAction from './actions/RequestBillAction';
 import BoardBillCard from './bill-card/BoardBillCard';
 import OfflineDimmed from './realtime/OfflineDimmed';
 import { useBoardOfflineLine } from './realtime/use-board-offline-line';
@@ -80,6 +83,7 @@ const ReadyBoardScreen: React.FC<ReadyBoardScreenProps> = ({ sessionId, boardNum
         onRetry={screen.retry}
         title={boardCopy.errorTitle}
         description={boardCopy.errorDescription}
+        secondaryAction={<ConnectedWaiterCallButton fullWidth size="lg" />}
       />
     );
   }
@@ -110,7 +114,13 @@ const ReadyBoardScreen: React.FC<ReadyBoardScreenProps> = ({ sessionId, boardNum
             isRetrying={isRefreshing}
           />
         )}
-        {movement.data !== undefined && <BoardBillCard movement={movement.data} boardNumber={boardNumber} />}
+        {movement.data !== undefined && (
+          <BoardBillCard
+            movement={movement.data}
+            boardNumber={boardNumber}
+            action={<RequestBillAction movement={movement.data} />}
+          />
+        )}
         {movement.data?.is_board_paid === true ? (
           // conta paga: sem itens e sem ações, só o que fechou a conta; vem de `is_board_paid` do servidor
           <OfflineDimmed>
@@ -137,6 +147,7 @@ const ReadyBoardScreen: React.FC<ReadyBoardScreenProps> = ({ sessionId, boardNum
           </OfflineDimmed>
         )}
       </Body>
+      {movement.data !== undefined && !movement.data.is_board_paid && <BoardActionBar movement={movement.data} />}
     </Root>
   );
 };

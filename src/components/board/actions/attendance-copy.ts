@@ -1,0 +1,15 @@
+export const attendanceCopy = {
+  callWaiter: 'Chamar garçom',
+  waiterCalledLead: 'Garçom chamado',
+  waiterCalledAt: (clock: string) => `às ${clock}`,
+  waiterCalled: (clock: string) => `Garçom chamado às ${clock}`,
+  orderMore: 'Pedir mais',
+  payBill: 'Pagar conta',
+  payOffline: 'Pagamento pelo app indisponível sem conexão. O garçom fecha a conta no caixa.',
+  requestBill: 'Pedir a conta',
+  billRequested: (clock: string) => `Conta pedida às ${clock}`,
+  waiterFailed: 'Não foi possível chamar o garçom.',
+  billFailed: 'Não foi possível pedir a conta.',
+  throttled: 'Muitos pedidos seguidos. Aguarde um instante.',
+  retry: 'Tentar de novo',
+} as const;

@@ -7,7 +7,7 @@ import CartColumn from '@/components/cart/dock/CartColumn';
 import { isCartDockRoute } from '@/components/cart/dock/cart-dock-routes';
 import TabletCartDock from '@/components/cart/dock/TabletCartDock';
 import OfflineBanner from '@/components/offline/OfflineBanner';
-import WaiterCallButton from '@/components/waiter/WaiterCallButton';
+import ConnectedWaiterCallButton from '@/components/waiter/ConnectedWaiterCallButton';
 import { useRestaurant } from '@/hooks/use-restaurant';
 import { useBoardSession } from '@/providers/board-session';
 import { appShellMetrics, CHROME_BOTTOM_INSET_VAR } from '@/theme';
@@ -181,7 +181,7 @@ const AppShell: React.FC<PropsWithChildren> = ({ children }) => {
             table={table}
             tabs={tabletTabs}
             activeTab={resolveActiveTab(pathname, 'tablet')}
-            action={<WaiterCallButton collapsible />}
+            action={<ConnectedWaiterCallButton collapsible />}
           />
         </TopBarSlot>
         <OfflineBanner />
