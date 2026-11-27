@@ -1,5 +1,5 @@
 ---
-description: Executa a implementação de uma task SDD — resolve o arquivo em .claude/sdd/<feature>/tasks/, lê spec e plan da feature, pergunta de qual branch cortar, cria a branch numa worktree isolada e delega ao indoor-agent → code-reviewer-typescript, em loop até aprovar. Não comita (isso é do /ship).
+description: Executa a implementação de uma task SDD — resolve o arquivo em .claude/sdd/<feature>/tasks/, lê spec e plan da feature, pergunta de qual branch cortar, cria a branch numa worktree isolada e delega ao indoor-agent → code-reviewer-typescript, em loop até aprovar. Não comita (isso é do /ship-pr).
 argument-hint: [<feature>/<id> | <id> | caminho do arquivo da task]
 ---
 
@@ -88,9 +88,9 @@ Fluxo:
    `task/<id>-<slug>`, cortada de `<base-escolhida>` em <YYYY-MM-DD>.
    ```
 
-   É esse registro que o `/ship` lê para saber contra qual branch abrir o PR.
+   É esse registro que o `/ship-pr` lê para saber contra qual branch abrir o PR.
 
-   g. Não fazer commit — commit, push e PR são do `/ship`.
+   g. Não fazer commit — commit, push e PR são do `/ship-pr`.
 
 3. **Conferir a issue da task** — o campo `**Issue:**`. Se estiver vazio e o dev quiser rastreio, perguntar se é pra criar (label `task`, sub-issue da feature) e preencher o campo.
 
@@ -111,15 +111,15 @@ Fluxo:
    - Aprendizado novo que valha para as próximas tasks → acrescentar em "Aprendizados" no `plan.md`
 
 9. **Reportar:**
-   - Caminho da worktree e branch criada, prontas pro `/ship`
+   - Caminho da worktree e branch criada, prontas pro `/ship-pr`
    - Arquivos criados/alterados, agrupados por camada
    - Resultado de `npx tsc --noEmit`, do eslint e do `next build`, **verificados por você**
    - O que foi validado no navegador e o que **não** foi
    - Decisões que o implementador tomou por conta própria e o veredito do review sobre elas
    - Variáveis de ambiente novas, se houver — e o lembrete de que `NEXT_PUBLIC_*` vira público no bundle
-   - Próximo passo: `/ship <feature>/<id>`
+   - Próximo passo: `/ship-pr <feature>/<id>`
 
-**Importante:** criar worktree e branch é esperado, mas **NÃO fazer commits** — commit, push e PR são do `/ship`. Também **não** chamar `ExitWorktree` ao final: o `/ship` roda dentro da mesma worktree.
+**Importante:** criar worktree e branch é esperado, mas **NÃO fazer commits** — commit, push e PR são do `/ship-pr`. Também **não** chamar `ExitWorktree` ao final: o `/ship-pr` roda dentro da mesma worktree.
 
 **Sobre o ambiente:**
 

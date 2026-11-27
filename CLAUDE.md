@@ -120,8 +120,12 @@ O trabalho é organizado por **feature**, não por task solta. Cada feature vive
 /create-spec      → spec.md + plan.md + tasks/ (e a issue da feature)
 /create-task      → acrescenta uma task à spec
 /execute          → branch + worktree, implementação via indoor-agent, review
-/ship             → commits atômicos, push e PR contra a base de que a task foi cortada
+/ship-pr             → commits atômicos, push e PR contra a base de que a task foi cortada
 ```
+
+**O comando chama-se `/ship-pr`, e não `/ship`, porque `/ship` virou comando nativo do Claude Code.** Command do repo com nome de built-in **não carrega**, então `/ship` passaria a rodar o nativo — commit, push, PR e vigília do PR até o merge, sem tag e sem release. **Não renomear de volta.**
+
+**O `/create-spec` escreve na worktree `docs/<issue>-<slug>` e abre PR contra a `master`.** Os artefatos da spec sobem **antes** da execução, e a branch da task é cortada de uma base que já contém a spec — ou seja, depois do merge desse PR.
 
 Fora do ciclo: `/review-task` confere a entrega contra o que a task prometeu, `/follow-ups` consolida a dívida adiada, e `/report-bug` e `/request-feature` abrem issue a partir de relato livre de tester ou PO.
 
@@ -131,7 +135,7 @@ Fora do ciclo: `/review-task` confere a entrega contra o que a task prometeu, `/
 
 **Contrato escrito é contrato para implementar.** Feature que depende de rota ou evento novo nasce como spec no repo de destino, e aqui a spec e cada task carregam o contrato **inline**. A tela é construída inteira contra ele, mesmo com a rota ainda não publicada. É proibido esconder UI porque "a rota não subiu", trocar implementação por mock, stub ou TODO, ou transformar isso em pergunta. O aviso de ordem de deploy vai no relatório, nunca na execução. O único motivo real para parar é **divergência medida** entre as duas specs no contrato (campo, status, unidade, nome de evento) — ausência de implementação do outro lado **não** é divergência.
 
-**Subagentes** (`.claude/agents/`): `indoor-agent` implementa, `code-reviewer-typescript` revisa contra os modos de falha desta base, `git-agent` faz commit, push e PR. O `/execute` e o `/ship` os orquestram — não invocar direto.
+**Subagentes** (`.claude/agents/`): `indoor-agent` implementa, `code-reviewer-typescript` revisa contra os modos de falha desta base, `git-agent` faz commit, push e PR. O `/execute` e o `/ship-pr` os orquestram — não invocar direto.
 
 **Identificadores:** código, nomes de arquivo, branches e slugs de pasta SDD em **inglês**; specs, tasks, issues, PRs e mensagens de UI em **português**, minúsculo, seguindo o que já existe (`"cardápio"`, `"nenhum produto para mostrar"`).
 

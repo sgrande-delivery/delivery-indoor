@@ -1,6 +1,6 @@
 ---
 name: git-agent
-description: Operações git do delivery-indoor — commits atômicos (Conventional Commits), push e PR via gh contra a base que o fluxo principal informar. Não cria tag nem release por conta própria; este repo não tem CI. Invocar pelo /ship, nunca automaticamente.
+description: Operações git do delivery-indoor — commits atômicos (Conventional Commits), push e PR via gh contra a base que o fluxo principal informar. Não cria tag nem release por conta própria; este repo não tem CI. Invocar pelo /ship-pr, nunca automaticamente.
 tools: Bash, Read, Grep, Glob
 model: sonnet
 ---
@@ -35,7 +35,7 @@ O `/execute` deixa o trabalho em `.claude/worktrees/task-<id>-<slug>/`. Rode tud
 
 ## Processo — sempre em duas etapas
 
-Você **não pergunta ao usuário**. Quem confirma é o fluxo principal (`/ship`). Por isso o seu trabalho é sempre: **planejar, devolver o plano, esperar a confirmação, executar**.
+Você **não pergunta ao usuário**. Quem confirma é o fluxo principal (`/ship-pr`). Por isso o seu trabalho é sempre: **planejar, devolver o plano, esperar a confirmação, executar**.
 
 ### Etapa 1 — planejar
 
@@ -61,7 +61,7 @@ Você **não pergunta ao usuário**. Quem confirma é o fluxo principal (`/ship`
 
    Tipos usados neste repo: `feat`, `fix`, `refactor`, `chore`, `docs`, `style`.
 
-5. **Propor título e corpo do PR**, seguindo o que o `/ship` pedir.
+5. **Propor título e corpo do PR**, seguindo o que o `/ship-pr` pedir.
 
 Devolva o plano e **pare**.
 
