@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor (branch `feat/indoor-v2`)
 **Depende de:** 01 (#53)
-**Status:** pendente
+**Status:** shipped
 
 ## Objetivo
 
@@ -136,4 +136,81 @@ Dinheiro por `moneyFormat` de `src/helpers/numberFormat.js`, sempre com o valor 
 
 ## Branch
 
-`task/54-board-bill-highlight-card`, base sugerida: `task/53-board-bill-reads-and-screen-frame` (ou `feat/indoor-v2`, se a 01 já tiver mergeado). Roda em paralelo com a 03, a 04 e a 06. Conflito esperado na junção: só em `BoardScreen.tsx`, resolvido pelo mapa de encaixe da 01.
+`task/54-board-bill-highlight-card`, cortada de `origin/feat/indoor-v2` (`0aa1ac2`) em 2026-11-27, no checkout principal. É a primeira da pilha sequencial da #23, escolhida pelo dev: a #56 sai desta branch, e o PR mira a `feat/indoor-v2`.
+
+## Implementação
+
+**Concluída em:** 2026-11-27 (`tsc`, `eslint` e testes puros verdes; `next build` e navegador ficaram com o dev)
+
+### Arquivos
+
+Criados: `src/hooks/use-now.ts`; em `src/components/board/bill-card/`: `format-duration.ts`, `bill-state.ts`, `bill-card-metrics.ts`, `BoardBillCard.tsx`, `BillCardOpen.tsx`, `BillCardPaid.tsx`, `BillCardShell.tsx`, `BillStateLabel.tsx`, `BillProgress.tsx`, `BillTimeRow.tsx`.
+Alterado: `src/components/board/ReadyBoardScreen.tsx` (card como primeiro filho do `Body`).
+
+### Decisões que tomei por conta própria
+
+- **Props `{ movement: BoardMovementDetail; boardNumber: string }` em vez de `OpenBoardMovement`.** O `ReadyBoardScreen` já lê a movimentação fresca por `useBoardMovement` (tipo `BoardMovementDetail`, `board` pode ser `null`), e o card deve mostrar o valor relido, não o congelado da sessão. O número da mesa vem do `boardNumber` que a tela já recebe. `OpenBoardMovement` continua atribuível.
+- **Enquanto `movement.data` é `undefined` o card não aparece** (a tela já passou pelo skeleton de itens).
+- **Componentes extras** para um por arquivo: `BillCardShell`, `BillStateLabel`, `BillProgress`, `BillTimeRow`, compartilhados pelas duas variantes. A barra recebe a largura por `style`, para não gerar uma classe por percentual.
+- **Raio 20 e padding 18 em `bill-card-metrics.ts`**: o raio `paper` do tema é 18, e o DS/task pedem 20. A sombra é `elevations.sm`.
+- **Borda da variante paga** como `inset box-shadow` de 1,5 em `success.mainChannel` a 0,35 (a opacidade é palpite do artboard, sem token), para não alterar o box model.
+- **Halo do ponto** em `primary.mainChannel` a 0,2 com 3px, também sem token no DS.
+- **Variante paga sem `opened_at` ou `paid_at` parseável** omite o rodapé inteiro; hora fora do dia corrente sai com a data (`formatBoardClock`), por consistência com o resto da conta.
+- **O `Heading` "Conta paga"** usa `toneOnCard.success` para texto e ícone.
+- `useNow` ganhou `refresh()` único para ligar, tique e `visibilitychange` (com `removeEventListener` no cleanup).
+
+### Divergências
+
+- A barra segue o DS (8px, `primary`) e não o artboard (6px, `success`), como a decisão 2; na variante paga a barra cheia é `success`, como a task pede.
+- "Conta pedida" é derivada, sem desenho no protótipo: confirmar o texto com o dev.
+
+### Verificação
+
+- `npx next typegen && npx tsc --noEmit`: ok. `npx eslint src app scripts`: sem erros nem warnings novos.
+- grep de hex, `toFixed` e subtração: nenhuma ocorrência.
+- Puros via `npx jiti`: `formatElapsed` dá "52 min", "1h 24min", "1h 05min", "1h 52min" e "0 min" nos cinco casos; `resolveBillState` dá `paid`, `requested` e `open`.
+
+### O que NÃO foi verificado
+
+- `next build` e o roteiro de navegador (passos 1 a 6), incluindo o contador corrigindo ao voltar à aba, o leitor de tela e as medidas (espaçamento entre blocos) contra o artboard.
+- A hidratação: o card só existe no ramo `ready`, mas não foi exercitado no navegador.
+
+### Correções aplicadas em review
+
+- `src/components/board/bill-card/BillCardPaid.tsx`: tirado o `fontSize: pxToRem(billCardMetrics.paidLineFontSize)` do `ThanksLine`, que repetia os 12px do `typographyTokens.body2` espalhado logo acima, e o `pxToRem` que ficou sem uso. Sem mudança visual.
+- `src/components/board/bill-card/BoardBillCard.tsx`: o comentário dizia "Não renderiza no servidor", como se o card se protegesse sozinho. Agora diz que ele só pode ser montado no ramo `ready`, que é a restrição de verdade.
+
+### Validação no navegador (2026-11-27, orquestrador)
+
+Contra a delivery-api local (`master` @ `819683112`), mesa 003 do restaurante 1, a 390 × 844. A abertura foi posta 52 min atrás e os pagamentos inseridos no banco, restaurado no fim. `next build` com as vars de restaurante: exit 0.
+
+| # | Cenário | Resultado |
+|---|---|---|
+| 1 | Nada pago | "Mesa 003 · conta aberta", falta pagar R$ 96,00 = `total_due`, "R$ 0,00 pagos", "0%", barra vazia e visível com `aria-valuenow=0`, "52 min" e "desde HH:mm" |
+| 2 | Contador (`page.clock`) | o tique de 15 s vira "53 min" depois de 65 s; com o relógio adiantado e um `visibilitychange`, corrige para "56 min" sem esperar o tique |
+| 3 | R$ 30,00 pagos | falta pagar R$ 66,00, "R$ 30,00 pagos", "31%" e a barra em 31 |
+| 4 | `bill_requested_at` | "Mesa 003 · conta pedida", e o resto igual |
+| 5 | Quitada, com `paid_at` | "Conta paga", R$ 96,00, "Tudo certo. Obrigado pela visita!", barra cheia em 100 e "Tempo de mesa · 52 min · 10:52 – 11:44". Nenhum "liberar" |
+| 6 | Medidas | os dois cards com raio 18 e padding 18, barra de 8, 14 acima da barra, 8 entre a barra e o pago, 14 até a régua do rodapé |
+| 7 | R$ 12.345,67 a 360 px (resposta interceptada) | o total desce para a linha de baixo, alinhado à direita, e nada estoura (`scrollWidth = clientWidth`) |
+
+18 de 18 conferências do roteiro. A mesa real, aberta em 13/10, mostra "1078h 26min · desde 13/10 13:26": a hora de outro dia sai com a data.
+
+**Não verificado:** o leitor de tela (passo 6 da task), o tema escuro (o trilho `field` sobre o `card`) e um iPhone de verdade.
+
+## Follow-ups identificados em review
+
+- **Contrato do card diferente do que as próximas tasks escrevem.** A 05 (#57), a 07 (#59) e a 08 (#60) escrevem `<BoardBillCard movement={movement} />` com `OpenBoardMovement`. A 02 entregou `{ movement: BoardMovementDetail; boardNumber: string; action? }`, então todo ponto de montagem precisa passar o `boardNumber`. A #60, decisão 4, também precisa de `describeBillState` sem o número da mesa, e hoje a assinatura exige o número.
+- **Skeleton do card de destaque com a barra de 6px** (`boardSkeletonMetrics.heroBar.height`, `src/components/board/board-metrics.ts:21`). A barra do card agora tem 8px (decisão 2), e o skeleton deve ter a forma do que substitui.
+- **"100%" com saldo em aberto.** `resolvePaidPercent` (`src/components/board/bill-amounts.ts:24`) usa `Math.round`: numa conta de R$ 200,00 com R$ 199,00 pagos, o card mostra a barra cheia e "100%" ao lado de "Falta pagar R$ 1,00". O módulo é da 01. Limitar a 99 enquanto `resolveAmountDue > 0` resolve, se o dev concordar.
+- **Rótulo do estado em `ink`, e não na cor da marca como no artboard.** O artboard pinta "Mesa 12 · conta aberta" em `--brand`. A primária do tenant como texto de 11px fica abaixo de 4,5:1 sobre o cartão, e o tema não tem tom de marca para texto. Pedir ao dev a decisão, e um token `toneOnCard` de marca para texto se ele quiser a cor.
+- **Variante paga centralizada, e não alinhada à esquerda como no artboard.** O DS (`BoardBillCard/README.md`, "na conta paga o card centraliza") e o artboard `Conta · celular · paga` divergem. A implementação seguiu o DS sem registrar a divergência. Confirmar com o dev.
+
+### Ajustes de review (2026-11-27)
+
+- **A1:** o card usa `boardMetrics.cardRadius` (18, `componentRadii.paper`), `cardPadding` (18) e `cardShadow`; `padding` e `radius` saíram de `bill-card-metrics.ts`. Isto substitui a decisão anterior de raio 20.
+- **A2:** o `gap` uniforme de 12 do `BillCardShell` saiu; os espaços são margens, do `bundle.css` (`.bpi-bill`): 14 acima da barra, 8 entre a barra e a linha do pago, 14 de margem mais 14 de padding no rodapé (acima e abaixo da régua). Rótulo para valores e valores para ação: 12 (`spacingScale.sm`); agradecimento da variante paga: 4 abaixo do valor (artboard, sem token).
+- **A3:** ponto com halo de 4 a 0,15, gap 9 e `letter-spacing` 0,09em.
+- **A5:** a linha de valores quebra (`flexWrap: wrap`, `minInlineSize: 0` nos dois lados, total com `marginInlineStart: auto`): num aparelho estreito com valor grande o total desce para a linha de baixo e o valor de 34px fica inteiro, sem encolher nem cortar. Medido depois no navegador (cenário 7 da validação).
+- **Nit:** "Conta paga" vem só de `describeBillState('paid', '')`.
+- `tsc` e `eslint` passam. Não rodei typegen, build nem dev.
