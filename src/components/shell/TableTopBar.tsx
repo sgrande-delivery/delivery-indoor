@@ -21,7 +21,7 @@ export interface TableTopBarBrand {
 /** `none` é a mesa não identificada; `unavailable` é a mesa identificada que falhou ao carregar (só a marca). */
 export type TableTopBarTable =
   | { kind: 'loading' }
-  | { kind: 'ready'; label: string }
+  | { kind: 'ready'; label: string; isPaid: boolean }
   | { kind: 'none' }
   | { kind: 'unavailable' };
 
@@ -84,7 +84,9 @@ const NameSkeleton = styled('span')({
   overflow: 'hidden',
 });
 
-const TableChip = styled('span')(({ theme }) => ({
+const TableChip = styled('span', {
+  shouldForwardProp: prop => prop !== 'isPaid',
+})<{ isPaid: boolean }>(({ theme, isPaid }) => ({
   display: 'inline-flex',
   alignItems: 'center',
   flexShrink: 0,
@@ -99,6 +101,11 @@ const TableChip = styled('span')(({ theme }) => ({
   fontSize: pxToRem(metrics.chipFontSize),
   fontWeight: fontWeights.bold,
   whiteSpace: 'nowrap',
+  // conta quitada: a pele do ladrilho "pago" da conta, no lugar da neutra
+  ...(isPaid && {
+    backgroundColor: theme.vars.palette.toneOnCard.paidTile.backgroundColor,
+    color: theme.vars.palette.toneOnCard.paidTile.color,
+  }),
 }));
 
 const NoTableText = styled('span')(({ theme }) => ({
@@ -146,8 +153,12 @@ const TableTopBar: React.FC<TableTopBarProps> = ({ brand, table, tabs, activeTab
         />
       )}
       {table.kind === 'ready' && (
-        <TableChip>
-          <Icon name="table_restaurant" size={metrics.chipIconSize} />
+        <TableChip isPaid={table.isPaid}>
+          <Icon
+            name={table.isPaid ? 'check_circle' : 'table_restaurant'}
+            fill={table.isPaid}
+            size={metrics.chipIconSize}
+          />
           {table.label}
         </TableChip>
       )}

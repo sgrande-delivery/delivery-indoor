@@ -3,9 +3,10 @@
 import React from 'react';
 import { styled } from '@mui/material/styles';
 import { Icon } from '@/components/ui';
+import { tabletShellMediaQuery } from '@/components/shell/shell-metrics';
 import type { Image } from '@/types/image';
 import { resolveCategoryKindIcon } from './category-kind-icon';
-import { roundsMetrics } from './rounds-metrics';
+import { roundsMetrics, roundsTabletMetrics } from './rounds-metrics';
 
 export interface BoardItemThumbProps {
   image: Image | null;
@@ -23,6 +24,11 @@ const Frame = styled('span')(({ theme }) => ({
   borderRadius: roundsMetrics.thumbRadius,
   backgroundColor: theme.vars.palette.surface.field,
   color: theme.vars.palette.surface.muted,
+  [`@media ${tabletShellMediaQuery}`]: {
+    inlineSize: roundsTabletMetrics.thumbSize,
+    blockSize: roundsTabletMetrics.thumbSize,
+    borderRadius: roundsTabletMetrics.thumbRadius,
+  },
 }));
 
 const Photo = styled('img')({

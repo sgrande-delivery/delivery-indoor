@@ -9,7 +9,7 @@ import WaiterCallButton, { WaiterCallButtonProps, WaiterCallButtonState } from '
 
 type ConnectedWaiterCallButtonProps = Pick<
   WaiterCallButtonProps,
-  'collapsible' | 'fullWidth' | 'stackCalledLabel' | 'size'
+  'collapsible' | 'fullWidth' | 'stackCalledLabel' | 'size' | 'compactLabel'
 >;
 
 /**

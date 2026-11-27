@@ -133,7 +133,9 @@ const AppShell: React.FC<PropsWithChildren> = ({ children }) => {
   let table: TableTopBarTable = { kind: 'none' };
 
   if (session.status === 'ready') {
-    table = { kind: 'ready', label: `Mesa ${session.movement.board.number}` };
+    const { board, is_board_paid: isPaid } = session.movement;
+
+    table = { kind: 'ready', label: isPaid ? `Mesa ${board.number} · paga` : `Mesa ${board.number}`, isPaid };
   } else if (session.status === 'loading') {
     table = { kind: 'loading' };
   } else if (session.status === 'error') {

@@ -2,8 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { boardPaymentsQueryKey, boardProductsQueryKey } from '@/services/board-bill';
-import { boardMovementQueryKey } from '@/services/board-movement';
+import { ALL_BOARD_BILL_KEYS, resolveBoardBillQueryKeys } from '@/components/board/realtime/board-bill-keys';
 
 export interface RefreshBoardBill {
   refresh: () => Promise<void>;
@@ -23,11 +22,11 @@ export function useRefreshBoardBill(movementId: string | null): RefreshBoardBill
     setIsRefreshing(true);
 
     try {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: boardMovementQueryKey(movementId) }),
-        queryClient.invalidateQueries({ queryKey: boardProductsQueryKey(movementId) }),
-        queryClient.invalidateQueries({ queryKey: boardPaymentsQueryKey(movementId) }),
-      ]);
+      await Promise.all(
+        resolveBoardBillQueryKeys(movementId, ALL_BOARD_BILL_KEYS).map(queryKey =>
+          queryClient.invalidateQueries({ queryKey })
+        )
+      );
     } finally {
       setIsRefreshing(false);
     }

@@ -9,6 +9,7 @@ export const boardCopy = {
   itemsTitle: 'Itens da mesa',
   itemsEmptyTitle: 'Nenhum pedido ainda',
   itemsEmptyDescription: 'Os pedidos da mesa aparecem aqui assim que chegam à cozinha.',
+  closedAt: (clock: string) => `encerrada às ${clock}`,
   refreshFailed: 'Não foi possível atualizar a conta.',
 } as const;
 

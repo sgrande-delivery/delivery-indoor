@@ -2,10 +2,11 @@
 
 import React from 'react';
 import { styled } from '@mui/material/styles';
+import { tabletShellMediaQuery } from '@/components/shell/shell-metrics';
 import { fontFamilies, pxToRem } from '@/theme';
 import type { BoardProductItem } from '@/types/board-bill';
 import { describeBoardItemMeta } from './board-item-text';
-import { roundsMetrics } from './rounds-metrics';
+import { roundsMetrics, roundsTabletMetrics } from './rounds-metrics';
 
 export interface BoardItemMetaProps {
   item: Pick<BoardProductItem, 'amount' | 'person' | 'price'>;
@@ -16,6 +17,9 @@ const Root = styled('div')(({ theme }) => ({
   fontSize: pxToRem(roundsMetrics.metaFontSize),
   lineHeight: roundsMetrics.lineHeight,
   color: theme.vars.palette.surface.muted,
+  [`@media ${tabletShellMediaQuery}`]: {
+    fontSize: pxToRem(roundsTabletMetrics.metaFontSize),
+  },
 }));
 
 const BoardItemMeta: React.FC<BoardItemMetaProps> = ({ item }) => {

@@ -19,7 +19,10 @@ export interface BoardTotalsProps {
   appearance: 'footer' | 'card';
   /** Só no pago: "Subtotal · {n} itens". */
   itemCount?: number;
-  /** Substitui a linha agregada "Já pago" pelas linhas de pagamento do tablet. */
+  /**
+   * As linhas de pagamento do tablet (grupos `dt`/`dd` que só aparecem no tablet). Quando vêm, o celular segue com a
+   * linha agregada "Já pago" e o tablet usa estas; sem elas (pagamentos sem dado), a agregada vale nos dois.
+   */
   paidRows?: React.ReactNode;
 }
 
@@ -31,6 +34,8 @@ const Root = styled('dl', {
   margin: 0,
   ...(appearance === 'footer'
     ? {
+        // no cartão de itens que cresce (tablet deitado) o resumo desce para o pé
+        marginBlockStart: 'auto',
         paddingBlockStart: totalsMetrics.footerPaddingBlockStart,
         paddingBlockEnd: totalsMetrics.footerPaddingBlockEnd,
         paddingInline: roundsMetrics.cardPaddingInline,
@@ -70,14 +75,15 @@ const BoardTotals: React.FC<BoardTotalsProps> = ({ movement, variant = 'open', a
       ) : (
         <>
           <BoardTotalsEmphasis label={totalsCopy.total} value={moneyFormat(movement.total_due)} />
-          {paidRows ??
-            (movement.total_paid > 0 && (
-              <BoardTotalsRow
-                label={totalsCopy.paid}
-                value={`${totalsCopy.minusSign}${moneyFormat(movement.total_paid)}`}
-                tone="positive"
-              />
-            ))}
+          {paidRows}
+          {movement.total_paid > 0 && (
+            <BoardTotalsRow
+              label={totalsCopy.paid}
+              value={`${totalsCopy.minusSign}${moneyFormat(movement.total_paid)}`}
+              tone="positive"
+              visibleOn={paidRows === undefined ? undefined : 'phone'}
+            />
+          )}
           <BoardTotalsEmphasis label={totalsCopy.due} value={moneyFormat(resolveAmountDue(movement))} tone="brand" />
         </>
       )}

@@ -3,13 +3,14 @@
 import React from 'react';
 import { styled } from '@mui/material/styles';
 import type { BoardPayment } from '@/types/board-bill';
-import BoardPaymentRow, { type BoardPaymentTone } from './BoardPaymentRow';
+import BoardPaymentRow, { type BoardPaymentMeta, type BoardPaymentTone } from './BoardPaymentRow';
 import { paymentsMetrics } from './payments-metrics';
 
 export interface BoardPaymentListProps {
   payments: readonly BoardPayment[];
   now: Date;
   tone: BoardPaymentTone;
+  meta?: BoardPaymentMeta;
 }
 
 const Root = styled('ul')({
@@ -19,10 +20,10 @@ const Root = styled('ul')({
   padding: 0,
 });
 
-const BoardPaymentList: React.FC<BoardPaymentListProps> = ({ payments, now, tone }) => (
+const BoardPaymentList: React.FC<BoardPaymentListProps> = ({ payments, now, tone, meta }) => (
   <Root>
     {payments.map(payment => (
-      <BoardPaymentRow key={payment.id} payment={payment} now={now} tone={tone} />
+      <BoardPaymentRow key={payment.id} payment={payment} now={now} tone={tone} meta={meta} />
     ))}
   </Root>
 );

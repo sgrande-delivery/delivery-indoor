@@ -3,6 +3,7 @@
 import React from 'react';
 import { styled } from '@mui/material/styles';
 import { moneyFormat } from '@/helpers/numberFormat';
+import { tabletShellMediaQuery } from '@/components/shell/shell-metrics';
 import { fontFamilies, pxToRem } from '@/theme';
 import type { BoardProductItem } from '@/types/board-bill';
 import { buildBoardItemComposition, hasBoardItemComposition } from './board-item-composition';
@@ -10,7 +11,7 @@ import { describeBoardItemTitle } from './board-item-text';
 import BoardItemComposition from './BoardItemComposition';
 import BoardItemMeta from './BoardItemMeta';
 import BoardItemThumb from './BoardItemThumb';
-import { roundsMetrics } from './rounds-metrics';
+import { roundsMetrics, roundsTabletMetrics } from './rounds-metrics';
 
 export interface BoardItemRowProps {
   item: BoardProductItem;
@@ -40,6 +41,9 @@ const Name = styled('div')(({ theme }) => ({
   fontWeight: roundsMetrics.nameWeight,
   lineHeight: roundsMetrics.lineHeight,
   color: theme.vars.palette.surface.ink,
+  [`@media ${tabletShellMediaQuery}`]: {
+    fontSize: pxToRem(roundsTabletMetrics.nameFontSize),
+  },
 }));
 
 const Price = styled('span')(({ theme }) => ({
@@ -48,6 +52,9 @@ const Price = styled('span')(({ theme }) => ({
   fontSize: pxToRem(roundsMetrics.priceFontSize),
   fontWeight: roundsMetrics.priceWeight,
   color: theme.vars.palette.surface.ink,
+  [`@media ${tabletShellMediaQuery}`]: {
+    fontSize: pxToRem(roundsTabletMetrics.priceFontSize),
+  },
 }));
 
 /** O item já lançado, somente leitura. O valor da linha é o `final_price` da api: nada é multiplicado aqui. */

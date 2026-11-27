@@ -12,6 +12,12 @@ export const actionsMetrics = {
   // A fonte é a do `.ghost` do artboard (13,5); o padding é `spacingScale.sm`, o menor do tema que cabe.
   rowButtonFontSize: 13.5,
   rowButtonPaddingInline: spacingScale.sm,
+  // O tablet em pé (artboard `Conta · tablet em pé`): uma linha com os três botões, 16/24/22 de padding e 12 entre eles.
+  // O artboard os desenha com 56; aqui ficam os 52 do `lg`, e o garçom e "Pedir mais" sobem de `md` para ele.
+  portraitGap: 12,
+  portraitPaddingBlockStart: spacingScale.md,
+  portraitPaddingInline: spacingScale.lg,
+  portraitPaddingBlockEnd: 22,
   requestedGap: controlGap,
   requestedIconSize: controlSizes.md.iconSize,
 } as const;

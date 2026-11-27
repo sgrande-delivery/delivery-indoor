@@ -54,7 +54,7 @@ const BillCardPaid: React.FC<BillCardPaidProps> = ({ movement }) => {
     <BillCardShell paid>
       <Heading>
         <Icon name="check_circle" fill size={billCardMetrics.paidIconSize} />
-        {describeBillState('paid', '')}
+        {describeBillState('paid')}
       </Heading>
       <PaidValue>{moneyFormat(movement.total_paid)}</PaidValue>
       <ThanksLine>Tudo certo. Obrigado pela visita!</ThanksLine>

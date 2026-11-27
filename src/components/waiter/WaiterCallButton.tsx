@@ -4,8 +4,13 @@ import React from 'react';
 import { styled } from '@mui/material/styles';
 import { attendanceCopy } from '@/components/board/actions/attendance-copy';
 import { Button } from '@/components/ui';
-import { tabletPortraitMediaQuery, tabletShellMediaQuery } from '@/components/shell/shell-metrics';
+import {
+  tabletPortraitMediaQuery,
+  tabletPortraitShellMediaQuery,
+  tabletShellMediaQuery,
+} from '@/components/shell/shell-metrics';
 import { controlBorderWidth, controlSizes } from '@/theme';
+import { waiterCallMetrics } from './waiter-call-metrics';
 
 const collapsedMediaQuery = `${tabletShellMediaQuery} and ${tabletPortraitMediaQuery}`;
 
@@ -24,6 +29,8 @@ export interface WaiterCallButtonProps {
   /** Na meia célula da barra do celular, "Garçom chamado às HH:mm" não cabe numa linha: vira duas linhas fixas. */
   stackCalledLabel?: boolean;
   size?: 'md' | 'lg';
+  /** O rótulo curto do repouso no tablet em pé, onde a barra de ações tem três botões numa linha: "Garçom". */
+  compactLabel?: string;
 }
 
 interface RootProps {
@@ -69,6 +76,24 @@ const Stacked = styled('span')({
   flexDirection: 'column',
   alignItems: 'center',
   lineHeight: 1.3,
+  // no tablet em pé a célula do garçom é do tamanho do conteúdo: a frase cabe numa linha
+  [`@media ${tabletPortraitShellMediaQuery}`]: {
+    flexDirection: 'row',
+    gap: waiterCallMetrics.stackedRowGap,
+  },
+});
+
+const FullLabel = styled('span')({
+  [`@media ${tabletPortraitShellMediaQuery}`]: {
+    display: 'none',
+  },
+});
+
+const CompactLabel = styled('span')({
+  display: 'none',
+  [`@media ${tabletPortraitShellMediaQuery}`]: {
+    display: 'inline',
+  },
 });
 
 const WaiterCallButton: React.FC<WaiterCallButtonProps> = ({
@@ -79,6 +104,7 @@ const WaiterCallButton: React.FC<WaiterCallButtonProps> = ({
   fullWidth = false,
   stackCalledLabel = false,
   size = 'md',
+  compactLabel,
 }) => {
   const isCalled = state === 'called' && calledAt !== undefined;
   const label = isCalled ? attendanceCopy.waiterCalled(calledAt) : attendanceCopy.callWaiter;
@@ -102,6 +128,11 @@ const WaiterCallButton: React.FC<WaiterCallButtonProps> = ({
             <span>{attendanceCopy.waiterCalledLead}</span>
             <span>{attendanceCopy.waiterCalledAt(calledAt)}</span>
           </Stacked>
+        ) : compactLabel !== undefined && !isCalled ? (
+          <>
+            <FullLabel>{label}</FullLabel>
+            <CompactLabel>{compactLabel}</CompactLabel>
+          </>
         ) : (
           label
         )}

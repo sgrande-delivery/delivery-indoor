@@ -6,17 +6,22 @@ import { Icon } from '@/components/ui';
 import { moneyFormat } from '@/helpers/numberFormat';
 import { pxToRem, typographyTokens } from '@/theme';
 import type { BoardPayment } from '@/types/board-bill';
-import { formatBoardMoment } from '../board-time';
+import { formatBoardClock, formatBoardMoment } from '../board-time';
 import { describePaymentTitle } from './describe-payment';
 import { resolvePaymentMethodIcon } from './payment-method-icon';
+import { paymentsCopy } from './payments-copy';
 import { paymentsMetrics } from './payments-metrics';
 
 export type BoardPaymentTone = 'success' | 'ink';
+
+/** `moment` é "hoje às 20:05"; `confirmed` é "20:05 · confirmado", do encerramento da conta no tablet deitado. */
+export type BoardPaymentMeta = 'moment' | 'confirmed';
 
 export interface BoardPaymentRowProps {
   payment: BoardPayment;
   now: Date;
   tone: BoardPaymentTone;
+  meta?: BoardPaymentMeta;
 }
 
 const Root = styled('li')(({ theme }) => ({
@@ -77,8 +82,18 @@ const Value = styled('span', {
   color: tone === 'success' ? theme.vars.palette.toneOnCard.success : theme.vars.palette.surface.ink,
 }));
 
-const BoardPaymentRow: React.FC<BoardPaymentRowProps> = ({ payment, now, tone }) => {
-  const moment = formatBoardMoment(payment.created_at, now);
+function describePaymentWhen(createdAt: string, now: Date, meta: BoardPaymentMeta): string | null {
+  if (meta === 'moment') {
+    return formatBoardMoment(createdAt, now);
+  }
+
+  const clock = formatBoardClock(createdAt, now);
+
+  return clock === null ? null : `${clock} · ${paymentsCopy.confirmed}`;
+}
+
+const BoardPaymentRow: React.FC<BoardPaymentRowProps> = ({ payment, now, tone, meta = 'moment' }) => {
+  const when = describePaymentWhen(payment.created_at, now, meta);
 
   return (
     <Root>
@@ -87,7 +102,7 @@ const BoardPaymentRow: React.FC<BoardPaymentRowProps> = ({ payment, now, tone })
       </IconBox>
       <Body>
         <Kind>{describePaymentTitle(payment)}</Kind>
-        {moment !== null && <When>{moment}</When>}
+        {when !== null && <When>{when}</When>}
       </Body>
       <Value tone={tone}>{moneyFormat(payment.value)}</Value>
     </Root>

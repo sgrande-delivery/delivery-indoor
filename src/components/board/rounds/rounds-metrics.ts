@@ -34,3 +34,16 @@ export const roundsMetrics = {
   emptyMarginBlockEnd: 15,
   emptyMarginBlockStart: 14,
 } as const;
+
+// As medidas de tablet do item (artboards `Conta · tablet deitado` e `Conta · tablet em pé`): miniatura de 52, nome e
+// valor em 15, meta em 12. A composição acompanha a meta, que no artboard é a mesma linha `.it-s`.
+export const roundsTabletMetrics = {
+  thumbSize: 52,
+  thumbRadius: 14,
+  nameFontSize: 15,
+  metaFontSize: 12,
+  compositionFontSize: 12,
+  priceFontSize: 15,
+  // a linha de título ganha o botão "Atualizar" de 44: o respiro de cima encolhe para o texto não descer
+  titlePaddingBlockStartWithAction: 8,
+} as const;

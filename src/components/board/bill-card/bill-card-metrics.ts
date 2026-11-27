@@ -1,4 +1,4 @@
-import { spacingScale } from '@/theme';
+import { fontWeights, spacingScale } from '@/theme';
 
 // As medidas do `BoardBillCard` (DS e artboard `Conta · celular · em aberto`) que o tema não tem.
 export const billCardMetrics = {
@@ -38,4 +38,21 @@ export const billCardMetrics = {
   timeRangeWeight: 600,
   ruleHeight: 1,
   tickMs: 15000,
+  // O tablet (artboards `Conta · tablet deitado` e `Conta · tablet em pé`): o contador sem o ladrilho, em 12, e o
+  // "pagos / de" em 12. A régua do rodapé de celular sai, e a barra ganha o respiro do artboard.
+  tabletCounterFontSize: 12,
+  tabletCounterGap: 5,
+  tabletCounterIconSize: 16,
+  tabletCounterTextGap: 4,
+  tabletCounterAsideGap: 4,
+  // "de {total}": em pé, o 600 da linha do pago; deitado, 500 (artboards `Conta · tablet em pé` e `Conta · tablet deitado`)
+  tabletTotalWeight: fontWeights.semiBold,
+  landscapeTotalWeight: fontWeights.medium,
+  // o card deitado tem 18 em cima e embaixo e 20 nas laterais (artboard `Conta · tablet deitado`)
+  landscapePaddingInline: 20,
+  tabletValuesMarginBlockStart: 10,
+  tabletDueMarginBlockStart: 12,
+  landscapeProgressMarginBlockStart: 12,
+  portraitColumnGap: 18,
+  portraitRightGap: 8,
 } as const;

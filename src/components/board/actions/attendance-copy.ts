@@ -1,5 +1,6 @@
 export const attendanceCopy = {
   callWaiter: 'Chamar garçom',
+  waiterShort: 'Garçom',
   waiterCalledLead: 'Garçom chamado',
   waiterCalledAt: (clock: string) => `às ${clock}`,
   waiterCalled: (clock: string) => `Garçom chamado às ${clock}`,
