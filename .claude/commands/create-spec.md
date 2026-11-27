@@ -1,11 +1,23 @@
 ---
-description: Cria a estrutura SDD de uma feature em .claude/sdd/<issue>-<slug>/ — spec.md (o quê/por quê) e plan.md (como, com a quebra em tasks), abrindo a issue `feature` no GitHub. Primeiro passo do fluxo /create-spec → /create-task → /execute → /ship-pr.
+description: Cria a estrutura SDD de uma feature em .claude/sdd/<issue>-<slug>/ — spec.md (o quê/por quê) e plan.md (como, com a quebra em tasks), abrindo a issue `feature` no GitHub. Primeiro passo do fluxo /create-spec → /create-task → /execute → /ship-pr. A spec é escrita numa worktree isolada e sobe num PR contra a `master`, e o relatório devolve o link do PR e das issues.
 argument-hint: [número da issue de feature e/ou descrição da feature]
 ---
 
 O usuário quer especificar uma nova feature neste repo. A descrição dele é:
 
 **$ARGUMENTS**
+
+**A spec se escreve numa worktree isolada e sobe num PR.** O working tree principal pode estar no meio de outra frente, e a sessão que especifica não pode prender a que executa. A issue e o slug se resolvem onde este comando foi chamado; **a partir da escrita dos arquivos, todo caminho é relativo à worktree**, e os dois últimos passos commitam, fazem push e abrem o PR contra a `master`.
+
+```bash
+git fetch origin
+git worktree add .claude/worktrees/<issue>-<slug> -b docs/<issue>-<slug> origin/master
+```
+
+- A branch é **`docs/<issue>-<slug>`** — nunca `task/<id>-<slug>`, que é o nome da branch de execução e é por ele que o `/execute` resolve a spec.
+- Cortar sempre de `origin/master` recém-fetchado: worktree criada de base velha nasce com a spec apoiada no que já mudou.
+- `.claude/worktrees/` é gitignorado, então a worktree não aparece no diff.
+- Worktree já existente para esta spec (spec sendo evoluída): reaproveitar. **Nunca apagar a worktree de outra sessão.**
 
 Fluxo:
 
@@ -150,13 +162,37 @@ Fluxo:
 
 8. **Criar o diretório `tasks/`** vazio em `.claude/sdd/<feature>/tasks/`.
 
-9. **Reportar** ao usuário: caminhos criados, link da issue, resumo da quebra em tasks, e o próximo passo (`/create-task <feature> 01`).
+9. **Commitar, subir e abrir o PR** — na worktree, nunca no working tree principal:
+
+   ```bash
+   cd .claude/worktrees/<issue>-<slug>
+   git add .claude/sdd/<feature>
+   git commit -m "docs(sdd): spec e plan da #<issue> — <título curto>"
+   git push -u origin docs/<issue>-<slug>
+   gh pr create --repo sgrande-delivery/delivery-indoor --base master --head docs/<issue>-<slug> \
+     --title "docs(sdd): spec da #<issue> — <título curto>" --body-file <arquivo com o corpo>
+   ```
+
+   - `git add` por **caminho explícito** (`.claude/sdd/<feature>`), nunca `git add .`.
+   - **Corpo do PR:** o objetivo da feature em 1–2 parágrafos (o `## Objetivo` da spec), a tabela das tasks com as issues, as decisões pendentes e o que ficou fora do escopo. Quem revisa decide se a quebra está certa **antes** de a implementação começar — é esse o ponto deste PR.
+   - **Vínculo sem fechar:** `Relacionado a #<issue>`, nunca `Closes`/`Fixes`. O merge deste PR fecharia a issue guarda-chuva antes da primeira linha de código.
+   - Não confiar no exit code: reler o PR publicado com `gh pr view <n> --repo sgrande-delivery/delivery-indoor --json number,url,baseRefName,title` e conferir base e título.
+
+10. **Reportar** ao usuário, com as **URLs cruas** — é o que ele vai abrir:
+    - **o link do PR**, e a base de verdade dele, a lida da API;
+    - **o link da issue da feature**;
+    - o resumo da quebra em tasks;
+    - os caminhos criados e a worktree onde estão (`.claude/worktrees/<issue>-<slug>`);
+    - o próximo passo: **`/create-task <feature> 01`** — e, para executar, a branch da task é cortada de uma base que já contém a spec, ou seja, **depois que este PR mergear**. Depois do merge, a worktree sai com `git worktree remove .claude/worktrees/<issue>-<slug>`.
 
 **Não fazer:**
 
 - Não criar issue no GitHub sem o usuário ter escolhido — é ação externa e visível
 - Não criar os arquivos de task aqui — isso é do `/create-task`
-- Não commitar — os artefatos SDD sobem junto com o `/ship-pr`
+- Não escrever os arquivos da spec no working tree principal — eles nascem na worktree `docs/<issue>-<slug>`
+- Não commitar nada fora de `.claude/sdd/<feature>`, e nunca `git add .`
+- Não usar `Closes`/`Fixes` no PR da spec — ele entrega a spec, não a feature
+- Não criar a branch **de execução** (`task/<id>-<slug>`) aqui: a desta etapa é a `docs/<issue>-<slug>`; a de execução é do `/execute`, que pergunta a base uma vez por spec
 - Não duplicar o `CLAUDE.md` na spec — referenciar basta
 - Não estimar tempo / story points
 - Textos em português; código, slugs e branches em inglês

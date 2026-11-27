@@ -125,6 +125,8 @@ O trabalho é organizado por **feature**, não por task solta. Cada feature vive
 
 **O comando chama-se `/ship-pr`, e não `/ship`, porque `/ship` virou comando nativo do Claude Code.** Command do repo com nome de built-in **não carrega**, então `/ship` passaria a rodar o nativo — commit, push, PR e vigília do PR até o merge, sem tag e sem release. **Não renomear de volta.**
 
+**O `/create-spec` escreve na worktree `docs/<issue>-<slug>` e abre PR contra a `master`.** Os artefatos da spec sobem **antes** da execução, e a branch da task é cortada de uma base que já contém a spec — ou seja, depois do merge desse PR.
+
 Fora do ciclo: `/review-task` confere a entrega contra o que a task prometeu, `/follow-ups` consolida a dívida adiada, e `/report-bug` e `/request-feature` abrem issue a partir de relato livre de tester ou PO.
 
 **Status da task** no `plan.md`: `a especificar` → `pendente` → `executada` → `shipped`.
