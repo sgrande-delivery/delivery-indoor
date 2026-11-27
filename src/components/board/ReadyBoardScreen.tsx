@@ -12,11 +12,13 @@ import { useRefreshBoardBill } from '@/hooks/use-refresh-board-bill';
 import { useIsOffline } from '@/providers/connectivity/ConnectivityProvider';
 import { boardCopy } from './board-copy';
 import { boardMetrics } from './board-metrics';
+import { summarizeBoardProducts } from './board-summary';
 import BoardHeader from './BoardHeader';
 import BoardScreenSkeleton from './BoardScreenSkeleton';
 import BoardBillCard from './bill-card/BoardBillCard';
 import OfflineDimmed from './realtime/OfflineDimmed';
 import { useBoardOfflineLine } from './realtime/use-board-offline-line';
+import BoardPaymentsCard from './payments/BoardPaymentsCard';
 import BoardItemsCard from './rounds/BoardItemsCard';
 import BoardTotals from './totals/BoardTotals';
 
@@ -43,6 +45,12 @@ const Body = styled('div')({
   paddingInline: boardMetrics.paddingInline,
 });
 
+const Stack = styled('div')({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: boardMetrics.gap,
+});
+
 interface ReadyBoardScreenProps {
   sessionId: string;
   boardNumber: string;
@@ -54,8 +62,8 @@ const ReadyBoardScreen: React.FC<ReadyBoardScreenProps> = ({ sessionId, boardNum
   // segundo observador da chave do provider: relê ao montar (`staleTime` 0), junto com itens e pagamentos,
   // para o "falta pagar" não vir de uma movimentação mais velha que a lista
   const movement = useBoardMovement(sessionId);
-  // bloco secundário: a falha dele não derruba a tela, e a leitura aqui aquece o cache para o bloco de pagamentos
-  useBoardPayments(sessionId);
+  // bloco secundário: a falha dele não derruba a tela, e fica no cartão de pagamentos
+  const payments = useBoardPayments(sessionId);
   const { refresh, isRefreshing } = useRefreshBoardBill(sessionId);
   const screen = useQueryScreenState(products);
   useBoardOfflineLine(products);
@@ -103,12 +111,31 @@ const ReadyBoardScreen: React.FC<ReadyBoardScreenProps> = ({ sessionId, boardNum
           />
         )}
         {movement.data !== undefined && <BoardBillCard movement={movement.data} boardNumber={boardNumber} />}
-        <OfflineDimmed>
-          <BoardItemsCard
-            products={products.data.products}
-            footer={movement.data !== undefined && <BoardTotals movement={movement.data} appearance="footer" />}
-          />
-        </OfflineDimmed>
+        {movement.data?.is_board_paid === true ? (
+          // conta paga: sem itens e sem ações, só o que fechou a conta; vem de `is_board_paid` do servidor
+          <OfflineDimmed>
+            <Stack>
+              <BoardPaymentsCard query={payments} tone="ink" />
+              <BoardTotals
+                movement={movement.data}
+                variant="paid"
+                appearance="card"
+                itemCount={summarizeBoardProducts(products.data.products).itemCount}
+              />
+            </Stack>
+          </OfflineDimmed>
+        ) : (
+          // os dois num só esmaecimento e numa só pilha: sem pagamento o cartão some e não deixa vão
+          <OfflineDimmed>
+            <Stack>
+              <BoardItemsCard
+                products={products.data.products}
+                footer={movement.data !== undefined && <BoardTotals movement={movement.data} appearance="footer" />}
+              />
+              <BoardPaymentsCard query={payments} />
+            </Stack>
+          </OfflineDimmed>
+        )}
       </Body>
     </Root>
   );
