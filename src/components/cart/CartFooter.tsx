@@ -65,6 +65,9 @@ const CartFooter: React.FC<CartFooterProps> = ({ cart, layout, send }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<DialogMode>('first-send');
   const hasItems = Boolean(cart && cart.items.length > 0);
+  const failureData = send.error !== null ? readSendFailure(send.error) : null;
+  // o CTA é o aceite: enquanto a recusa de preço está de pé, mostra o total novo e envia com ele
+  const priceChange = failureData?.kind === 'price-changed' ? failureData : null;
 
   function openDialog(mode: DialogMode): void {
     setDialogMode(mode);
@@ -79,7 +82,7 @@ const CartFooter: React.FC<CartFooterProps> = ({ cart, layout, send }) => {
     }
 
     if (person) {
-      send.send(person);
+      send.send(person, { acceptedTotal: priceChange?.newTotal });
     }
   }
 
@@ -115,7 +118,6 @@ const CartFooter: React.FC<CartFooterProps> = ({ cart, layout, send }) => {
     <OrderingAsRow name={person} onChange={() => openDialog('change')} disabled={send.isSending} />
   ) : null;
 
-  const failureData = send.error !== null ? readSendFailure(send.error) : null;
   // a cozinha fechada que a trava já diz não se repete; sem o restaurante lido, a falha é o único aviso
   const isKitchenCovered = failureData?.kind === 'kitchen-closed' && restaurant.data !== undefined;
 
@@ -133,7 +135,8 @@ const CartFooter: React.FC<CartFooterProps> = ({ cart, layout, send }) => {
   const blockNotice = block ? <SendBlockNotice message={block.message} /> : null;
 
   const isDisabled = !hasItems || block !== null || isClearing || person === undefined;
-  const total = hasItems && cart ? cart.total : null;
+  const total =
+    hasItems && cart ? (priceChange?.newTotal ?? (person ? send.acceptedTotalFor(person) : null) ?? cart.total) : null;
 
   const dialog =
     dialogMode === 'first-send' ? (

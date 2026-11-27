@@ -6,6 +6,7 @@ import { useIsOffline } from '@/providers/connectivity/ConnectivityProvider';
 import { addCartItem, ensureCart } from '@/services/cart';
 import { Cart } from '@/types/cart';
 import { ProductSelection } from '@/types/product-selection';
+import { dismissAnsweredFailure } from './send-store';
 import { CART_QUERY_KEY, CART_WRITE_MUTATION_KEY } from './cart-query';
 
 /** Defesa do hook: quem decide se o botão de adicionar aparece é o detalhe do produto, que não deveria ter oferecido. */
@@ -48,6 +49,10 @@ export function useAddCartItem(): UseMutationResult<Cart, Error, ProductSelectio
 
       return addCartItem(cart.id, selection);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [CART_QUERY_KEY] }),
+    onSuccess: () => {
+      dismissAnsweredFailure('change');
+
+      return queryClient.invalidateQueries({ queryKey: [CART_QUERY_KEY] });
+    },
   });
 }

@@ -41,6 +41,8 @@ export interface SentOrder {
 const SEE_BILL_LABEL = 'Ver conta da mesa';
 
 export interface SendCallbacks {
+  /** O total novo da recusa por preço que o cliente aceitou, em centavos: o corpo leva `accept_price_change`. */
+  acceptedTotal?: number | null;
   /** Roda quando a tentativa termina, com sucesso ou não. */
   onSettled?: () => void;
 }
@@ -50,6 +52,8 @@ export interface UseSendOrder {
   send: (customerName: string, callbacks?: SendCallbacks) => boolean;
   /** Reenvia a tentativa que falhou sem resposta registrada, com a mesma chave e sem depender da sacola lida. */
   retry: () => boolean;
+  /** O total aceito que um `send` com este nome reenviaria (a tentativa de rede pendente); `null` sem aceite. */
+  acceptedTotalFor: (customerName: string) => number | null;
   isSending: boolean;
   /** A última falha, até a próxima tentativa; `null` sem falha. */
   error: unknown;
@@ -57,6 +61,10 @@ export interface UseSendOrder {
   isRetryable: boolean;
   sent: SentOrder | null;
   resetSent: () => void;
+}
+
+function findReusableAttempt(attempt: SendAttempt | null, cartId: string, customerName: string): SendAttempt | null {
+  return attempt !== null && attempt.cartId === cartId && attempt.customerName === customerName ? attempt : null;
 }
 
 /**
@@ -79,7 +87,9 @@ export function useSendOrder(): UseSendOrder {
   const mutation = useMutation({
     retry: 0,
     mutationFn: (attempt: SendAttempt) =>
-      checkoutCart(attempt.cartId, attempt.customerName, attempt.key, attempt.sessionToken),
+      checkoutCart(attempt.cartId, attempt.customerName, attempt.key, attempt.sessionToken, {
+        acceptPriceChange: attempt.acceptedTotal !== null,
+      }),
     onSuccess: (order, attempt) => {
       // a confirmação entra antes de a sacola sumir, no mesmo commit: a troca por store externo é síncrona e, sem isso,
       // a tela piscaria o vazio antes de mostrá-la
@@ -125,6 +135,11 @@ export function useSendOrder(): UseSendOrder {
   }
 
   function handleFailure({ kind }: SendFailure, attempt: SendAttempt): void {
+    if (kind === 'price-changed') {
+      // quando uma promoção caiu a sacola converge, e o resumo precisa sair do desconto velho
+      void queryClient.invalidateQueries({ queryKey: cartQueryKey(attempt.cartId) });
+    }
+
     if (kind === 'kitchen-closed') {
       // o CTA trava já, sem esperar a releitura; ela confirma, e reabrir destrava
       queryClient.setQueryData<Restaurant>(restaurantQueryKey, current =>
@@ -167,22 +182,27 @@ export function useSendOrder(): UseSendOrder {
       return false;
     }
 
-    const previous = getSendState().attempt;
-    const reusedKey =
-      previous !== null && previous.cartId === cart.id && previous.customerName === customerName ? previous.key : null;
+    const reused = findReusableAttempt(getSendState().attempt, cart.id, customerName);
 
     return run(
       {
         cartId: cart.id,
         customerName,
-        key: reusedKey ?? randomUuid(),
+        key: reused?.key ?? randomUuid(),
         sessionToken: readStoredCartSessionToken(cart.id),
         items: cart.items,
         itemCount: cart.items.reduce((count, item) => count + item.quantity, 0),
         movementId,
+        // a chave reaproveitada leva o mesmo corpo, o aceite inclusive
+        acceptedTotal: reused !== null ? reused.acceptedTotal : (callbacks?.acceptedTotal ?? null),
       },
       callbacks
     );
+  }
+
+  // o que o próximo `send` vai levar no corpo, para o CTA mostrar exatamente isso
+  function acceptedTotalFor(customerName: string): number | null {
+    return cart ? (findReusableAttempt(sendState.attempt, cart.id, customerName)?.acceptedTotal ?? null) : null;
   }
 
   function retry(): boolean {
@@ -196,6 +216,7 @@ export function useSendOrder(): UseSendOrder {
   return {
     send,
     retry,
+    acceptedTotalFor,
     isSending: sendState.isSending,
     error: sendState.error,
     isRetryable: sendState.attempt !== null && sendState.error !== null,

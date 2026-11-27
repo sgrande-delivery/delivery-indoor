@@ -72,3 +72,16 @@ export interface Cart {
   /** Declarado pelo contrato, ainda não vem na resposta. */
   board_movement_id: string | null;
 }
+
+/**
+ * O corpo do `409 checkout_price_changed`, em centavos. Não traz `message` nem `detail`; o `error` é copy técnica da
+ * api.
+ */
+export interface CheckoutPriceChangedBody {
+  error?: string;
+  status_code: 409;
+  internal_code: 'checkout_price_changed';
+  previous_total: number;
+  new_pricing: { subtotal: number; discount: number; delivery_fee: number; total: number };
+  stale_promotions: { promotion_id: number; name: string; reason: string }[];
+}
