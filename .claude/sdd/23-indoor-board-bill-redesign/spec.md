@@ -1,6 +1,6 @@
 # Spec — Conta da mesa redesenhada
 
-**Status:** rascunho
+**Status:** entregue
 **Criada em:** 2026-11-16
 **Escopo:** cross-repo
 **Issue:** [#23](https://github.com/sgrande-delivery/delivery-indoor/issues/23)

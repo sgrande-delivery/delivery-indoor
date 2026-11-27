@@ -42,7 +42,7 @@ Esta é a tela que **não** vem do `delivery-client` — ele não tem conta de m
 | 05 | Pagamentos lançados e estado de conta paga | [#57](https://github.com/sgrande-delivery/delivery-indoor/issues/57) | [57-board-payments-and-paid-state.md](./tasks/57-board-payments-and-paid-state.md) | 01, 02, 04 | shipped |
 | 06 | Tempo real do `/board`: inscrição, reinscrição no `connect` e invalidação | [#58](https://github.com/sgrande-delivery/delivery-indoor/issues/58) | [58-board-realtime-socket.md](./tasks/58-board-realtime-socket.md) | 01 | shipped |
 | 07 | Chamar garçom, pedir a conta, pedir mais e pagar | [#59](https://github.com/sgrande-delivery/delivery-indoor/issues/59) | [59-board-attendance-actions.md](./tasks/59-board-attendance-actions.md) | 02, 06 | shipped |
-| 08 | Tablet: paisagem em duas colunas e retrato com barra de ações fixa | [#60](https://github.com/sgrande-delivery/delivery-indoor/issues/60) | [60-tablet-board-bill-layouts.md](./tasks/60-tablet-board-bill-layouts.md) | 02–05, 07, #40 | pendente |
+| 08 | Tablet: paisagem em duas colunas e retrato com barra de ações fixa | [#60](https://github.com/sgrande-delivery/delivery-indoor/issues/60) | [60-tablet-board-bill-layouts.md](./tasks/60-tablet-board-bill-layouts.md) | 02–05, 07, #40 | shipped |
 
 Status: `a especificar` → `pendente` → `executada` → `shipped`.
 
