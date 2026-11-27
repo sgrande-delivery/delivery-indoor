@@ -3,11 +3,13 @@ description: Ship de uma task SDD — commits atômicos, push e PR contra a bran
 argument-hint: [<feature>/<id> | <id> | caminho do arquivo da task]
 ---
 
+> **Por que o nome é `/ship-pr` e não `/ship`.** `/ship` virou **comando nativo** do Claude Code, e o nativo fica com o nome: um command do repo chamado `ship` **não carrega** (o Claude Code avisa "Not loaded … has a built-in command of that name"). Quem digitasse `/ship` rodaria o nativo — que comita, abre PR e fica vigiando o PR até o merge, e **nunca cria tag nem release**. **Não renomear de volta**: o nome de volta só devolve a colisão.
+
 A task **$ARGUMENTS** foi aprovada por mim após testes locais. Prossiga com o ship.
 
 > **Não há pipeline neste repo.** O `delivery-indoor` não tem `.github/workflows` — nenhum merge, tag ou release dispara build ou deploy. O deploy é feito fora do GitHub (`server.js` em runtime estilo Heroku, com as vars de restaurante injetadas pelo provisionamento). Consequência prática: **não crie tag nem release** aqui a menos que o dev peça explicitamente, e nunca diga que "o merge sobe pra produção" — não sobe.
 
-> **Onde este comando roda.** O `/execute` deixa a task numa worktree própria (`.claude/worktrees/task-<id>-<slug>/`). O `/ship` roda **dentro dela**. Se a sessão estiver no checkout principal, entrar na worktree com `EnterWorktree` passando o `path`; se a worktree não existir, é sinal de que a task não foi executada por este fluxo — perguntar em vez de supor.
+> **Onde este comando roda.** O `/execute` deixa a task numa worktree própria (`.claude/worktrees/task-<id>-<slug>/`). O `/ship-pr` roda **dentro dela**. Se a sessão estiver no checkout principal, entrar na worktree com `EnterWorktree` passando o `path`; se a worktree não existir, é sinal de que a task não foi executada por este fluxo — perguntar em vez de supor.
 
 > **A base do PR vem da base da branch, não de um default.** O `/execute` registra na seção `## Branch` da task de qual branch ela foi cortada. Task cortada de `origin/master` abre PR contra `master`; task cortada de `task/<outra>` abre PR **contra essa branch** — apontar para `master` faria o diff carregar a task alheia inteira.
 
@@ -17,7 +19,7 @@ Fluxo:
    - `<task_id>` e `<slug>`
    - número da issue da task (campo `**Issue:**`) e o da feature
    - **a base registrada na seção `## Branch`** — é ela que define o alvo do PR
-   - o campo `**Repo:**` — se não for `delivery-indoor`, este `/ship` não é o lugar; reportar e parar
+   - o campo `**Repo:**` — se não for `delivery-indoor`, este `/ship-pr` não é o lugar; reportar e parar
 
 2. **Conferir o remote.** O `origin` local pode apontar para o fork pessoal `raphaelcarreiro/delivery-board-client`. O repo canônico é `sgrande-delivery/delivery-indoor`:
 

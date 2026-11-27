@@ -1,5 +1,5 @@
 ---
-description: Cria a estrutura SDD de uma feature em .claude/sdd/<issue>-<slug>/ — spec.md (o quê/por quê) e plan.md (como, com a quebra em tasks), abrindo a issue `feature` no GitHub. Primeiro passo do fluxo /create-spec → /create-task → /execute → /ship.
+description: Cria a estrutura SDD de uma feature em .claude/sdd/<issue>-<slug>/ — spec.md (o quê/por quê) e plan.md (como, com a quebra em tasks), abrindo a issue `feature` no GitHub. Primeiro passo do fluxo /create-spec → /create-task → /execute → /ship-pr.
 argument-hint: [número da issue de feature e/ou descrição da feature]
 ---
 
@@ -156,7 +156,7 @@ Fluxo:
 
 - Não criar issue no GitHub sem o usuário ter escolhido — é ação externa e visível
 - Não criar os arquivos de task aqui — isso é do `/create-task`
-- Não commitar — os artefatos SDD sobem junto com o `/ship`
+- Não commitar — os artefatos SDD sobem junto com o `/ship-pr`
 - Não duplicar o `CLAUDE.md` na spec — referenciar basta
 - Não estimar tempo / story points
 - Textos em português; código, slugs e branches em inglês

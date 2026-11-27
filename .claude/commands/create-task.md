@@ -135,7 +135,7 @@ Fluxo:
 **Não fazer:**
 
 - Não criar issue sem o usuário ter escolhido no passo 3 — é ação externa e visível
-- Não commitar — os artefatos SDD sobem com o `/ship`
+- Não commitar — os artefatos SDD sobem com o `/ship-pr`
 - Não inventar seções fora do template — o que não couber vai em "Contexto"
 - Não deixar Objetivo genérico ("implementar conforme a spec") nem Contexto vazio
 - Não tratar como task deste repo algo que depende de endpoint ou evento inexistente sem registrar a dependência e marcar o `**Repo:**` correto

@@ -71,7 +71,7 @@ Fluxo:
    ## Recomendações
    ```
 
-9. **Sugerir o próximo passo:** com crítico, oferecer acrescentar uma task de correção à spec; tudo verde, recomendar o `/ship`; premissa errada, recomendar corrigir a task antes de fechar a issue.
+9. **Sugerir o próximo passo:** com crítico, oferecer acrescentar uma task de correção à spec; tudo verde, recomendar o `/ship-pr`; premissa errada, recomendar corrigir a task antes de fechar a issue.
 
 **Não fazer:**
 
