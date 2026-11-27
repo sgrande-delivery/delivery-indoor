@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor (branch `feat/indoor-v2`)
 **Depende de:** 02 (#54), e 06 (#58) para o estado chegar aos outros aparelhos
-**Status:** pendente
+**Status:** shipped
 **Alinhado a #24 (#61, #63) e à spec da #23 (2026-11-23):** a rota do pagamento fica `/board/payment`, declarada aqui, e a #24 a adota (decisão 6); o valor que a #24 relê é o que falta (`amount_due − amount_paid`), e não o `amount_due`; as peças que a #24 monta fora da conta estão em "Consumidores fora da conta"; e a posição do "Pedir a conta" (decisão 1) foi registrada como pendente na spec.
 
 ## Objetivo
@@ -242,4 +242,121 @@ Roteiro (`/board?session=<aberta>`, a 390 × 844 e a 1180 × 820):
 
 ## Branch
 
-`task/59-board-attendance-actions`, base sugerida: a junção da 02 e da 06 sobre a 01 (ou `feat/indoor-v2`, se as três já tiverem mergeado). Sem a 06 na base, o roteiro só não cobre o passo 3 e o fim da janela vindo de outro aparelho. Conflitos esperados na junção: `BoardScreen.tsx` (mapa de encaixe da 01) e `AppShell.tsx` (uma linha, com a #49).
+`task/59-board-attendance-actions`, cortada de `task/57-board-payments-and-paid-state` (`129acd4`) em 2026-11-27, no checkout principal. É a quinta da pilha sequencial da #23 e tem na base a 02 (#54), a 04 (#56), a 06 (#58) e a 05 (#57). O PR mira a branch da #57 até o #97 mergear, e a #60 sai desta branch.
+
+## Implementação
+
+**Concluída em:** 2026-11-27
+
+### Camadas tocadas
+
+- Tipos e serviço: `src/types/board-attendance.ts`, `src/services/board-attendance.ts` (`requestWaiterCall`, `requestBill`, chaves de mutação, erro de resposta fora do contrato).
+- Puros: `src/components/board/actions/attendance-failure.ts`, `waiter-call-window.ts`, `attendance-copy.ts`, `actions-metrics.ts`.
+- Hooks: `src/hooks/use-attendance-action.ts` (ciclo comum: trava em voo, `useIsMutating` por `mutationKey`, `retry: 0`, toast), `use-waiter-call.ts`, `use-request-bill.ts`.
+- Componentes: `src/components/board/actions/{BoardActionBar,PayBillButton,OrderMoreButton,RequestBillAction}.tsx`, `src/components/waiter/ConnectedWaiterCallButton.tsx`, `WaiterCallButton.tsx` (estado `idle|pending|called`, `calledAt`, `fullWidth`, `size`).
+- Encaixe: `ReadyBoardScreen.tsx` (e não o `BoardScreen`, que só faz o portão): `action` do card, `BoardActionBar` depois do `Body` fora da conta paga, `secondaryAction` do `RouteErrorState`. `AppShell.tsx` (uma linha), `app-routes.ts` (`BOARD_PAYMENT_ROUTE`).
+
+### Contratos consumidos
+
+- `POST /boardMovements/{id}/waiter-calls` (201/200 `{ id, board_movement_id, created_at, window_seconds }`) e `PATCH …/request-bill` (200 `{ bill_requested_at }`), conforme o contrato inline. Não implementados na api (#1645 a #1648): a tela foi escrita contra o contrato, sem mock.
+- `GET /boardMovements/{id}` com `waiter_call` e `bill_requested_at` (normalização já era da 01).
+
+### Variáveis de ambiente novas
+
+- Nenhuma.
+
+### Decisões que tomei por conta própria
+
+- **Props com `BoardMovementDetail`**, e não `OpenBoardMovement`: é o tipo que `useBoardMovement` entrega ao `ReadyBoardScreen` e que o `BoardBillCard` recebe.
+- **Ciclo comum extraído** para `useAttendanceAction`, para as duas mutações não duplicarem toast e trava. "Tentar de novo" chama a versão mais recente de `run` por ref, que repassa as guardas (offline, já chamado).
+- **Prioridade dos estados no garçom:** `called` vence `unavailable` offline (mostrar "Garçom chamado às HH:mm" sem rede é verdade); `pending` vem depois de `called`.
+- **Timer de fim da janela com folga de 50 ms** (`EXPIRY_SLACK_MS`), para um disparo adiantado do `setTimeout` não deixar o estado preso. A releitura usa `cancelRefetch: false`, para os vários botões de garçom na tela gerarem um GET só.
+- **429 em toast `warning`, demais falhas em `error`.** Falha `refused` relê a movimentação, e o portão da sessão decide.
+- **`WaiterCallButton` ganhou `fullWidth` e `size`** (`lg` no erro de rota, para igualar o `ErrorPageSecondaryAction`; `fullWidth` deixa o rótulo "Garçom chamado às HH:mm" quebrar na meia célula do celular). O estado `called` usa `&&.Mui-disabled` para vencer o estilo de desabilitado do `Button`.
+- **`PayBillButton` desabilitado** vira `Button` sem `component` (sem `href`), e não `Link` com `disabled`. Desabilitado também com falta pagar zero.
+- **`RequestBillAction`** devolve `null` na conta paga (checa `movement.is_board_paid`) e, em `unavailable` offline, mostra o botão desabilitado.
+- **Pendente da decisão 1** (posição do "Pedir a conta" no card, divergindo do default da spec): mantida a da task, a confirmar com o dev.
+- **Foco:** o `loading` do `Button` desabilita, então o foco sai do botão durante o voo. Usei o que a task pede (spinner no botão); o padrão `aria-disabled` da sacola não foi aplicado.
+
+### Origem das medidas
+
+- Altura/raio/ícone dos botões: `controlSizes` (`lg` 52, `md` 44) pelo `Button`; o artboard desenha 54 no pagar, e o token vence.
+- Barra: padding 12/18/16 e gap 9 do artboard `Conta · celular · em aberto` (12, 16 e 18 batem com `spacingScale` e `boardMetrics`; o 9 não tem token e está em `actions-metrics.ts`). Fundo `surface.card`, borda `surface.line` pelo tema.
+- Cor do chamado: `toneOnCard.success`, borda `controlBorderWidth` (DS). Frase offline: `caption` + `surface.muted` (artboard `Estado · offline`, copy literal da task).
+- Linha "Conta pedida": `body2`, `muted`, ícone 18 (par do `md`, sem token próprio).
+
+### Como testar
+
+1. `yarn dev`, abrir `/board?session=<uuid>` a 390 × 844 e 1180 × 820, seguir o roteiro da seção Testes (override de rede para as rotas da 1610, que a api ainda não publica).
+
+### O que NÃO foi verificado
+
+- **Nada no navegador** (há um `next dev` do dev na porta 3468; não rodei `next dev`, `typegen` nem `build`). Layout, toast, janela e offline sem checagem visual.
+- Contra a api real: as rotas não existem. **Ordem de deploy:** até #1645 a #1648 publicadas, o POST dá 404 e o toast "Não foi possível chamar o garçom." aparece; o GET sem `waiter_call` apaga o estado gravado pelo 201 em qualquer releitura. `/board/payment` cai no 404 da fundação até a #24.
+- `tsc --noEmit` e `eslint src app scripts` limpos. Testes puros com `jiti`: `resolveAttendanceFailure` (404/422 `refused`, 429 `throttled`, 500/503/rede `unreachable`) e janela (`end` correto, `edge` exclusivo, ISO com microssegundos, `window_seconds` 0 e ISO inválido dão `null`).
+
+### Correções após o review e a medição no navegador (2026-11-27)
+
+- **"Pagar conta":** o `Pay` (`styled(Button)`) faz o filho de conteúdo do `Button` crescer (`& > span:first-of-type { flexGrow: 1 }`), em vez do `justifyContent` da raiz. O rótulo fica junto do ícone à esquerda e o valor na ponta direita.
+- **Linha garçom e pedir mais:** na `Cell` da `BoardActionBar`, os dois botões recebem `paddingInline` 12 (`spacingScale.sm`) e fonte 13,5. A fonte é a do `.ghost` do artboard `Conta · celular · em aberto`. O padding 12 é o menor token do tema que cabe: o artboard usa 16, mas a meia célula é (360 − 36 − 9) / 2 = 157,5px, e com 16 ou com os 20 do `md` o rótulo não cabe em uma linha. Rótulo de repouso em `nowrap`; "Garçom chamado às HH:mm" quebra (até duas linhas). Os dois botões têm a mesma altura porque a `Cell` estica o filho (`minHeight` 44 do `Button`). **Medida estimada pela largura do texto, não no navegador:** a conferir a 360 e a 390.
+- **Erro de rota:** o `WaiterCallButton` tem fundo `surface.card` (o `.ghost` do artboard também; igual ao `ErrorPageSecondaryAction`). O desabilitado continua com o `field` do DS.
+- **`RequestBillAction`:** gap e ícone vieram para `actions-metrics.ts` (`controlGap` e `controlSizes.md.iconSize`, 20); o comentário errado saiu.
+- **Import** do `ConnectedWaiterCallButton` no `ReadyBoardScreen` voltou ao bloco dos absolutos.
+- `tsc --noEmit` e `eslint src app scripts` limpos; nada de `typegen`, `build` ou `dev`.
+
+### Ajuste do estado "chamado" na barra do celular (2026-11-27)
+
+- **Rótulo em duas linhas fixas** ("Garçom chamado" / "às HH:mm"), ligado pela prop `fullWidth` do `WaiterCallButton`, que já significa "estou numa célula" (barra do celular e erro de rota). No topo do tablet, sem `fullWidth`, o rótulo segue em uma linha. `line-height` 1,3. O `aria-label` e o `VisuallyHidden` continuam com a frase inteira. A copy ficou em `attendanceCopy.waiterCalledLead` e `waiterCalledAt`, e `waiterCalled` as mantém juntas.
+- **Células:** a `BoardActionBar` lê `useWaiterCall()` e, em `called`, a célula de "Pedir mais" vira `flex: 0 0 auto`; a do garçom (`flex: 1`) ocupa o resto. Em repouso as metades seguem iguais. A altura igual vem do `align-items` padrão da `Row`.
+- Removida a prop interna `wraps`, que não tem mais uso (o rótulo não quebra por conta própria).
+- `tsc` e `eslint` limpos; sem medição no navegador.
+
+### Correções aplicadas em review
+
+- `src/hooks/use-attendance-action.ts`: a releitura da movimentação na falha `refused` (4xx) perdeu o `{ cancelRefetch: false }`. O 4xx é o servidor avisando que a mesa mudou (liberada ou fechada). Reaproveitar uma leitura que já estava em voo pode trazer a mesa de antes da mudança, e aí o portão não reage. É o erro que a #58 proíbe nos eventos de socket. Neste caminho não há o que deduplicar: só uma instância falha por toque. O timer de fim de janela continua com `cancelRefetch: false` (ver o julgamento da decisão 3 no review).
+- `src/components/waiter/WaiterCallButton.tsx` (re-review): o estado `called` pintava o fundo de `transparent`, enquanto o repouso passou a `surface.card`. No erro de rota, o botão ficava branco em repouso e passava a mostrar o fundo da página quando chamado. O `.bpi-ghost--called` do DS (`bundle.css:390`) só troca borda e texto e herda o `background: var(--card)` do `.bpi-ghost`, então o chamado agora também usa `surface.card`.
+
+### Validação no navegador (2026-11-27, orquestrador)
+
+Contra a delivery-api local (`master` @ `819683112`), mesa 003, a 390 × 844, a 360 e a 1180 × 820. **As rotas da delivery-api#1610 não existem na `master`** (as tasks #1645 a #1648 estão abertas). O roteiro (`qa59.mjs`) as respondeu pelo contrato inline com `page.route`:
+- `POST …/waiter-calls`: 201 e depois 200 dentro da janela, com `window_seconds: 8`;
+- `PATCH …/request-bill`: 200 com o mesmo horário;
+- o GET da movimentação com `waiter_call` e `bill_requested_at`.
+
+Isso é técnica de teste, e nada vai para o repo. "Pedir mais" e "Pagar conta" rodaram contra a api real. Resultado: 26 de 26.
+
+| # | Passo da task | Resultado |
+|---|---|---|
+| 1 | Chamar garçom, com toque duplo | um POST, e "Garçom chamado às HH:mm" com a hora da chamada, desabilitado |
+| 2 | Fim da janela | o botão volta sozinho e relê a movimentação uma vez |
+| 3 | Topo do tablet | o botão de garçom do topo funciona, a conta e o topo mostram o mesmo estado, e no cardápio o topo continua "chamado". O "outro aparelho" depende da socket-api#65, que não está na `master` do socket |
+| 4 | 429 / 500 / api real sem a rota | "Muitos pedidos seguidos. Aguarde um instante." sem ação / "Não foi possível chamar o garçom." com "Tentar de novo" / o toast de falha, sem repetir sozinho. O botão volta a "Chamar garçom" |
+| 5 | Pedir a conta | um PATCH, e "Conta pedida às HH:mm" no lugar do botão, com o card em "conta pedida". Sobrevive ao reload |
+| 6 | Pedir mais | vai para `/` |
+| 7 | Pagar conta | mostra o falta pagar do card (R$ 103,99) e vai para `/board/payment`, sem valor na URL (a página 404 até a #24) |
+| 8 | Offline | pagar desabilitado com a frase do artboard, garçom e pedir a conta desabilitados, e voltar a rede não dispara nada (0 POST, 0 PATCH) |
+| 9 | Erro de rota | "Chamar garçom", com fundo de cartão, ao lado do "Tentar novamente", e funciona |
+| 10 | Conta paga | sem barra de ações e sem "Pedir a conta" |
+| 11 | Alvos | 44 ("Pedir a conta", garçom, "Pedir mais") e 52 ("Pagar conta") |
+
+**Medidas da barra (`measure59.mjs`), a 360 e a 390:**
+- "Pagar conta" com o rótulo a 56 da borda e o valor a 26 da ponta direita;
+- "Chamar garçom" em uma linha;
+- no estado chamado, "Garçom chamado / às HH:mm" em duas linhas, com a célula do garçom crescendo e "Pedir mais" do tamanho do conteúdo;
+- os dois botões da linha com 44 nos dois estados;
+- no topo do tablet, o rótulo chamado em uma linha.
+
+**Defeitos que o navegador pegou e foram corrigidos antes do ship:** o valor do "Pagar conta" colado no rótulo, e o "Chamar garçom" e o estado chamado quebrando em duas e três linhas na meia célula.
+
+**Não verificado:** as rotas reais da 1610, o estado chegando a outro aparelho pelo socket, e o leitor de tela.
+
+**Ajuste depois do re-review (orquestrador):** o rótulo de chamado em duas linhas estava ligado ao `fullWidth`, e por isso também quebrava no botão de largura inteira do erro de rota, onde cabe numa linha. O gatilho passou a ser a prop própria `stackCalledLabel`, que só a `BoardActionBar` passa. No navegador: duas linhas na meia célula da barra e uma linha ("Garçom chamado às 13:06") no erro de rota.
+
+## Follow-ups identificados em review
+
+- **"Tentar de novo" do toast numa instância já desmontada** (`use-attendance-action.ts:68`): o `runRef` guarda o `run` do último render, com o `isBlocked` congelado. Um exemplo: a falha acontece na barra, o cliente toca "Pedir mais", fica offline e toca "Tentar de novo" dentro dos 6 s do toast. A mutação nasce pausada e dispara quando a rede volta. A janela é estreita. A correção é conferir `onlineManager.isOnline()` e `queryClient.isMutating({ mutationKey })` no momento do `run`, e não só o estado do render. Baixa.
+- **`run` não confere o `pending` compartilhado** (`use-attendance-action.ts:77`): a trava em voo é por instância. Um "Tentar de novo" com outra instância em voo manda uma segunda requisição. O servidor responde 200 com a mesma chamada, então o efeito é inócuo, mas `pendingCount > 0` na guarda fecha o caso. Baixa.
+- **Leitor de tela no tablet:** a barra do topo e a `BoardActionBar` ficam visíveis ao mesmo tempo (até a 08), cada uma com o seu `VisuallyHidden role="status"`, e o "Garçom chamado às HH:mm" é anunciado duas vezes. Já a linha "Conta pedida às HH:mm" (`RequestBillAction.tsx:37`) entra no DOM com o conteúdo pronto, no lugar do botão que tinha o foco. Região viva inserida já preenchida não é anunciada com garantia. Baixa, acessibilidade.
+- **Relógio do aparelho adiantado em mais que `window_seconds`:** o 201 chega com o `created_at` já vencido pelo relógio local. O botão nunca mostra "chamado", e cada toque recebe o 200 sem nenhum retorno visível. É consequência da decisão 3 da task. Uma saída seria calcular a defasagem entre o `created_at` do 201 e o `Date.now()` local. Precisa de decisão de spec. Observação.
+- **"Pagar conta" offline com o valor:** o artboard `Estado · offline` desenha o botão desabilitado só com "Pagar conta", centralizado e sem valor, com 10 de gap até a frase. A implementação mostra o valor e usa gap 9. A task não diz nada sobre isso. Confirmar com o dev. Observação.
+- **Rótulos da linha sem quebra abaixo de 360px:** o `WaiterCallButton` voltou a `nowrap` em todos os estados (a prop `wraps` saiu). "Chamar garçom" e "Garçom chamado" cabem a 360 e a 390 (medido pelo dev), mas numa célula mais estreita o texto transborda a borda em vez de quebrar. O DS desenha o celular com 372 de conteúdo, então isso fica fora do formato. Observação.
