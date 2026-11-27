@@ -14,6 +14,7 @@ import { boardCopy } from './board-copy';
 import { boardMetrics } from './board-metrics';
 import BoardHeader from './BoardHeader';
 import BoardScreenSkeleton from './BoardScreenSkeleton';
+import BoardBillCard from './bill-card/BoardBillCard';
 import BoardItemsCard from './rounds/BoardItemsCard';
 
 const Root = styled('div')({
@@ -97,6 +98,7 @@ const ReadyBoardScreen: React.FC<ReadyBoardScreenProps> = ({ sessionId, boardNum
             isRetrying={isRefreshing}
           />
         )}
+        {movement.data !== undefined && <BoardBillCard movement={movement.data} boardNumber={boardNumber} />}
         <BoardItemsCard products={products.data.products} />
       </Body>
     </Root>
