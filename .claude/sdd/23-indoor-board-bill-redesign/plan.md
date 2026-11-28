@@ -38,11 +38,11 @@ Esta é a tela que **não** vem do `delivery-client` — ele não tem conta de m
 | 01 | Leituras e tipos da conta: movimentação, itens e pagamentos por React Query, e a moldura de `/board` | [#53](https://github.com/sgrande-delivery/delivery-indoor/issues/53) | [53-board-bill-reads-and-screen-frame.md](./tasks/53-board-bill-reads-and-screen-frame.md) | #20 | shipped |
 | 02 | Card de destaque: falta pagar, total, pago, percentual e contador ao vivo | [#54](https://github.com/sgrande-delivery/delivery-indoor/issues/54) | [54-board-bill-highlight-card.md](./tasks/54-board-bill-highlight-card.md) | 01 | shipped |
 | 03 | Itens agrupados por rodada, com quem pediu e a composição do item | [#55](https://github.com/sgrande-delivery/delivery-indoor/issues/55) | [55-board-round-grouped-items.md](./tasks/55-board-round-grouped-items.md) | 01 | shipped |
-| 04 | Resumo de valores: subtotal, taxa de serviço, desconto, pago e falta pagar | [#56](https://github.com/sgrande-delivery/delivery-indoor/issues/56) | [56-board-bill-totals.md](./tasks/56-board-bill-totals.md) | 01 | pendente |
-| 05 | Pagamentos lançados e estado de conta paga | [#57](https://github.com/sgrande-delivery/delivery-indoor/issues/57) | [57-board-payments-and-paid-state.md](./tasks/57-board-payments-and-paid-state.md) | 01, 02, 04 | pendente |
-| 06 | Tempo real do `/board`: inscrição, reinscrição no `connect` e invalidação | [#58](https://github.com/sgrande-delivery/delivery-indoor/issues/58) | [58-board-realtime-socket.md](./tasks/58-board-realtime-socket.md) | 01 | pendente |
-| 07 | Chamar garçom, pedir a conta, pedir mais e pagar | [#59](https://github.com/sgrande-delivery/delivery-indoor/issues/59) | [59-board-attendance-actions.md](./tasks/59-board-attendance-actions.md) | 02, 06 | pendente |
-| 08 | Tablet: paisagem em duas colunas e retrato com barra de ações fixa | [#60](https://github.com/sgrande-delivery/delivery-indoor/issues/60) | [60-tablet-board-bill-layouts.md](./tasks/60-tablet-board-bill-layouts.md) | 02–05, 07, #40 | pendente |
+| 04 | Resumo de valores: subtotal, taxa de serviço, desconto, pago e falta pagar | [#56](https://github.com/sgrande-delivery/delivery-indoor/issues/56) | [56-board-bill-totals.md](./tasks/56-board-bill-totals.md) | 01 | shipped |
+| 05 | Pagamentos lançados e estado de conta paga | [#57](https://github.com/sgrande-delivery/delivery-indoor/issues/57) | [57-board-payments-and-paid-state.md](./tasks/57-board-payments-and-paid-state.md) | 01, 02, 04 | shipped |
+| 06 | Tempo real do `/board`: inscrição, reinscrição no `connect` e invalidação | [#58](https://github.com/sgrande-delivery/delivery-indoor/issues/58) | [58-board-realtime-socket.md](./tasks/58-board-realtime-socket.md) | 01 | shipped |
+| 07 | Chamar garçom, pedir a conta, pedir mais e pagar | [#59](https://github.com/sgrande-delivery/delivery-indoor/issues/59) | [59-board-attendance-actions.md](./tasks/59-board-attendance-actions.md) | 02, 06 | shipped |
+| 08 | Tablet: paisagem em duas colunas e retrato com barra de ações fixa | [#60](https://github.com/sgrande-delivery/delivery-indoor/issues/60) | [60-tablet-board-bill-layouts.md](./tasks/60-tablet-board-bill-layouts.md) | 02–05, 07, #40 | shipped |
 
 Status: `a especificar` → `pendente` → `executada` → `shipped`.
 

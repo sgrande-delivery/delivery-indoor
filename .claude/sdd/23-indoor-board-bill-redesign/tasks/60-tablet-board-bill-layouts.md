@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor (branch `feat/indoor-v2`)
 **Depende de:** 02 (#54), 03 (#55), 04 (#56), 05 (#57) e 07 (#59); e a task 01 da #21 ([#40](https://github.com/sgrande-delivery/delivery-indoor/issues/40)), pelos cortes de orientação
-**Status:** pendente
+**Status:** shipped
 **Alinhado a #24 (#61, #63, #66) (2026-11-23):** o lugar `payment` da coluna direita tem um contrato só, escrito aqui e seguido pela #61 e pela #66 (decisão 4); a frase offline passa a ser de quem ocupa o lugar, e não do `BoardBillAside`; e a frase "O garçom já foi avisado" do encerramento sai por default, como a da confirmação da #63, porque a premissa medida não se sustenta (decisão 9).
 
 ## Objetivo
@@ -211,4 +211,137 @@ Artboards `Conta · tablet deitado` (`Main.dc.html`), `Conta · tablet em pé`, 
 
 ## Branch
 
-`task/60-tablet-board-bill-layouts`, base sugerida: a junção da 02 à 07 sobre a 01, com a #40 na base (ou `feat/indoor-v2`, se tudo já tiver mergeado). Conflitos esperados: `BoardScreen.tsx` (reescreve o mapa de encaixe acima), `AppShell.tsx` (com a #49 e a 07) e `TableTopBar.tsx`.
+`task/60-tablet-board-bill-layouts`, cortada de `task/59-board-attendance-actions` (`2a3e261`) em 2026-11-27, no checkout principal. É a última da pilha sequencial da #23 e tem na base a 02 (#54), a 04 (#56), a 06 (#58), a 05 (#57) e a 07 (#59), mais a 01, a 03 e a #40 da `feat/indoor-v2`. O PR mira a branch da #59 até o #98 mergear.
+
+## Implementação
+
+**Concluída em:** 2026-11-27 (`tsc` e `eslint` limpos; os dois greps estáticos limpos; **nada rodado no navegador**: `next typegen`, `next build` e `next dev` ficaram com o dev)
+
+### Arquivos
+
+Novos: `src/components/board/layout/` (`format-visibility.tsx`, `layout-metrics.ts`, `BoardBody.tsx`, `BoardBillAside.tsx`, `BoardBillMain.tsx`, `BoardPaidClosing.tsx`, `closing-copy.ts`), `src/components/board/RefreshBillButton.tsx`, `src/components/board/payments/BoardTotalsPaymentLines.tsx`.
+
+Alterados: `ReadyBoardScreen.tsx` (o mapa de encaixe), `BoardHeader.tsx`, `BoardScreenSkeleton.tsx`, `bill-card/` (`BillCardOpen`, `BillTimeRow`, `BillProgress`, `BillStateLabel`, `bill-state`, `bill-card-metrics`), `totals/` (`BoardTotals`, `BoardTotalsRow`), `payments/` (`BoardPaymentRow`, `BoardPaymentList`, `payments-copy`), `rounds/` (`BoardItemsCard`, `BoardItemRow`, `BoardItemThumb`, `BoardItemMeta`, `BoardItemComposition`, `rounds-metrics`), `realtime/OfflineDimmed.tsx`, `actions/` (`BoardActionBar`, `actions-metrics`, `attendance-copy`), `waiter/WaiterCallButton.tsx` e `ConnectedWaiterCallButton.tsx`, `shell/TableTopBar.tsx`, `shell/AppShell.tsx`, `hooks/use-refresh-board-bill.ts`.
+
+Nenhum arquivo de `src/theme/` nem de `src/components/ui/`.
+
+### Divergências da task (o código real já era outro)
+
+- **O mapa de encaixe está no `ReadyBoardScreen`**, e não no `BoardScreen` (que só faz o portão): reescrito lá. O `Body` e a `Stack` saíram dele (viraram `BoardBody` e o próprio `OfflineDimmed`).
+- **`BoardBillCard` com `{ movement, boardNumber, action? }`.** O rótulo deitado sai por CSS: `describeBillState(state)` não leva o número, e o rótulo renderiza `describeBoardPrefix(n)` ("Mesa N · ") num `span` escondido deitado, mais o texto do estado. Um DOM só.
+- **`BoardTotalsPaymentLines` recebe `payments: readonly BoardPayment[]`, e não a query.** Quem decide se há linhas é o `ReadyBoardScreen`: sem dado ou com lista vazia ele não passa `paidRows`, e a linha agregada "Já pago" vale nos dois formatos. Com `paidRows`, a agregada é `phone`, e as linhas de pagamento, `tablet`. Não há `??` sobre JSX.
+- **`format-visibility.tsx` exporta também estilos** (`phoneOnlyStyle`, `tabletOnlyStyle(display)`, `landscapeOnlyStyle`, `notLandscapeStyle`), além dos quatro componentes. O `BoardTotals` é um `dl`, e um `div` de recorte em volta do grupo `dt`/`dd` não é filho válido: o `BoardTotalsRow` ganhou `visibleOn` e esconde o próprio grupo.
+- **`WaiterCallButton`: a prop se chama `compactLabel`, e não `label`.** O rótulo curto "Garçom" só vale no tablet em pé e a mesma instância serve ao celular, então os dois rótulos entram no DOM e o corte esconde um. O `aria-label` segue o rótulo completo. O estado chamado não muda.
+- **`OfflineDimmed` virou a pilha** (flex em coluna, `gap`): fez o papel da `Stack`, para o cartão ausente não deixar vão e para o cartão de itens crescer deitado. No celular o resultado é o mesmo. Consequência: deitado, o resumo (rodapé do cartão de itens) também esmaece offline. O artboard `Estado · offline` não esmaece o resumo; deixei assim para não partir o cartão.
+- **O "Atualizar"** é o `RefreshBillButton` (`movementId`), usado pelo `BoardHeader` do celular e pelo `headerAction` do cartão de itens (em `TabletOnly`). O `use-refresh-board-bill.ts` passou a usar `resolveBoardBillQueryKeys(movementId, ALL_BOARD_BILL_KEYS)`: as mesmas três chaves.
+
+### Decisões que tomei por conta própria
+
+- **O aviso de releitura deitado** ocupa a linha `notice` da grade (`auto`, sem altura quando vazia); a grade é `"notice notice" "main aside"`.
+- **Respiro da sombra nas regiões que rolam:** `margin` negativo e `padding` igual (11 nas laterais, 10 em cima, 22 embaixo), porque o `overflow` corta a sombra de `elevations.sm`. Valores em `layout-metrics.ts`, derivados do blur e do offset da sombra.
+- **O card em pé** usa 4 colunas internas (rótulo e valor à esquerda; "pagos" e "de" lado a lado, barra e contador à direita, encostados embaixo). Deitado, rótulo e contador na primeira linha, valor à esquerda, "pagos"/"de" empilhados à direita. O percentual some no tablet (o artboard não o desenha). A fonte do valor segue `typographyTokens.h1` (34); o artboard em pé usa 38, e o token vence.
+- **`BillTimeRow` ganhou `compactOnTablet`**, só passada pelo card em aberto: o card pago em pé (ramo do celular) mantém o rodapé com ladrilho. O "· desde HH:mm" vem de `::before`.
+- **Barra em pé:** botões do garçom e "Pedir mais" sobem de `md` para a altura `lg` (52) por CSS, todos alinhados no topo (`flex-start`), para a frase offline do "Pagar conta" não esticar os vizinhos. Os 56 do artboard ficaram em 52 (decisão 5 da task). O DOM segue a ordem do celular e a ordem visual vem de `order`; no tablet em pé o foco por teclado passa por "Pagar conta" primeiro. O estado chamado do garçom vira uma linha ("Garçom chamado às HH:mm") em vez de duas: a célula do garçom é do tamanho do conteúdo em pé. **Não medi** se cabe.
+- **Itens no tablet (decisão 11):** a composição (`S/ cebola`, adicionais) também vai a 12, porque no artboard é a mesma linha `.it-s`. O padding lateral do cartão de itens continua 17 (o artboard usa 22): não estava na decisão e a mudança atravessa rodadas, linhas e rodapé.
+- **O encerramento** é um cartão (raio, sombra e padding de `boardMetrics`), e não a coluna chapada com borda à esquerda do artboard (decisão 12 da task). As linhas de pagamento são as do `BoardPaymentRow` (com régua entre elas), sem o fundo verde translúcido do `.pay` do artboard. O título usa `typographyTokens.h2` (24; o artboard, 28). A falha só da lista de pagamentos mostra o `InlineError` com retry dentro do encerramento.
+- **A falha dos pagamentos no tablet:** o cartão "Pagamentos" é só do celular. Com a releitura falha e sem dado, o tablet mostra a linha agregada "Já pago" e nenhum aviso (o do celular fica escondido). Aceitei por ser raro; diga se quer o `InlineError` no tablet também.
+- **O skeleton** tem a mesma estrutura da conta (regiões, `BoardBody`): hero e, deitado, placeholders de pagar e "Pedir mais" na direita; cartão de itens na esquerda; cartão de pagamentos só no celular; barra de três botões em pé. As linhas de item do skeleton seguem com 44 (a real tem 52 no tablet): a altura de cada linha difere até a troca.
+- **Chip pago:** `{ kind: 'ready'; label; isPaid }`. A pele é `toneOnCard.paidTile` (fundo e cor) e o ícone `check_circle` preenchido.
+
+### Origem das medidas
+
+- **Tema/DS:** raio, sombra e padding de cartão (`boardMetrics`), tipografia por spread dos tokens (`h1`, `h2`, `label`, `caption`, `body1`), alturas de botão (`controlSizes`), `paidTile`, cortes (`shell-metrics.ts`).
+- **Artboards, sem token:** grade 440/22/22×28, gap 14 da coluna direita, corpo em pé 22×24 com gap 16, barra em pé 16/24/22 com gap 12, círculo de 84, miniatura 52/14, margens do card (10/12 acima do valor, 12 e 8 acima da barra). Todas em `layout-metrics.ts`, `bill-card-metrics.ts`, `rounds-metrics.ts` e `actions-metrics.ts`.
+- O artboard `Conta · tablet deitado` é o `Main.dc.html` do zip (`canvas.json`). A coluna da direita dele já mostra o painel de pagamento da #24, que é o lugar `payment` da decisão 4, e a grade 440/22/22×28 e as medidas do card deitado vêm dele. *Corrigido em review: a versão anterior dizia que o artboard não estava no pacote.*
+
+### Verificação
+
+- `npx tsc --noEmit`: sem erros.
+- `npx eslint src app scripts`: sem erros nem warnings novos (só o aviso de versão do React do plugin).
+- `grep -rn "min-width\|orientation\|100dvh\|useMediaQuery" src/components/board`: nenhuma ocorrência.
+- `git diff --stat`: nenhum arquivo de `src/theme/` nem de `src/components/ui/`. Sem hex nos arquivos novos.
+
+### O que NÃO foi verificado
+
+- **Tudo no navegador**, nas cinco larguras. As áreas de grade do card (deitado e em pé), o `1fr` da linha do "pagos", o preenchimento de altura do cartão de itens, o corte das sombras, a rolagem independente e a página parada, o skeleton sem salto, o offline, e o celular a 390 × 844 e 844 × 390 (nenhuma regra de celular foi alterada, mas o `OfflineDimmed` e o `BoardItemsCard` agora são `flex` em coluna).
+- Se "Garçom chamado às HH:mm" cabe na célula da barra em pé, e os alvos de 44 nas quatro larguras.
+- `next build`, `typegen` e o fluxo em tempo real (a conta quitada com a tela aberta).
+
+### Correções aplicadas em review
+
+- `src/components/board/BoardScreenSkeleton.tsx`: saiu o JSDoc antigo ("O celular do artboard…"), que ficou empilhado em cima do novo.
+- `src/components/board/bill-card/BillTimeRow.tsx`: `fontWeight: 400` virou `fontWeights.regular`.
+- `tsc` e `eslint` rodados de novo, os dois limpos.
+
+### Devolvido ao implementador (bloqueante)
+
+- **`src/components/board/payments/BoardTotalsPaymentLines.tsx:25-37`: `.map()` com corpo próprio e JSX de várias linhas** (regra "pai, `<XxxList>` e `<XxxItem>`"). Extrair `BoardTotalsPaymentLine` (`{ payment, now }`), que monta o rótulo "{forma} · {pessoa} · {HH:mm}" e o `BoardTotalsRow`, como o `BoardPaymentList` faz com o `BoardPaymentRow`. Na mesma passada, trocar o `new Date()` do render pelo `useNow` que os outros dois blocos de pagamento usam.
+
+### Validação no navegador (2026-11-27, orquestrador)
+
+Contra a delivery-api local (`master` @ `819683112`), na mesa 004 (41 itens em 35 rodadas, para a coluna rolar), com um pagamento parcial e depois quitada pelo banco, que foi restaurado. O roteiro `qa60.mjs` deu **47 de 47**:
+
+| Largura | Resultado |
+|---|---|
+| 1180 × 820 e 1440 × 900 | itens à esquerda e o card à direita (440 de largura). A coluna de itens rola sozinha: com ela a 900px, a direita não se move e o `document.scrollingElement.scrollTop` fica em 0. O card mostra "Conta aberta" sem número, e o resumo traz a linha do pagamento com a hora e o "Falta pagar". Sem cartão "Pagamentos" à parte e sem barra embaixo. "Pagar conta" e "Pedir mais" ficam na direita. O "Atualizar" do cabeçalho dos itens relê as três chaves |
+| 820 × 1180 | uma coluna. A barra fixa tem "Garçom", "Pedir mais" e "Pagar conta R$ 677,35", e não se move quando a lista rola |
+| 390 × 844 e 844 × 390 | o celular: cartão "Pagamentos" à parte, "Já pago" agregado e nenhuma linha de pagamento no resumo |
+| Conta paga, 1180 | o encerramento com "Conta paga", "R$ 737,35 quitados. A mesa pode ser liberada.", os pagamentos com "HH:mm · confirmado", "Chamar garçom" e a nota fiscal, sem ação de pagar. Os itens à esquerda trazem "encerrada às HH:mm", o chip vira "Mesa 004 · paga" e o "Atualizar" continua lá |
+| Conta paga, 820 | a composição paga do celular em coluna, sem barra de ações, com o "Atualizar" numa linha acima de "Pagamentos" |
+| Skeleton (respostas atrasadas 4 s) | duas colunas a 1180, coluna com a barra a 820, e nada passando da borda dos cartões a 1180, a 820 e a 390 |
+| Offline, 1180 | itens a 0,72 e o pagar desabilitado com a frase |
+| Alvos | nenhum abaixo de 44 a 1180, a 1440 e a 820 |
+
+Também conferido:
+- **Peso do "de {total}":** 500 deitado e 600 em pé, como nos dois artboards (nit do re-review, corrigido pelo orquestrador em `bill-card-metrics.ts` e `BillCardOpen.tsx`).
+- **Regressão do celular nesta branch:** os roteiros da #54 (18/18), #56 (15/15), #57 (19/19) e #59 (26/26) passam. O respiro do cartão de pagamentos continua 18/18.
+- **Defeito que vinha da #53 e o navegador pegou:** a barra da linha de item do skeleton passava 38px da borda do cartão em todos os formatos. Foi corrigido aqui, com `flex: 1` e `minInlineSize: 0`.
+
+**Não verificado:**
+- a troca para a conta paga com a tela aberta (pelo socket da #58);
+- o leitor de tela;
+- um tablet de verdade.
+
+## Follow-ups identificados em review
+
+- **(média) O tablet não tem "Atualizar" na conta paga.** Em pé, o ramo pago não tem o cartão de itens, e o `BoardHeader` some no tablet. Deitado, o `BoardItemsCard` pago não recebe `headerAction`. A review da #57 manteve o botão na conta paga do celular por causa da RN-06: é por ele que a tela volta a aberta se o socket estiver caído e o PDV excluir um pagamento. O tablet está em tela cheia e não tem como recarregar. Deitado, a correção é passar o mesmo `headerAction` ao cartão pago. Em pé, falta decidir o lugar.
+- **(média) RF-01 contra o artboard: o percentual some no tablet** (`BillCardOpen.tsx:182-189`). A RF-01 e o critério 1 da spec pedem "o percentual pago" no card, e os dois artboards de tablet não o desenham. A barra o comunica visualmente, e o `aria-valuenow` para o leitor de tela, mas o número não aparece. Confirmar com o dev e registrar a divergência na spec. Para voltar com o número, basta tirar o `phoneOnlyStyle` e dar uma área da grade ao `PaidPercent`.
+- **(média) A falha dos pagamentos não aparece no tablet.** Sem dado e com erro, o tablet mostra só o "Já pago" agregado, sem aviso e sem "Tentar de novo". O `InlineError` fica no cartão `PhoneOnly`. O total fecha, mas a lista de quem pagou some sem aviso. A regra pede inline para bloco secundário que falhou. O mesmo vale para a falha de releitura com dado velho (`isRefetchError`): o celular avisa e o tablet não.
+- **(média, para a #61) O lugar `payment` fica montado em todo formato**, e só aparece deitado (`LandscapeOnly`, `display: none`). O contrato da decisão 4 diz "renderizado só deitado". Quando o `BoardPaymentColumn` ocupar o lugar, os hooks dele (a leitura de `payment-options` e o que mais ele escutar) vão rodar também no celular e no tablet em pé, em `/board`. A #61 já aceita que a conta escondida fique montada (armadilha "A conta escondida continua montada"), mas não diz nada sobre a coluna. Escrever isso no contrato da decisão 4, ou fazer a #61 desligar as leituras fora de paisagem.
+- **(baixa) `BoardBillAside` ganhou uma prop `secondary`** (o "Pedir mais") que não está no contrato da decisão 4, onde o `OrderMoreButton` é da própria região. O comportamento do contrato continua (ele fica embaixo do lugar, com ou sem a #24), e a prop deixa o skeleton reusar a região. Registrar a mudança na decisão 4.
+- **(baixa) O `describeBillState` ficou com um ramo morto.** Nenhum chamador passa mais o número (o `BillCardPaid` passa `''` para `paid`). A copy "Mesa N · " está duplicada: no ramo morto e no JSX do `BillCardOpen.tsx:208`. No DOM o rótulo virou "Mesa 12 · Conta aberta", com maiúscula no meio. Não aparece, por causa do `uppercase`, mas o leitor de tela lê assim. Tirar o parâmetro e pôr o prefixo da mesa numa função de copy em `bill-state.ts`.
+- **(baixa) O contador deitado perde o rótulo para o leitor de tela.** "Mesa ocupada há" e "desde HH:mm" saem com `display: none`, e o leitor de tela ouve só "1h 24min". Usar `VisuallyHidden` em vez de `display: none` mantém o desenho do artboard e o sentido.
+- **(baixa) Na barra em pé, o garçom e "Pedir mais" sobem para 52 só na altura.** O raio (`controlRadii.md` 14) e o ícone (20) continuam os do `md`, ao lado do "Pagar conta" em `lg` (16 e 22). Conferir no navegador e, se destoar, levar também o raio e o ícone.
+- **(baixa) O skeleton não tem a forma do tablet.** O card de destaque do skeleton é o do celular (chip, valor, barra e rodapé), sem a forma em grade nem o espaço do "Pedir a conta". Deitado, os placeholders de pagar e de "Pedir mais" descem quando o dado chega. Em pé, desce o cartão de itens. As linhas de item têm 44, contra 52 no tablet, e o cartão de itens não tem a forma do resumo (follow-up da #56, ainda aberto). Medir no navegador o salto da decisão 12.
+- **(baixa) As medidas de tablet do cabeçalho e do resumo do cartão de itens ficaram com as do celular.** O artboard usa título 15/800, contador 12, padding 20/22 e resumo com padding 16/22 e gap 9. A decisão 11 cobre só a linha do item. O implementador registrou só o padding.
+- **(baixa) O DS não descreve as variantes novas.** Faltam o chip pago no `design-system/components/TableTopBar/README.md` (a anatomia ainda diz só `table_restaurant`) e, no `BoardTotals/README.md`, as linhas de pagamento no lugar do "Já pago" no tablet.
+- **(baixa) Os números de respiro da sombra estão escritos à mão** (`layout-metrics.ts:19-21`: 10, 22, 11). Eles dependem do `elevations.sm` (0 6px 16px) e do `landscapeGap` (11 = 22 / 2). Se um dos dois mudar, a sombra volta a ser cortada sem aviso. Escrever a conta com constantes, como a #56 fez no rodapé do resumo.
+- **(baixa) Anúncio duplicado do garçom** (follow-up da #59), resolvido só em parte. Deitado e com a conta aberta, a `BoardActionBar` escondida sai da árvore de acessibilidade. Em pé (decisão 6) e deitado com a conta paga (decisão 10), continuam dois `role="status"` visíveis, e "Garçom chamado às HH:mm" é anunciado duas vezes. Junta com a pendência das decisões 6 e 10.
+- **(observação) O artboard `Conta · tablet deitado` está no zip.** O `canvas.json` liga esse artboard ao `Main.dc.html`. Ele parece "a tela de pagamento" porque a coluna da direita já mostra o painel da #24 ("Quanto você vai pagar?", "Forma de pagamento", "Gerar Pix"), que é o lugar `payment` da decisão 4. A grade 440/22/22×28 vem dele, e as medidas do card deitado conferem: valor 34, 10 acima dos valores, 12 acima da barra, contador 12 com ícone 16 e gap 5. O que diverge: o "de R$ X" é 500 no artboard (a implementação usa 600) e o padding do card é 18/20 (a implementação usa 18). Corrigir a frase em "Origem das medidas".
+- **(observação) No tablet em pé, a ordem de foco não segue a ordem visual** ("Pagar conta" vem primeiro, e está à direita). Aceito. Com um DOM só, um dos dois formatos tem de divergir, e manter o celular certo é a escolha melhor: é o aparelho pessoal, onde o leitor de tela é mais provável. Os três botões são independentes, então a ordem não muda o sentido (WCAG 2.4.3). Confirmar com o dev.
+
+### Correções depois do review e da medição no navegador (2026-11-27)
+
+- **`BoardTotalsPaymentLine`** extraído (`{ payment, now }`), e o `BoardTotalsPaymentLines` usa `useNow` (60 s) no lugar do `new Date()` do render.
+- **Skeleton estourando o cartão:** a barra do `BoardSkeletonItemRow` está num `div` com `flex: 1` e `minInlineSize: 0`; o `Skeleton` do DS não foi tocado.
+- **"Atualizar" na conta paga:** deitado, o `headerAction` vai ao cartão de itens pago. **Em pé, o botão fica numa linha à direita, acima do cartão "Pagamentos"** (`PaidRefresh`, em `TabletOnly` dentro de `NotLandscape`). Escolhi essa linha, e não o cabeçalho do cartão "Pagamentos", porque esse cartão não existe quando a lista de pagamentos está vazia, e é justamente o caso da RN-06 (pagamento excluído no PDV com o socket caído).
+- **Medidas do artboard deitado:** padding lateral do card deitado 20 (18 em cima e embaixo); "de {total}" com peso 500; rótulo do contador em pé com `fontWeights.regular`.
+- **Nits:** `boardCopy.closedAt`; `itemCount` calculado uma vez no `ReadyBoardScreen`; imports em ordem; `describeBillState(state)` sem número e `describeBoardPrefix(n)` ("Mesa N · ") como única fonte do prefixo; `waiterCallMetrics.stackedRowGap` no lugar do `gap: 4`.
+- Mantidos, como pedido: percentual escondido no tablet (para o dev decidir, contra a RF-01), ordem de foco da barra em pé, tablet sem `InlineError` de pagamentos.
+- `tsc` e `eslint` limpos; sem `dev` nem `build`.
+
+### Re-review (2026-11-27)
+
+Aprovado. O bloqueio está resolvido: o `BoardTotalsPaymentLine` é o item, o `.map()` cabe numa linha e o `now` vem do `useNow`.
+
+Follow-ups acima que esta rodada fechou:
+- o "Atualizar" na conta paga do tablet;
+- o ramo morto do `describeBillState`, que agora tem o `describeBoardPrefix` como única fonte do prefixo;
+- o padding 18/20 e o "de" em 500 do card deitado, da observação sobre o artboard.
+
+Nesta rodada, corrigi também duas frases que a mudança deixou velhas no relato da implementação, a de "Divergências" sobre o `describeBillState` e a de "Origem das medidas" sobre o artboard no zip.
+
+Achados novos, nenhum bloqueante:
+- **(nit)** O `tabletTotalWeight: 500` vale nos dois formatos de tablet (`BillCardOpen.tsx`, `TotalValue`, sob `tabletShellMediaQuery`). O artboard em pé desenha o "de {total}" em 600, herdado da linha. Só o deitado usa 500.
+- **(observação)** O `PaidRefresh` em pé fica dentro do `OfflineDimmed` e esmaece com a rede caída, como as listas. Ele continua tocável, e o toque falha com o aviso de releitura de sempre. Aceito.
+- **(observação)** A correção do `BoardSkeletonItemRow` muda o skeleton do celular: a barra deixa de passar 38px da borda do cartão, defeito que vinha da #53. É conserto, e não regressão do "celular não muda".

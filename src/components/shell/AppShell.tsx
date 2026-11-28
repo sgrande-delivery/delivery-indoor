@@ -7,7 +7,7 @@ import CartColumn from '@/components/cart/dock/CartColumn';
 import { isCartDockRoute } from '@/components/cart/dock/cart-dock-routes';
 import TabletCartDock from '@/components/cart/dock/TabletCartDock';
 import OfflineBanner from '@/components/offline/OfflineBanner';
-import WaiterCallButton from '@/components/waiter/WaiterCallButton';
+import ConnectedWaiterCallButton from '@/components/waiter/ConnectedWaiterCallButton';
 import { useRestaurant } from '@/hooks/use-restaurant';
 import { useBoardSession } from '@/providers/board-session';
 import { appShellMetrics, CHROME_BOTTOM_INSET_VAR } from '@/theme';
@@ -133,7 +133,9 @@ const AppShell: React.FC<PropsWithChildren> = ({ children }) => {
   let table: TableTopBarTable = { kind: 'none' };
 
   if (session.status === 'ready') {
-    table = { kind: 'ready', label: `Mesa ${session.movement.board.number}` };
+    const { board, is_board_paid: isPaid } = session.movement;
+
+    table = { kind: 'ready', label: isPaid ? `Mesa ${board.number} · paga` : `Mesa ${board.number}`, isPaid };
   } else if (session.status === 'loading') {
     table = { kind: 'loading' };
   } else if (session.status === 'error') {
@@ -181,7 +183,7 @@ const AppShell: React.FC<PropsWithChildren> = ({ children }) => {
             table={table}
             tabs={tabletTabs}
             activeTab={resolveActiveTab(pathname, 'tablet')}
-            action={<WaiterCallButton collapsible />}
+            action={<ConnectedWaiterCallButton collapsible />}
           />
         </TopBarSlot>
         <OfflineBanner />

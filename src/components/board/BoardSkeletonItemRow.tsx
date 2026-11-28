@@ -12,6 +12,12 @@ const Row = styled('div')({
   gap: spacingScale.sm,
 });
 
+// o `Skeleton` mede 100% do pai: sem o pai flexível a barra soma a largura da miniatura e passa da borda do cartão
+const Bar = styled('div')({
+  flex: 1,
+  minInlineSize: 0,
+});
+
 const BoardSkeletonItemRow: React.FC = () => {
   return (
     <Row>
@@ -20,7 +26,9 @@ const BoardSkeletonItemRow: React.FC = () => {
         height={boardSkeletonMetrics.itemRowHeight}
         radius={boardSkeletonMetrics.itemThumbRadius}
       />
-      <Skeleton width="100%" height={boardSkeletonMetrics.itemRowHeight} />
+      <Bar>
+        <Skeleton width="100%" height={boardSkeletonMetrics.itemRowHeight} />
+      </Bar>
     </Row>
   );
 };

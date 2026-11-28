@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor (branch `feat/indoor-v2`)
 **Depende de:** 01 (#53), 02 (#54) e 04 (#56)
-**Status:** pendente
+**Status:** shipped
 
 ## Objetivo
 
@@ -138,4 +138,92 @@ com `const summary = summarizeBoardProducts(products.data.products)`. No ramo ab
 
 ## Branch
 
-`task/57-board-payments-and-paid-state`, base sugerida: a junção da 02 e da 04 sobre a 01 (ou `feat/indoor-v2`, se as três já tiverem mergeado). O cartão de pagamentos não depende delas e pode ser escrito antes; a composição paga precisa das duas na base.
+`task/57-board-payments-and-paid-state`, cortada de `task/58-board-realtime-socket` (`69ccdff`) em 2026-11-27, no checkout principal. É a quarta da pilha sequencial da #23 e já tem na base a 02 (#54), a 04 (#56) e a 06 (#58). O PR mira a branch da #58 até o #96 mergear, e a #59 sai desta branch.
+
+## Implementação
+
+**Concluída em:** 2026-11-27
+
+### Camadas tocadas
+
+- Novos, em `src/components/board/payments/`: `payment-method-icon.ts` (`isPixMethod`, `resolvePaymentMethodIcon`, módulo compartilhado com a #24), `describe-payment.ts` (`describePaymentTitle`, `sortPaymentsByTime`), `payments-metrics.ts`, `payments-copy.ts`, `BoardPaymentsCard.tsx`, `BoardPaymentList.tsx`, `BoardPaymentRow.tsx`.
+- Alterado: `src/components/board/ReadyBoardScreen.tsx`. O encaixe é nele, e não no `BoardScreen` que a task cita: o `BoardScreen` só resolve a sessão e delega, e os blocos da #54, #56 e #58 já moram no `ReadyBoardScreen`.
+- Nenhum arquivo de `src/theme/` nem de `src/components/ui/` tocado; nenhum ícone novo.
+
+### Contratos consumidos
+
+- `GET /boardMovements/{id}/payments` via `useBoardPayments` (já existia): `BoardPayment { id, value, person, created_at, payment_method: { id, method, kind, mode } | null }`, como tipado em `src/types/board-bill.ts`. Não reconferido na API nesta task.
+
+### Variáveis de ambiente novas
+
+- Nenhuma.
+
+### Decisões que tomei por conta própria
+
+- **Medidas do DS vencem a task onde divergem.** `bundle.css` (`.bpi-pay-row`) e README: caixa de ícone 38 (a task diz 40), raio 12 (task: 13), glifo 20, gap 12, padding de linha 10, forma 13/700 (task: 13/600), quando 11 `muted` com margem de 1, valor 13,5/800 (task: 14/800). Só o título do cartão (13,5/800) e o padding de 18 vêm de fora do DS: o título reaproveita `roundsMetrics` ("Itens da mesa"), e o padding é `boardMetrics.cardPadding`. O README do DS pinta o valor em `ink`; o tom `success` da conta aberta vem da task (artboard aberto), por isso a prop `tone`.
+- Tipografia: `...typographyTokens.subtitle2` (forma), `.caption` (quando) e `.subtitle1` (valor), com `fontSize`/`fontWeight` sobrescritos pelas medidas do DS, para vir `lineHeight` junto. Não há token de 13/700 nem de 13,5/800.
+- Raio, sombra e padding do cartão: `boardMetrics`. Valor com `whiteSpace: 'nowrap'` e `flexShrink: 0`. Sem hex.
+- **Separador entre linhas (`surface.line`) em ambos os estados**, e não só no pago: o DS não define divisor, a task o põe na paga "como no artboard", e não li o artboard aberto para distinguir. Simples de restringir à paga se o dev preferir.
+- **Aberta e paga com a mesma árvore `OfflineDimmed`** (follow-up da #58): na aberta, itens + pagamentos num só `OfflineDimmed` e numa só `Stack`, para o cartão ausente não deixar um vão de `gap` (um wrapper vazio ainda é item flex). Na paga, pagamentos + resumo.
+- `BoardBillCard` com `{ movement, boardNumber }` (follow-up da #54). O resumo pago é `variant="paid" appearance="card" itemCount` de `summarizeBoardProducts` (follow-up da #56).
+- Estado paga exige `movement.data`: sem a movimentação lida (primeiro render) a tela mostra a aberta, que é o que o servidor ainda não negou. Não há cache de `is_board_paid` por conta própria.
+- Erro só dos pagamentos com dado e releitura falha: o `InlineError` some enquanto offline (`useIsOffline`), como o `refreshFailed` do `ReadyBoardScreen`; a linha de offline já cobre.
+- Query ociosa (`skipToken`, sem sessão) e sem dado: o cartão não renderiza.
+- Pix pelo nome também (`\bpix\b/i`), com os comentários de WHY dos dois arquivos do client, incluindo a medição dos 130 Pix `other` (2026-09-12, banco de dev do `delivery-client`). `picpay` entrou no mapa com `account_balance_wallet`, como a decisão 1.
+- Nenhuma soma de dinheiro: o `Já pago` e o `Total pago` vêm de `total_paid` do servidor.
+
+### Divergências
+
+- A task manda o encaixe no `BoardScreen` e passa `<BoardBillCard movement={movement} />` e `summary`; o código real é o `ReadyBoardScreen`, com `boardNumber`.
+- Medidas 38/12/13-700/13,5 do DS no lugar de 40/13/13-600/14 da task (acima).
+- Contradição da decisão 8 (nome de quem pagou no tablet: README do DS × RF-19): o nome aparece também no tablet porque a linha é a mesma. Fica para o dev e para a #24.
+- Copy "Não foi possível carregar os pagamentos." é derivada e precisa de confirmação.
+
+### Como testar
+
+1. Já há `next dev` do dev na porta 3468. Abrir `/board?session=<uuid>` a 390 × 844 e seguir os passos 1 a 6 da seção Testes (pagamentos lançados pelo admin, sem pagamento, bloqueio de `*/payments*`, conta quitada, exclusão de pagamento, mesa liberada).
+
+### O que NÃO foi verificado
+
+- Nada no navegador: nenhum passo do roteiro foi executado, nem a conferência visual contra os artboards. Sem mesa aberta exercitada aqui.
+- `next typegen` e `next build` não foram rodados (pedido do dev, há `next dev` na 3468).
+- Medidas do artboard `Conta · celular · paga` (separador, respiros entre os três cartões) não conferidas; os respiros usam `boardMetrics.gap`.
+- Saída do `npx jiti` com alias manual (`JITI_ALIAS`), pois o jiti puro não resolve `@/`.
+
+### Correções aplicadas em review
+
+- `src/components/board/payments/payment-method-icon.ts`: o `ICONS_BY_KIND[method.kind] ?? DEFAULT_ICON` virou `Object.prototype.hasOwnProperty.call(ICONS_BY_KIND, method.kind)`, como o `resolveCategoryKindIcon` da #55. O `Record<string, IconName>` deixa o índice herdar do protótipo: medido no jiti, `kind: 'constructor'` devolvia uma função e `kind: 'toString'` também, e o `??` não pega nenhum dos dois. O `kind` vem de enum fechado na API, então não quebrava tela hoje, mas o módulo é compartilhado com a #24 e a assinatura promete `IconName`.
+- `src/components/board/payments/BoardPaymentsCard.tsx`: `useNow(NOW_INTERVAL_MS)` virou `useNow(NOW_INTERVAL_MS, payments !== undefined && payments.length > 0)`. Sem isso o tique de 60 s rodava também com o cartão em `null` (mesa sem pagamento, query ociosa), e é para isso que o hook tem o `enabled`.
+- `src/components/board/ReadyBoardScreen.tsx`: o import de `./board-summary` foi para junto dos outros `./board-*`.
+
+### Ajustes depois do review (2026-11-27, orquestrador)
+
+- **Respiro de baixo do cartão (achado 1).** Na última linha, `paddingBlockEnd: 0` (`BoardPaymentRow.tsx`): o padding de 18 do cartão já dá o respiro, e somado aos 10 da linha ficava 28 embaixo contra 18 em cima. Medido no navegador: 19 do topo do cartão ao texto do título (18 mais o entrelinha), e 18 da caixa do último ícone à base. As linhas medem 58 e 49 (a última sem o padding de baixo).
+- **Skeleton com a forma da lista.** São caixas de 38 (a do ícone) com 20 entre elas (o padding das duas linhas vizinhas) e 14 abaixo do título. Somam os mesmos 110 da lista de duas linhas, então a troca não empurra o resumo. Isso tira o `boardSkeletonMetrics.paymentRowHeight` (40) do cartão. O skeleton da tela inteira (`BoardScreenSkeleton`, da #53) continua com o dele.
+
+### Validação no navegador (2026-11-27, orquestrador)
+
+Contra a delivery-api local (`master` @ `819683112`), mesa 003, a 390 × 844. Os pagamentos foram inseridos no banco com formas reais do restaurante 1 (PIX off `kind: 'pix'`, Cartão de crédito, Dinheiro), e o banco foi restaurado no fim. Resultado: 19 de 19, três rodadas seguidas.
+
+| # | Passo da task | Resultado |
+|---|---|---|
+| 2 | Sem pagamento | nenhum cartão "Pagamentos" |
+| 1 | Pix com pessoa (12 min atrás) e cartão sem pessoa (5 min atrás), gravados fora de ordem | Pix primeiro, `qr_code_2`, "PIX off · Rafael"; cartão com `credit_card` e sem pessoa; "hoje às HH:mm"; R$ 20,00 e R$ 15,50 em verde (`rgb(25, 131, 79)`). A soma é o `total_paid` (35,50) do GET e o "Já pago" do resumo |
+| — | Offline | o cartão de pagamentos esmaece a 0,72, como o de itens |
+| 3 | `*/payments*` bloqueado | "Não foi possível carregar os pagamentos." no bloco, e o card de destaque e os itens seguem. "Tentar de novo", depois de desbloquear, traz as linhas |
+| 4 | Quitada (`is_board_paid`, R$ 103,99) | "Conta paga", os três pagamentos em tinta (`rgb(43, 15, 7)`), "Subtotal · 6 itens" e "Total pago"; sem itens, sem ações, nada de liberar |
+| 5 | Um pagamento excluído | volta ao estado aberto, com "Falta pagar" |
+| 6 | Mesa liberada | a tela "sem mesa" ("Leia o QR code da mesa"), e não a conta paga |
+
+O Pix com `kind: 'other'` não existe no restaurante 1. O predicado pelo nome ficou coberto pelos testes puros (e pelos do review, com "Pix na entrega", "Pagamento via pix", "Pixel Pay" e "Pixpay"). **Não verificado:** o tema escuro e o leitor de tela.
+
+## Follow-ups identificados em review
+
+- **(média) Respiro de baixo do cartão "Pagamentos" é 28, e o de cima é 18.** O `padding` 18 do cartão soma com o `paddingBlockEnd` 10 da última linha (`.bpi-pay-row`). Nos dois artboards o cartão tem 17 nas duas bordas. O card de itens da #55 compensa a mesma soma com `cardPaddingBlockEnd: 2`. Corrigir com `'&:last-child': { paddingBlockEnd: 0 }` na linha, ou com um `paddingBlockEnd` do cartão de 18 − 10, e medir no navegador.
+- **(baixa) DS e artboard divergem na linha de pagamento**, e a tela tem as duas fontes lado a lado. O `BoardPaymentRow` segue o DS (38/12, 13/700, valor 13,5/800). O `BoardItemRow` da #55 segue o artboard no preço (14/800, contra 13,5 do `.bpi-item__price`). Na conta aberta, o valor do pagamento (13,5) fica logo abaixo do preço dos itens (14). O dev precisa escolher uma fonte para a tela e levar a escolha ao `bundle.css`/README. O tom do valor por estado (`success` na aberta, `ink` na paga) também não está no DS.
+- **(baixa) O skeleton da linha tem 40 e a linha real tem 58** (caixa de 38 mais 10 + 10). A troca do skeleton pelo conteúdo empurra o resumo. `boardSkeletonMetrics.paymentRowHeight` pode ir para 38 + 2 × 10, ou o skeleton pode ganhar o mesmo `paddingBlock`.
+- **(baixa) A tipografia espalha um token e sobrescreve quase tudo.** `...typographyTokens.subtitle2` (12/600) com 13/700 por cima, e `...caption` com um `fontSize` 11 que já é o do token. Na prática só `fontFamily` e `lineHeight: 1.4` sobrevivem. Os cards vizinhos (`BoardItemsCard`, rounds) escrevem `fontFamily: fontFamilies.text` e o `lineHeight` da métrica. Seguir esse padrão, com `lineHeight` em `payments-metrics.ts`.
+- **(observação) O artboard `Conta · celular · paga` não tem o botão de atualizar no cabeçalho**, e a implementação o mantém. Vale manter (RF-11, e RN-06: é por ele que a tela volta a aberta se o socket estiver caído e o PDV excluir um pagamento). Confirmar com o dev.
+- **(observação) A decisão que a #58 deixou para "a #57 ou a #60" segue aberta:** no celular, o `OfflineDimmed` esmaece também o resumo de valores, e na conta paga também o cartão do resumo. Fica para a #60, que reescreve o mapa.
+- **(nit) `resolvePaymentMethodIcon(method: BoardPaymentMethod | null)` usa só `kind` e `method`.** `Pick<BoardPaymentMethod, 'kind' | 'method'> | null`, como o `isPixMethod`, deixa a #24 chamar com outro shape de forma de pagamento sem montar `id` e `mode` falsos. Alargar o parâmetro não quebra chamador.
+- **(nit) `PIX_QR` (sublinhado) não casa com `\bpix\b`**, porque `_` é caractere de palavra. É o mesmo predicado do client, então mudar aqui criaria fork. Registrar lá, se alguma forma real tiver esse nome.

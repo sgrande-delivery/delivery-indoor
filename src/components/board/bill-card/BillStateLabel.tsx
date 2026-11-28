@@ -6,7 +6,8 @@ import { fontFamilies, typographyTokens } from '@/theme';
 import { billCardMetrics } from './bill-card-metrics';
 
 export interface BillStateLabelProps {
-  children: string;
+  children: React.ReactNode;
+  className?: string;
 }
 
 const Root = styled('div')({
@@ -34,9 +35,9 @@ const Text = styled('span')(({ theme }) => ({
   color: theme.vars.palette.surface.ink,
 }));
 
-const BillStateLabel: React.FC<BillStateLabelProps> = ({ children }) => {
+const BillStateLabel: React.FC<BillStateLabelProps> = ({ children, className }) => {
   return (
-    <Root>
+    <Root className={className}>
       <Dot aria-hidden />
       <Text>{children}</Text>
     </Root>

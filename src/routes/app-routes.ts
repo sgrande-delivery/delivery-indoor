@@ -18,6 +18,9 @@ export const CART_ROUTE = '/cart';
 /** A conta da mesa. */
 export const BOARD_ROUTE = '/board';
 
+/** O fluxo de pagamento da conta, da frente #24. */
+export const BOARD_PAYMENT_ROUTE = '/board/payment';
+
 /** Lê o `?category=`: inteiro positivo, ou `null` (ausente, repetido, `0`, `abc`, `1.5`). */
 export function parseCategoryId(raw: string | string[] | undefined): number | null {
   if (typeof raw !== 'string' || !/^[1-9]\d*$/.test(raw)) {

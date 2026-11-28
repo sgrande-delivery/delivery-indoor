@@ -10,11 +10,11 @@ import { HOME_ROUTE } from '@/routes/app-routes';
 import { typographyTokens } from '@/theme';
 import { boardCopy, describeBoardSubtitle } from './board-copy';
 import { boardMetrics } from './board-metrics';
+import RefreshBillButton from './RefreshBillButton';
 
 export interface BoardHeaderProps {
   boardNumber: string;
-  onRefresh: () => void;
-  isRefreshing: boolean;
+  movementId: string;
 }
 
 // No tablet a `TableTopBar` já é o cabeçalho da tela.
@@ -53,7 +53,7 @@ const Subtitle = styled('p')(({ theme }) => ({
 }));
 
 /** O voltar é um `Link` para o cardápio: a entrada é o redirect do QR, e o histórico pode sair do app. */
-const BoardHeader: React.FC<BoardHeaderProps> = ({ boardNumber, onRefresh, isRefreshing }) => {
+const BoardHeader: React.FC<BoardHeaderProps> = ({ boardNumber, movementId }) => {
   const restaurant = useRestaurant();
 
   return (
@@ -63,14 +63,7 @@ const BoardHeader: React.FC<BoardHeaderProps> = ({ boardNumber, onRefresh, isRef
         <Title>{boardCopy.title}</Title>
         <Subtitle>{describeBoardSubtitle(restaurant.data?.name, boardNumber)}</Subtitle>
       </Heading>
-      <IconButton
-        icon="refresh"
-        variant="neutral"
-        aria-label={boardCopy.refresh}
-        aria-busy={isRefreshing}
-        disabled={isRefreshing}
-        onClick={onRefresh}
-      />
+      <RefreshBillButton movementId={movementId} />
     </Root>
   );
 };

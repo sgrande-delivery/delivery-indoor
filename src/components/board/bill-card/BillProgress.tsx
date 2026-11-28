@@ -8,6 +8,7 @@ import { billCardMetrics } from './bill-card-metrics';
 export interface BillProgressProps {
   percent: number;
   tone?: 'primary' | 'success';
+  className?: string;
 }
 
 const Track = styled('div')(({ theme }) => ({
@@ -27,9 +28,10 @@ const Fill = styled('div', {
   backgroundColor: theme.vars.palette[tone].main,
 }));
 
-const BillProgress: React.FC<BillProgressProps> = ({ percent, tone = 'primary' }) => {
+const BillProgress: React.FC<BillProgressProps> = ({ percent, tone = 'primary', className }) => {
   return (
     <Track
+      className={className}
       role="progressbar"
       aria-valuenow={percent}
       aria-valuemin={0}

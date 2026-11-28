@@ -5,7 +5,7 @@
 **Tipo:** feature
 **Repo:** delivery-indoor (branch `feat/indoor-v2`)
 **Depende de:** 01 (#53)
-**Status:** pendente
+**Status:** shipped
 **Alinhado a #24 (#61, #63) e à #52 (2026-11-23):** o mapa evento → chaves ganha a tradução de cada grupo para as chaves do React Query num módulo só, exportado, onde a #61 acrescenta `payment-options` e de onde a #63 lê as chaves da conta (mudança 3); a decisão 6 passa a ter o contrato de quem consome o `useBoardSocket()` fora daqui; e a #52 encontra os nomes de hook que esta task cria.
 
 ## Objetivo
@@ -228,4 +228,90 @@ DevTools: Network (WS e Fetch/XHR filtrados por `boardMovements`).
 
 ## Branch
 
-`task/58-board-realtime-socket`, base sugerida: `task/53-board-bill-reads-and-screen-frame` (ou `feat/indoor-v2`, se a 01 já tiver mergeado). Roda em paralelo com a 02, a 03 e a 04, mas só é validável em navegador depois que os blocos existem (plan, "Ordem de execução"). Conflitos esperados na junção: `BoardScreen.tsx` (o `OfflineDimmed` em volta das linhas da 03 e da 05, pelo mapa de encaixe da 01) e `src/App.tsx` (uma linha).
+`task/58-board-realtime-socket`, cortada de `task/56-board-bill-totals` (`c1da7d7`) em 2026-11-27, no checkout principal. É a terceira da pilha sequencial da #23: o PR mira a branch da #56 até o #95 mergear, e a #57 sai desta branch.
+
+## Implementação
+
+**Concluída em:** 2026-11-27 (código; navegador e socket real ficam com o dev)
+
+### Camadas tocadas
+
+- `src/services/restaurant-header.ts`: exporta `restaurantUuid`, usado pelo header.
+- `src/store/socket-store.ts`: `SocketSnapshot` exportado (única mudança).
+- `src/hooks/use-board-socket.ts` (novo): o único `SocketStore` do `/board`, `useBoardSocket`, `useBoardSocketConnection`.
+- `src/components/board/realtime/`: `board-socket-events.ts`, `board-bill-keys.ts`, `invalidation-batcher.ts`, `use-board-realtime.ts`, `BoardRealtime.tsx`, `use-board-offline-line.ts`, `OfflineDimmed.tsx` (todos novos).
+- `src/App.tsx`: `<BoardRealtime />` dentro do `BoardSessionProvider`.
+- `src/components/board/ReadyBoardScreen.tsx`: `useBoardOfflineLine(products)` e `OfflineDimmed` em volta do `BoardItemsCard`.
+
+### Contratos consumidos
+
+- `/board` com `auth['x-restaurant-uuid']`, `query.app=indoor`, `subscribe_channel` com o UUID da movimentação, e os 8 eventos da tabela (nomes novos com ponto). Não conferi na fonte do socket-api, só no contrato inline.
+
+### Variáveis de ambiente novas
+
+- Nenhuma (`NEXT_PUBLIC_SOCKET` e `NEXT_PUBLIC_RESTAURANT_UUID` já existiam).
+
+### Decisões que tomei por conta própria
+
+- O `useBoardOfflineLine(products)` é chamado no topo do `ReadyBoardScreen`, e não "no ramo content": hook não pode ser condicional. Ele só registra a linha com offline e dado presente, então o efeito é o mesmo.
+- O `ReadyBoardScreen` ainda não renderiza card de pagamentos (vem na #57), então o `OfflineDimmed` envolve só o card de itens. A #57 deve envolver o de pagamentos.
+- Transição de opacidade de 200 ms com `ease` quando há movimento; `none` sob `REDUCED_MOTION_QUERY`. A duração não vinha da task.
+- A linha de banner usa o `dataUpdatedAt` da query de itens, como pedido.
+- `handleDisconnect` marca `hasDisconnected` também no `io client disconnect`, mas não faz mais nada nele; o cleanup do efeito já remove o listener antes disso na prática.
+- A cópia da linha do banner mora em `use-board-offline-line.ts` (não em `board-copy.ts`).
+
+### Como testar
+
+Roteiro 1 a 8 da seção Testes (socket-api local e `next dev`). Não executei.
+
+### Verificação feita
+
+- `npx tsc --noEmit`: limpo. `npx eslint src app scripts`: limpo (só o aviso de versão do React).
+- Grep 2 (por `grep -rn`, porque `git grep` ignora os arquivos ainda não rastreados): uma instância `'board'` em `use-board-socket.ts`; a outra é a do `/client`, pré-existente.
+- Grep 3: 5 `on` e 5 `off` no arquivo (`on(event, handler)` e `off(event, handler)` dentro de loop sobre os mesmos 8 eventos, mais `connect` e `disconnect`), todos com 2 argumentos.
+- Teste 4 (node, jiti, timers falsos): três `schedule` em t=0, 50 e 100 dão um `flush` em t=350 com `["movement","products"]`; `cancel()` antes da janela dá 0 flushes.
+
+### O que NÃO foi verificado
+
+- Navegador e socket real (handshake, sala, releituras, reconexão, `io server disconnect`, banner, esmaecimento).
+- `next typegen` e `next build`, por pedido (há `next dev` rodando).
+- Eventos novos (`board.*`) contra um socket-api que os emita.
+
+### Correções aplicadas em review
+
+- `src/components/board/realtime/OfflineDimmed.tsx`: `transition: 'opacity 200ms ease'` (literal) virou `theme.transitions.create(['opacity'])`, que é o `motion.duration.standard` (200 ms) com o `motion.easing.standard` do tema, como os outros componentes de `src/components/ui/`. O `useIsOffline()` saiu do JSX e foi para uma constante.
+- `src/components/board/realtime/use-board-realtime.ts`: `(Object.keys(BOARD_EVENT_INVALIDATIONS) as BoardSocketEvent[])` virou `Object.values(BOARD_SOCKET_EVENTS)`, que tem o mesmo tipo sem o `as`. Também entrou um comentário de WHY no ramo `io client disconnect`: o cleanup do `useBoardSocketConnection` roda **antes** do cleanup do efeito dos listeners, então o próprio `disconnect()` chega ao `handleDisconnect` de forma síncrona. É por isso que o ramo é necessário, e a nota da `## Implementação` ("o cleanup do efeito já remove o listener antes disso") está invertida. Sem o ramo, toda troca de sessão e toda saída de `ready` chamariam `reportConnectionLost()`.
+- `src/components/board/realtime/BoardRealtime.tsx`: `import React from 'react'`, como os outros componentes que usam `React.FC`.
+
+### Validação no navegador (2026-11-27, orquestrador)
+
+Contra o **`delivery-socket-api` real**, a `origin/master` @ `8eb1f45`, extraída por `git archive` e rodando local na 3030. Ela usa o `node_modules` do clone, com as dependências idênticas às da `master`, e um `.env` sem Grafana. A api local (`master` @ `819683112`) chegava ao socket por `socket_app` → gateway da rede `backend`, com uma linha temporária no `/etc/hosts` do container. Mesa 003, a 390 × 844. O roteiro (`qa58.mjs`) contou os quadros do websocket e as leituras REST da conta. Resultado: 19 de 19 e mais 3 de 3 no ponta a ponta.
+
+| # | Passo da task | Resultado |
+|---|---|---|
+| 1 | Handshake e sala | `40/board,{"x-restaurant-uuid":"38691b7e-…"}` e um `subscribe_channel` com o uuid da mesa na conexão viva |
+| 2 | Cada evento pela rota HTTP do socket | `board_products_added`, `board_product_deleted` e `board_totals_changed` releem `products` + `movement`; `board_payment_added` e `board_payment_deleted` releem `payments` + `movement`. Uma leitura por chave, ~250 ms depois. Rajada de 3 `board_products_added`: uma leitura por chave |
+| 3 | Ponta a ponta | outro aparelho manda um pedido pela api do carrinho (201); a api emite pelo socket, e a conta passa de 4 para 5 rodadas sem reload ("Pedido 5 · 1× X Salada · Rafael"), com o falta pagar atualizado. Vídeo `58a-pedido-de-outro-aparelho.mp4` |
+| 4 | Socket derrubado e de pé de novo | conexão nova com um `subscribe_channel`, releitura das três chaves, **sem** banner offline (a queda foi `transport close` e o probe viu a internet de pé). O evento seguinte relê |
+| 5 | Offline (`context.setOffline`) | o banner com "Esta é a conta de 12:17. Novos lançamentos do garçom aparecem quando a internet voltar.", itens a 0,72 e o card de destaque a 1. Na volta, o banner sai e a conta é relida. O offline emulado do Chromium **não** derruba o websocket aberto, então a reconexão depois de queda de rede foi provada pelo passo 4, e não por este |
+| 7 | Cardápio e volta 3× pela navegação do app | nenhum handshake novo, nenhum `subscribe_channel` a mais, e o evento seguinte dá uma leitura |
+| 8 | `board.*` | conferido por leitura: os três nomes estão com ponto. A `master` do socket ainda não os emite. O `board_bill_requested` de lá vai para a sala da loja, e não é o mesmo evento |
+
+O StrictMode está desligado (`next.config.ts:7`). As 2 conexões contadas no boot são a do `loading` → `ready`, e só a viva tem `subscribe_channel`.
+
+**Não verificado:** `io server disconnect` (o socket local não derruba o cliente; precisa da socket-api#77 ou de forçar no gateway) e a queda de rede real com o websocket caindo.
+
+**Efeito colateral no banco de dev:** o passo 3 gravou um pedido real na mesa 003 (1× X Salada, "Rafael", R$ 7,99). Ele ficou lá, como os pedidos de QA anteriores dessa mesa.
+
+## Follow-ups identificados em review
+
+- **(média) O primeiro `connect` depois de `connect_error` não relê a conta.** Um tablet que abre a conta durante um deploy ou uma queda do socket-api lê o REST no boot e se inscreve minutos depois. Como nunca houve `disconnect`, o `hasDisconnected` fica falso e o intervalo sem sala não é relido. Um pagamento perdido nesse intervalo deixa a lista de pagamentos sem a linha até o próximo evento de pagamento, mesmo quando um evento de item relê a movimentação. O código segue a tabela de reações da task ("se veio depois de um `disconnect`"), então a correção pede uma emenda: marcar a releitura também em `connect_error`, com o seu par `on`/`off`.
+- **(média) `src/hooks/use-refresh-board-bill.ts:75-79` monta a própria lista de chaves da conta.** Quando a #61 puser `payment-options` no grupo `movement` de `BOARD_BILL_QUERY_KEYS`, o "Atualizar" não vai reler esse grupo. Trocar por `resolveBoardBillQueryKeys(movementId, ALL_BOARD_BILL_KEYS)`, para a lista ser única de fato.
+- **(média, cross-repo) O nome do evento de conta pedida diverge entre as specs.** A spec do socket-api mergeada em 2026-11-27 (PR #67, `origin/master` `8eb1f45`, `.claude/sdd/65-board-attendance-client-events/spec.md:66`) recomenda `board.bill_requested_session` na decisão pendente 1. Esta task e a delivery-api#1648 dizem `board.bill_requested`. Quem implementar a #65 no socket-api precisa fechar a decisão com `board.bill_requested`: com o outro nome, o indoor nunca ouve o evento, e nada dá erro.
+- **(média) A #57 envolve o card de pagamentos no `OfflineDimmed`.** O critério "esmaece as listas" só fecha quando ela fizer isso.
+- **(baixa) 0,72 não é token.** Promover o valor para `interactionOpacities`, em `src/theme/interaction.ts`, e para `design-system/tokens.json` (por exemplo, `opacity-stale`). Hoje ele é constante local do `OfflineDimmed`, copiada do artboard.
+- **(baixa) No celular, o esmaecimento pega também o resumo de valores.** O `BoardTotals` é o footer do `BoardItemsCard`. No artboard `Estado · offline` (tablet) o resumo fica na coluna da direita, sem esmaecer. Decidir na #57 ou na #60 se o `OfflineDimmed` desce para envolver só a lista de rodadas.
+- **(baixa) O texto do teste estático 2 está velho.** O `/client` da #50 (`src/hooks/use-restaurant-state-socket.ts:12`) já estava na base. Trocar "acha uma instância" por "acha uma instância do `/board`".
+- **(baixa) A rule `socket-da-mesa` não cobre conexão nova.** A linha "Ao trocar de mesa, emitir `unsubscribe_channel`" vale só quando a conexão é a mesma (decisão 2). Escrever isso na rule.
+- **(nit) `src/hooks/use-restaurant-state-socket.ts:23` lê `process.env.NEXT_PUBLIC_RESTAURANT_UUID` direto**, em vez da constante `restaurantUuid` de `src/services/restaurant-header.ts`.
+- **(nit) A copy da linha do banner mora em `use-board-offline-line.ts`.** O resto da copy da conta está em `board-copy.ts`.

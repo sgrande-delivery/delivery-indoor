@@ -13,10 +13,15 @@ export function resolveBillState(
   return movement.bill_requested_at !== null ? 'requested' : 'open';
 }
 
-export function describeBillState(state: BillState, boardNumber: string): string {
+/** "Conta aberta", "Conta pedida" e "Conta paga". O número da mesa é do `describeBoardPrefix`: deitado ele sai. */
+export function describeBillState(state: BillState): string {
   if (state === 'paid') {
     return 'Conta paga';
   }
 
-  return `Mesa ${boardNumber} · ${state === 'requested' ? 'conta pedida' : 'conta aberta'}`;
+  return state === 'requested' ? 'Conta pedida' : 'Conta aberta';
+}
+
+export function describeBoardPrefix(boardNumber: string): string {
+  return `Mesa ${boardNumber} · `;
 }

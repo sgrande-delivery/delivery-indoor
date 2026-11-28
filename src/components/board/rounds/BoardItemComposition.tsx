@@ -2,10 +2,11 @@
 
 import React from 'react';
 import { styled } from '@mui/material/styles';
+import { tabletShellMediaQuery } from '@/components/shell/shell-metrics';
 import { fontFamilies, pxToRem } from '@/theme';
 import type { BoardItemCompositionLines } from './board-item-composition';
 import { describeBoardExtra, describeBoardRemoved } from './board-item-text';
-import { roundsMetrics } from './rounds-metrics';
+import { roundsMetrics, roundsTabletMetrics } from './rounds-metrics';
 
 export interface BoardItemCompositionProps {
   composition: BoardItemCompositionLines;
@@ -26,6 +27,9 @@ const Line = styled('span')(({ theme }) => ({
   fontSize: pxToRem(roundsMetrics.compositionFontSize),
   lineHeight: roundsMetrics.lineHeight,
   color: theme.vars.palette.surface.muted,
+  [`@media ${tabletShellMediaQuery}`]: {
+    fontSize: pxToRem(roundsTabletMetrics.compositionFontSize),
+  },
 }));
 
 const Removed = styled(Line)(({ theme }) => ({
