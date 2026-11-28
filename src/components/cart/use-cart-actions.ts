@@ -58,7 +58,13 @@ export function useCartActions({ anchorRef }: UseCartActionsOptions = {}): UseCa
   const isOffline = useIsOffline();
 
   function onRemoveSucceeded(): Promise<void> {
-    dismissAnsweredFailure();
+    dismissAnsweredFailure('removal');
+
+    return invalidateCart();
+  }
+
+  function onQuantitySucceeded(): Promise<void> {
+    dismissAnsweredFailure('change');
 
     return invalidateCart();
   }
@@ -79,7 +85,7 @@ export function useCartActions({ anchorRef }: UseCartActionsOptions = {}): UseCa
   const quantityMutation = useMutation({
     mutationKey: CART_WRITE_MUTATION_KEY,
     mutationFn: ({ itemId, quantity }: ChangeQuantityInput) => updateCartItemQuantity(itemId, quantity),
-    onSuccess: invalidateCart,
+    onSuccess: onQuantitySucceeded,
     onError: error => handleWriteError(error, QUANTITY_ERROR),
   });
 
@@ -99,7 +105,7 @@ export function useCartActions({ anchorRef }: UseCartActionsOptions = {}): UseCa
     mutationFn: async (itemIds: number[]) => {
       for (const itemId of itemIds) {
         await removeCartItem(itemId);
-        dismissAnsweredFailure();
+        dismissAnsweredFailure('removal');
       }
     },
     onSuccess: async () => {

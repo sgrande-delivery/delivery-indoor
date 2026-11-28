@@ -1,6 +1,6 @@
 import { AxiosRequestConfig, isAxiosError } from 'axios';
 import { randomUuid } from '@/helpers/random-uuid';
-import { Cart } from '@/types/cart';
+import { Cart, CheckoutPriceChangedBody } from '@/types/cart';
 import { PlacedOrder } from '@/types/order';
 import { ProductSelection } from '@/types/product-selection';
 import { api } from './api';
@@ -220,20 +220,71 @@ export function isCartItemRejected(error: unknown): boolean {
   return ITEM_REJECTION_STATUSES.includes(error.response.status);
 }
 
-const PRODUCT_UNAVAILABLE_CODE = 'product_unavailable';
+const UNAVAILABLE_MESSAGE_CODES = ['product_unavailable', 'option_item_unavailable'];
+const PRICE_CHANGED_CODE = 'checkout_price_changed';
 
 /**
- * O `message` da api só chega à tela quando é copy para o cliente: `product_unavailable` ("<nome> não está
- * disponível agora."). Os outros códigos de recusa vêm técnicos e em inglês ("Option group item 45 not found.").
+ * O `message` da api só chega à tela quando é copy para o cliente: `product_unavailable` e `option_item_unavailable`
+ * ("<nome> não está disponível agora."). Os outros códigos de recusa vêm técnicos e em inglês ("Option group item 45
+ * not found.").
  */
-export function readProductUnavailableMessage(error: unknown): string | null {
-  if (!isAxiosError<ApiResponseError>(error) || error.response?.data?.internal_code !== PRODUCT_UNAVAILABLE_CODE) {
+export function readUnavailableMessage(error: unknown): string | null {
+  if (!isAxiosError<ApiResponseError>(error)) {
     return null;
   }
 
-  const message = error.response.data.message;
+  const code = error.response?.data?.internal_code;
+
+  if (code === undefined || !UNAVAILABLE_MESSAGE_CODES.includes(code)) {
+    return null;
+  }
+
+  const message = error.response?.data?.message;
 
   return typeof message === 'string' && message.trim() !== '' ? message : null;
+}
+
+/** O que a tela diz do `409 checkout_price_changed`, em centavos. */
+export interface PriceChange {
+  previousTotal: number;
+  newTotal: number;
+  stalePromotionNames: string[];
+}
+
+function isCents(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+/**
+ * Lê o 409 de preço. Sem `previous_total` e `new_pricing.total` numéricos devolve `null`: a tela não tem o que mostrar,
+ * e "R$ NaN" é pior que a falha genérica. O total novo vem daqui, e não da sacola relida: quando o preço do produto
+ * mudou, o `GET /cart` segue com o total antigo.
+ */
+export function readPriceChange(error: unknown): PriceChange | null {
+  if (!isAxiosError<ApiResponseError>(error) || error.response?.data?.internal_code !== PRICE_CHANGED_CODE) {
+    return null;
+  }
+
+  const body: unknown = error.response.data;
+  const {
+    previous_total: previousTotal,
+    new_pricing: pricing,
+    stale_promotions: stale,
+  } = body as Partial<Record<keyof CheckoutPriceChangedBody, unknown>>;
+  const newTotal =
+    typeof pricing === 'object' && pricing !== null
+      ? (pricing as Partial<Record<keyof CheckoutPriceChangedBody['new_pricing'], unknown>>).total
+      : undefined;
+
+  if (!isCents(previousTotal) || !isCents(newTotal)) {
+    return null;
+  }
+
+  const names = (Array.isArray(stale) ? stale : [])
+    .map((promotion: unknown) => (promotion as { name?: unknown } | null)?.name)
+    .filter((name): name is string => typeof name === 'string' && name.trim() !== '');
+
+  return { previousTotal, newTotal, stalePromotionNames: [...new Set(names)] };
 }
 
 export function isCartUsable(cart: Cart): boolean {
@@ -352,12 +403,17 @@ export async function checkoutCart(
   cartId: string,
   customerName: string,
   idempotencyKey: string,
-  sessionToken?: string
+  sessionToken?: string,
+  options: { acceptPriceChange?: boolean } = {}
 ): Promise<PlacedOrder> {
   const config = cartRequestConfig(sessionToken);
   const response = await api.post<PlacedOrder>(
     `/cart/${cartId}/checkout`,
-    { customer_name: customerName, shipment_method: BOARD_SHIPMENT_METHOD },
+    {
+      customer_name: customerName,
+      shipment_method: BOARD_SHIPMENT_METHOD,
+      ...(options.acceptPriceChange && { accept_price_change: true }),
+    },
     { ...config, headers: { ...config.headers, [IDEMPOTENCY_KEY_HEADER]: idempotencyKey } }
   );
 

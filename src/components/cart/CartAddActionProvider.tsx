@@ -3,7 +3,7 @@
 import React, { PropsWithChildren, useMemo } from 'react';
 import { ProductAddActionProvider } from '@/components/product/product-add-action';
 import { ToastContextValue, useToast } from '@/components/ui';
-import { readProductUnavailableMessage } from '@/services/cart';
+import { readUnavailableMessage } from '@/services/cart';
 import { ProductSelection } from '@/types/product-selection';
 import { isTableClosedError, TABLE_CLOSED_MESSAGE } from './send-failure';
 import { OfflineCartWriteError, useAddCartItem } from './use-add-cart-item';
@@ -24,8 +24,7 @@ function announceAddFailure(error: unknown, toast: ToastContextValue, readTableQ
     return;
   }
 
-  const message =
-    error instanceof OfflineCartWriteError ? OFFLINE_ERROR : (readProductUnavailableMessage(error) ?? ADD_ERROR);
+  const message = error instanceof OfflineCartWriteError ? OFFLINE_ERROR : (readUnavailableMessage(error) ?? ADD_ERROR);
 
   toast.show({ message, variant: 'error' });
 }

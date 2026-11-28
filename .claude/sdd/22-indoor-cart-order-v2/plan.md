@@ -35,6 +35,7 @@ A sacola do `delivery-client` já é o carrinho v2, e é a fonte: `src/services/
 | 03 | Envio do pedido e tela de "pedido enviado" | [#48](https://github.com/sgrande-delivery/delivery-indoor/issues/48) | [48-send-order-confirmation.md](./tasks/48-send-order-confirmation.md) | 01, 02, 04, #23 (01 e 03) | shipped |
 | 04 | Sacola no tablet: coluna fixa em paisagem e painel inferior em retrato | [#49](https://github.com/sgrande-delivery/delivery-indoor/issues/49) | [49-tablet-cart-panel.md](./tasks/49-tablet-cart-panel.md) | 01 (e, para o roteiro em navegador, #21 03 e 05) | shipped |
 | 05 | Recusas do envio e estados da sacola (vazia, limpando, offline) | [#50](https://github.com/sgrande-delivery/delivery-indoor/issues/50) | [50-send-refusals-cart-states.md](./tasks/50-send-refusals-cart-states.md) | 03 | shipped |
+| 06 | Preço que subiu e adicional pausado no envio da mesa | [#93](https://github.com/sgrande-delivery/delivery-indoor/issues/93) | [93-send-price-changed-option-unavailable.md](./tasks/93-send-price-changed-option-unavailable.md) | 05, PR da delivery-api#1608 com o merge da `master` | shipped |
 
 Status: `a especificar` → `pendente` → `executada` → `shipped`.
 
@@ -57,6 +58,7 @@ Nesta feature todas as tasks são deste repo, então o arquivo leva o número da
 2. **`04`** depois da `01`, ainda em paralelo com a `02`: monta a coluna e o painel do tablet em volta do `CartPanel` da `01`. O roteiro em navegador dela navega por `/menu` e `/search`, que a 03 e a 05 da #21 criam; com elas fora da base, esse passo vai para a junção.
 3. **`03`** depois de `01`, `02` e `04`, e com as tasks 01 e 03 da #23 (#53 e #55) na base: o envio precisa da sacola, do nome, das molduras do tablet onde a confirmação aparece, da leitura da conta e do selo da rodada.
 4. **`05`** por último, porque mapeia as recusas que a `03` já exercitou.
+5. **`06`** depois da `05`, e só com a delivery-api#1608 mergeada: as duas recusas que ela mapeia vieram da `master` da api no merge de 2026-11-27 (#1802 e #1834).
 
 Se for preciso escolher uma só: a **`01`**. Sem o carrinho no servidor, o resto é fachada sobre o modelo antigo.
 
@@ -70,6 +72,7 @@ Se for preciso escolher uma só: a **`01`**. Sem o carrinho no servidor, o resto
 | `delivery-api` | **Cozinha fechada com código próprio** no pedido de mesa v2 | [#1767](https://github.com/sgrande-delivery/delivery-api/issues/1767), task nova de 2026-11-23. Hoje é `400 bad_request` (`RestaurantOpeningValidator.php:68-70`) |
 | `delivery-api` | **Posse da sacola** | **Fechada pela [#1629](https://github.com/sgrande-delivery/delivery-api/issues/1629) em 2026-11-23:** só o `x-cart-session-token`, sem eixo nem header de movimentação. É o que a [#46](./tasks/46-board-cart-v2.md) já manda |
 | `delivery-api` | Setting `uses_v2_orders` ligada na loja de teste — o `orders.v2` guarda o preview e o checkout | Configuração por restaurante, não código |
+| `delivery-api` | **Recusas que chegaram no merge com a `master`:** `409 checkout_price_changed`, com `previous_total`, `new_pricing` e `stale_promotions` no topo e sem `message` (#1802), e `422 option_item_unavailable` (#1834), as duas valendo na mesa | Fixadas na tabela "Recusas do caminho de mesa" da 1608 em 2026-11-27, por decisão do dev. A [#93](./tasks/93-send-price-changed-option-unavailable.md) as mapeia |
 | `delivery-socket-api` | Nada. `board_products_added` na sala da sessão já existe e é o que atualiza a conta depois do envio | Verificado em 2026-11-16 |
 
 ## Aprendizados que valem para as próximas tasks

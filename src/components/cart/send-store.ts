@@ -14,6 +14,11 @@ export interface SendAttempt {
   items: CartItem[];
   itemCount: number;
   movementId: string;
+  /**
+   * O total novo que o cliente aceitou, em centavos; `null` sem aceite. O envio leva `accept_price_change` quando há
+   * valor, e o retry de rede reenvia a tentativa inteira, então o que a tela mostra e o que sai não divergem.
+   */
+  acceptedTotal: number | null;
 }
 
 export interface SendState {
@@ -55,20 +60,27 @@ export function resetSendState(): void {
   setSendState(IDLE);
 }
 
-// Só a recusa por item muda com a sacola. Mesa fechada, loja sem v2 e cozinha fechada não dependem dela: a api não as
-// confere no PATCH nem no DELETE de item, então apagar o aviso deixaria o CTA habilitado diante de uma recusa de pé.
-const ANSWERED_BY_CART_WRITE = new Set<SendFailureKind>(['item-unavailable']);
+export type CartWrite = 'change' | 'removal';
+
+// Mesa fechada, loja sem v2 e cozinha fechada não dependem da sacola: a api não as confere no PATCH nem no DELETE de
+// item, então apagar o aviso deixaria o CTA habilitado diante de uma recusa de pé. A recusa por item some quando a
+// sacola perde itens; a de preço, em qualquer escrita, porque o `new_pricing.total` do 409 descreve uma sacola que
+// deixou de existir.
+const ANSWERED_BY_WRITE: Record<CartWrite, Set<SendFailureKind>> = {
+  change: new Set<SendFailureKind>(['price-changed']),
+  removal: new Set<SendFailureKind>(['item-unavailable', 'price-changed']),
+};
 
 /**
- * Descarta a recusa por item (sem tentativa pendente) quando a sacola perde itens. A falha com tentativa fica: o pedido
- * pode ter entrado.
+ * Descarta a recusa que a escrita bem-sucedida respondeu (sem tentativa pendente). A falha com tentativa fica: o
+ * pedido pode ter entrado.
  */
-export function dismissAnsweredFailure(): void {
+export function dismissAnsweredFailure(write: CartWrite): void {
   if (state.attempt !== null || state.error === null) {
     return;
   }
 
-  if (!ANSWERED_BY_CART_WRITE.has(readSendFailure(state.error).kind)) {
+  if (!ANSWERED_BY_WRITE[write].has(readSendFailure(state.error).kind)) {
     return;
   }
 
